@@ -66,6 +66,9 @@ export default function AuthForm() {
                         emailError ? "border-red-500" : "border-gray-300 focus:ring-2 focus:ring-sky-400"
                     }`}
                 />
+                <div className="min-h-[1.25rem]">
+                {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+                </div>
             </div>
         </div>
 
