@@ -1,5 +1,5 @@
 import Image from "next/image";
-import AuthForm from "@/features/auth/AuthForm";
+import AuthForm from "@/features/auth/components/AuthForm";
 export default function LoginPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-sky-100 to-white flex items-center justify-center">
