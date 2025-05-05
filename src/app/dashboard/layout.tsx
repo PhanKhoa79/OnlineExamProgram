@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Sidebar } from '@/components/dashboard/Sidebar';
-import { Navbar } from '@/components/ui/Navbar';
+import { Navbar } from '@/components/dashboard/Navbar';
 import { ThemeProvider } from '../../../components/providers/ThemeProvider';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation'; 
@@ -45,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
         <div className="flex flex-col flex-1">
           <div className="rounded-xl shadow-xl bg-[var(--navbar-bg)] dark:bg-[#2a2a3f]">
-            <Navbar variant='dashboard'/>
+            <Navbar />
           </div>
 
           <main className="flex-1 mt-2 lg:mt-4 rounded-xl shadow-xl bg-white dark:bg-[#1f1f2e] px-4 pt-4 pb-0 md:px-6 overflow-auto">
