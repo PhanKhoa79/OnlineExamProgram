@@ -1,12 +1,41 @@
-'use client';
-
 import { ReactNode } from 'react';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Navbar } from '@/components/ui/Navbar';
 import { ThemeProvider } from '../../../components/providers/ThemeProvider';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation'; 
+import { decode } from 'jsonwebtoken';
+import type { Metadata } from 'next';
 import '@/styles/globals.css'
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export const metadata: Metadata = {
+  title: 'Dashboard - MegaStart Online',
+  description: 'Trang quản trị dành cho Admin và Giảng viên',
+  icons: {
+    icon: '/logo.png',
+  },
+}
+
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+
+  const cookieStore = await cookies();
+
+  const token = cookieStore.get('accessToken')?.value;
+
+  const decoded = decode(token)
+  if (
+    !decoded ||
+    typeof decoded !== 'object' ||
+    !('role' in decoded)
+  ) {
+    redirect('/login')
+  }
+
+  const role = (decoded as { role?: string }).role
+  if (role !== 'admin' && role !== 'teacher') {
+    redirect('/for-bidden')
+  }
+
   return (
     <ThemeProvider>
       <div className="flex h-screen bg-gray-100 dark:bg-gray-800 md:gap-4">

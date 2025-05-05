@@ -1,4 +1,3 @@
-import Image from "next/image";
 import AuthForm from "@/features/auth/components/AuthForm";
 export default function LoginPage() {
     return (
@@ -15,17 +14,9 @@ export default function LoginPage() {
           </p>
   
           <AuthForm />
-  
-          <div className="flex items-center my-6">
-            <div className="flex-grow h-px bg-gray-300" />
-            <span className="mx-4 text-sm text-gray-400">Or sign in with</span>
-            <div className="flex-grow h-px bg-gray-300" />
-          </div>
-  
-          <div className="flex justify-center gap-4">
-            <button className="border border-gray-300 p-2 rounded-full hover:bg-gray-100">
-              <Image src="/google-icon.svg" alt="Google" width={25}  height={25}/>
-            </button>
+          
+          <div className="mt-4 text-right text-sm text-sky-500 cursor-pointer hover:underline">
+            Forgot password?
           </div>
         </div>
       </div>
