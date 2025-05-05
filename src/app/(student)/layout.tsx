@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { decode } from 'jsonwebtoken'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
-import { Navbar } from '@/components/ui/Navbar'
+import { Navbar } from '@/components/student/Navbar'
 
 export const metadata: Metadata = {
   title: 'Student Area - MegaStart Online',
@@ -37,7 +37,7 @@ export default async function StudentLayout({
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-[#FAFAFC]">
-        <Navbar variant="contact" />
+        <Navbar />
         {children}
       </div>
     </ThemeProvider>

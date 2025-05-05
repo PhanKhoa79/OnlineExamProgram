@@ -1,21 +1,53 @@
 'use client'
 
-import Image from 'next/image'
-import { ChevronDown } from 'lucide-react'
+import React, { useState } from 'react';
+import { Avatar } from '@mui/material';
+import { ArrowDropDown } from '@mui/icons-material';
+import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
+import { logout } from '../../features/auth/services/authService'; 
 
 export default function ProfileAvatar() {
+   const [isOpen, setIsOpen] = useState(false);
+  
+    const toggleDropdown = () => {
+      setIsOpen(!isOpen);
+    };
+  
+    const handleLogout = async () => {
+      try {
+        await logout();      
+        window.location.href = '/login';
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    };
+
   return (
-    <div className="flex items-center space-x-2 cursor-pointer hover:opacity-90 transition">
-        <div className="w-9 h-9 rounded-full overflow-hidden">
-        <Image
-            src="/logo.png"
-            alt="Profile"
-            width={36}
-            height={36}
-            className="object-cover w-full h-full"
-        />
+    <div className="relative z-999">
+      <div className="flex items-center gap-1.5 cursor-pointer" onClick={toggleDropdown}>
+        <Avatar alt="Avatar" src="/avatar.png" sx={{ width: 50, height: 50 }} />
+        <ArrowDropDown className="text-[#4A3AFF]" />
+      </div>
+      {isOpen && (
+        <div className="flex flex-col justify-center gap-y-4 absolute right-0 mt-2 w-60 bg-white shadow-xl rounded-md p-4">
+          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 border-b border-gray-300">
+            <Avatar alt="Avatar" src="/avatar.png" sx={{ width: 30, height: 30 }} />
+            <span>James Aldrino</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-200">
+            <AccountCircle className="text-gray-600" />
+            <span>Thông tin cá nhân</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-200">
+            <Settings className="text-gray-600" />
+            <span>Đổi mật khẩu</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-200" onClick={handleLogout}>
+            <ExitToApp className="text-gray-600" />
+            <span>Đăng xuất</span>
+          </div>
         </div>
-        <ChevronDown className="w-4 h-4 text-gray-500" />
-  </div>
+      )}
+    </div>
   )
 }
