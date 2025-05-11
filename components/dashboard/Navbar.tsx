@@ -1,10 +1,10 @@
 'use client';
 
-import { Bell, Moon, Sun } from 'lucide-react';
 import { useResponsive } from '@/hooks/useReponsiveHook';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import SearchBar from '@/components/ui/SearchBar';
 import ProfileAvatar from '@/components/ui/ProfileAvatar';
+import { DarkMode, LightMode, Notifications } from '@mui/icons-material';
 
 
 export const Navbar = () => {
@@ -28,14 +28,14 @@ export const Navbar = () => {
 
               <button onClick={toggleDarkMode} className="cursor-pointer">
                 {isDarkMode ? (
-                  <Moon className="text-gray-400" size={24} />
+                  <DarkMode className="text-gray-400" sx={{ fontSize: 24}} />
                 ) : (
-                  <Sun className="text-yellow-400 dark:text-white" size={24} />
+                  <LightMode className="text-yellow-400 dark:text-white" sx={{ fontSize: 24}} />
                 )}
               </button>
             </div>
           )}
-          <Bell className="w-5 h-5 text-gray-600 dark:text-white cursor-pointer" />
+          <Notifications className="w-5 h-5 text-gray-600 dark:text-white cursor-pointer" />
           <ProfileAvatar />
         </div>
       </div>

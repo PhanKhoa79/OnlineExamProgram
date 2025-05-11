@@ -1,5 +1,4 @@
-import { Search } from 'lucide-react'
-
+import { Search } from  '@mui/icons-material';
 export default function SearchBar() {
   return (
     <div className="flex items-center bg-gray-100 px-3 py-2 rounded-lg w-full max-w-lg">

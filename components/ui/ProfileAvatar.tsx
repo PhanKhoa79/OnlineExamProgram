@@ -23,7 +23,7 @@ export default function ProfileAvatar() {
     };
 
   return (
-    <div className="relative z-999">
+    <div className="relative z-999 dark:text-black">
       <div className="flex items-center gap-1.5 cursor-pointer" onClick={toggleDropdown}>
         <Avatar alt="Avatar" src="/avatar.png" sx={{ width: 50, height: 50 }} />
         <ArrowDropDown className="text-[#4A3AFF]" />

@@ -1,38 +1,17 @@
 // src/app/(student)/layout.tsx
 import type { Metadata } from 'next'
 import { ReactNode } from 'react'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { decode } from 'jsonwebtoken'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { Navbar } from '@/components/student/Navbar'
+import { checkUserRole } from '@/libs/checkRole'
 
 export const metadata: Metadata = {
   title: 'Student Area - MegaStart Online',
   description: 'Trang dành cho sinh viên',
 }
 
-export default async function StudentLayout({
-  children,
-}: {
-  children: ReactNode
-}) {
-  const cookieStore = await cookies();
-
-  const token = cookieStore.get('accessToken')?.value
-
-  const decoded = decode(token)
-  if (
-    !decoded ||
-    typeof decoded !== 'object' ||
-    !('role' in decoded)
-  ) {
-  }
-
-  const role = (decoded as { role?: string }).role
-  if (role !== 'student') {
-    redirect('/for-bidden')
-  }
+export default async function StudentLayout({ children }: { children: ReactNode }) {
+  const role = await checkUserRole(['student']);
 
   return (
     <ThemeProvider>
