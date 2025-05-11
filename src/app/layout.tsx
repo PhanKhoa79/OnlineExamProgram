@@ -1,7 +1,7 @@
-// src/app/dashboard/layout.tsx
 import '@/styles/globals.css'
 import type { Metadata } from 'next'
 import { ReactNode } from 'react'
+import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: 'MegaStart Online',
@@ -17,6 +17,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="en">
       <body>
         {children}
+         <Toaster richColors position="top-right" />
       </body>
     </html>
   )

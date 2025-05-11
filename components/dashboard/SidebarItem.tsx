@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
+import { KeyboardArrowDown } from '@mui/icons-material';
 import { ReactNode, useState } from 'react';
 import { useResponsive } from '@/hooks/useReponsiveHook';
 import classNames from 'classnames';
-import { usePathname } from 'next/navigation'; // ✅ App Router
+import { usePathname } from 'next/navigation'; 
 
 interface SidebarItemProps {
   title: string;
@@ -58,7 +58,7 @@ export const SidebarItem = ({
           {showTitle && title}
         </span>
         {hasChildren && !collapsed && (
-          <ChevronDown
+          <KeyboardArrowDown
             className={classNames('w-4 h-4 transition-transform', {
               'rotate-180': open,
             })}

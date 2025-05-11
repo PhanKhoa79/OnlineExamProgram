@@ -46,7 +46,7 @@ export default function AuthForm() {
         type="submit"
         className="w-full mt-4 py-2 bg-black text-white rounded-md hover:bg-gray-900 transition"
       >
-        Login
+        Đăng nhập
       </button>
     </form>
   );
