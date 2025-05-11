@@ -1,11 +1,13 @@
-"use client"
+'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
+import { verifyResetCode } from "../services/authService"
 import { toast } from "@/components/hooks/use-toast"
 import { Button } from "@/components/ui/button"
+import { useRouter } from 'next/navigation' 
+import { useResetPasswordStore } from "../store"
 import {
   Form,
   FormControl,
@@ -32,6 +34,8 @@ interface InputOTPFormProps {
 }
 
 export function InputOTPForm({ email }: InputOTPFormProps) {
+  const router = useRouter()
+  const { setResetInfo } = useResetPasswordStore()
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -39,15 +43,16 @@ export function InputOTPForm({ email }: InputOTPFormProps) {
     },
   })
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    async function onSubmit( data: z.infer<typeof FormSchema>) {
     try {
-      // Gọi API reset password với email và mã OTP
-      await resetPassword(data.pin, email)
+      // verify mã
+      await verifyResetCode(data.pin)
+      setResetInfo(email, data.pin);
       toast({
         title: "Mã xác thực đã được xác nhận",
         description: "Bạn có thể đặt lại mật khẩu mới."
       })
-      // Có thể chuyển hướng đến form đặt mật khẩu mới
+      router.push('/reset-password');
     } catch (error: any) {
       toast({
         variant: 'destructive',

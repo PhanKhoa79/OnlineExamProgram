@@ -1,18 +1,23 @@
-"use client"
+'use client'
 import { useState } from 'react';
 import { InputOTPForm } from '@/features/auth/components/InputOtpForm';
 import { Input } from '@/components/ui/input';
+import { forgotPassword } from '@/features/auth/services/authService';
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<'email' | 'otp'>('email');
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: call API to send OTP to the entered email
-    // Example: await forgotPassword(email)
-
-    setStep('otp'); // chuyển qua bước nhập OTP
+    setError('');
+    try {
+      const res = await forgotPassword(email);
+      setStep('otp'); 
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!');
+    };
   };
 
   return (
@@ -42,6 +47,11 @@ export default function ForgotPasswordPage() {
                 required
               />
             </div>
+
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
+
             <button
               type="submit"
               className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"

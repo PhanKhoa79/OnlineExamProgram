@@ -1,8 +1,9 @@
 import AuthForm from "@/features/auth/components/AuthForm";
+import Link from "next/link";
 export default function LoginPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-sky-100 to-white flex items-center justify-center">
-        <div className="w-full max-w-md bg-white/70 backdrop-blur-md shadow-xl rounded-3xl p-8 border border-gray-200">
+        <div className="flex flex-col gap-4 w-full max-w-md bg-white/70 backdrop-blur-md shadow-xl rounded-3xl p-8 border border-gray-200">
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl">
               ➡️
@@ -15,9 +16,9 @@ export default function LoginPage() {
   
           <AuthForm />
           
-          <div className="mt-4 text-right text-sm text-sky-500 cursor-pointer hover:underline">
+          <Link  href="/forgot-password" className="mt-4 text-right text-sm text-sky-500 cursor-pointer hover:underline">
             Forgot password?
-          </div>
+          </Link>
         </div>
       </div>
     );

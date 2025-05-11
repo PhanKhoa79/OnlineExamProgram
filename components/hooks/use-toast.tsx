@@ -22,7 +22,7 @@ export function toast({
   const variantClasses =
     variant === "destructive"
       ? "bg-red-50 border border-red-200 text-red-800"
-      : "bg-white border border-gray-200 text-gray-900";
+      : "bg-green border border-gray-200 text-gray-900";
 
   // 2. Render custom toast với style tương ứng
   return sonnerToast.custom(
