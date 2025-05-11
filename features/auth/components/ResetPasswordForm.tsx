@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { activate } from '../services/authService';
+import { useRouter} from 'next/navigation';
+import { resetPassword } from '../services/authService';
 import AuthInput from '@/components/ui/AuthInput';
 import HttpsIcon from '@mui/icons-material/Https';
 import { schema as passwordSchema, getErrorMessage } from '@/libs/validationAuth';
+import { toast } from '@/components/hooks/use-toast';
+import { useResetPasswordStore } from '../store';
 
 export default function ResetPasswordForm() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token') ?? '';
+  const { code } = useResetPasswordStore();
+  console.log(code);
   const router = useRouter();
 
   const [newPassword, setNewPassword] = useState('');
@@ -47,18 +49,16 @@ export default function ResetPasswordForm() {
     setServerError(null);
 
     // nếu có lỗi hiện tại, không submit
-    if (currentError || newError || confirmError) return;
-
+    if (newError || confirmError) return;
     try {
-      await activate(token, currentPassword, newPassword);
+      await resetPassword(code, newPassword);
+      toast({
+        title: "Đổi mật khẩu thành công",
+        description: "Bạn có thể đăng nhập với mật khẩu mới."
+      })
       router.push('/login');
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err.message || 'Có lỗi xảy ra';
-      if (msg.includes('tạm thời không đúng')) {
-        setCurrentError('Mật khẩu tạm thời không đúng');
-      } else {
-        setServerError(msg);
-      }
+        setServerError(err.response?.data?.message);
     }
   };
 

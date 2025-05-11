@@ -19,3 +19,15 @@ export const activate = (
     newPassword,
   });
 };
+
+export const forgotPassword = (email: string) => {
+  return api.post('/auth/forgot-password', { email });
+};
+
+export const resetPassword = (code: string, newPassword: string) => {
+  return api.post('/auth/reset-password', { code, newPassword });
+};
+
+export const verifyResetCode = (code: string) => {
+  return api.post('/auth/verify-reset-code', { code });
+};
