@@ -5,7 +5,6 @@ import { ThemeProvider } from '../../../components/providers/ThemeProvider';
 import type { Metadata } from 'next';
 import '@/styles/globals.css'
 import { checkUserRole } from '@/libs/checkRole';
-import { AccountTable } from '@/components/ui/Table/Account/AccountTable';
 
 export const metadata: Metadata = {
   title: 'Dashboard - MegaStart Online',
@@ -32,7 +31,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           </div>
 
           <main className="flex-1 mt-2 lg:mt-4 rounded-xl shadow-xl bg-white dark:bg-[#1f1f2e] px-4 pt-4 pb-0 md:px-6 overflow-auto">
-            <AccountTable />
+            {children}
           </main>
         </div>
       </div>

@@ -1,36 +1,36 @@
 'use client'
-import { useState } from 'react';
-import { InputOTPForm } from '@/features/auth/components/InputOtpForm';
-import { Input } from '@/components/ui/input';
-import { forgotPassword } from '@/features/auth/services/authService';
+import { useState } from 'react'
+import { InputOTPForm } from '@/features/auth/components/InputOtpForm'
+import { Input } from '@/components/ui/input'
+import { forgotPassword } from '@/features/auth/services/authService'
+import { toast } from '@/components/hooks/use-toast'
 
 export default function ForgotPasswordPage() {
-  const [step, setStep] = useState<'email' | 'otp'>('email');
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [step, setStep] = useState<'email' | 'otp'>('email')
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    setError('')
     try {
-      const res = await forgotPassword(email);
-      setStep('otp'); 
+      await forgotPassword(email)
+      setStep('otp')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!');
-    };
-  };
+      toast({
+        title: error?.response?.data?.message || 'Có lỗi xảy ra',
+        description: 'Email chưa đăng ký',
+        variant: "error"
+      })
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100 to-white flex items-center justify-center">
-      <div className="flex flex-col items-center w-full max-w-md bg-white/70 backdrop-blur-md shadow-xl rounded-3xl p-8 border border-gray-200">
-        <div className="flex justify-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl">➡️</div>
-        </div>
-        <h2 className="text-center text-2xl font-semibold mb-1">Forgot Password</h2>
+      <div className="flex flex-col items-center">
+        <h2 className="text-center text-2xl font-semibold mb-1">Lấy lại mật khẩu</h2>
         <p className="text-center text-gray-500 text-sm mb-6">
-          Please enter your email to receive a reset code.
+          Nhập thông tin của bạn để tiếp tục
         </p>
-
         {step === 'email' ? (
           <form onSubmit={handleEmailSubmit} className="w-full space-y-4">
             <div>
@@ -41,16 +41,14 @@ export default function ForgotPasswordPage() {
                 type="email"
                 id="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 placeholder="you@example.com"
                 required
               />
             </div>
 
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
+            {error && <p className="text-red-500 text-sm">{error}</p>}
 
             <button
               type="submit"
@@ -63,6 +61,5 @@ export default function ForgotPasswordPage() {
           <InputOTPForm email={email} />
         )}
       </div>
-    </div>
-  );
+  )
 }

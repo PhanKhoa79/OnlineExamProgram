@@ -1,0 +1,192 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "../../../../components/ui/radio-group";
+import { UploadAvatar } from "@/components/ui/UploadAvtar";
+import { addAccount} from "../../services/accountService";
+import { toast } from "@/components/hooks/use-toast";
+import { schema, getErrorMessage } from "@/libs/validationAuth";
+import AuthInput from "@/components/ui/AuthInput";
+import {Email , Https, Person} from "@mui/icons-material";
+import { useDispatch } from 'react-redux';
+import { addAccount as addAccountAction } from '@/store/accountSlice';
+import { CustomModal } from "@/components/ui/CustomModal";
+import { Button } from "@/components/ui/button";
+
+export function AddAccountModal() {
+  const dispatch = useDispatch();
+
+  const [open, setOpen] = useState<boolean>(false);
+
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassWord] = useState<string>("");
+  const [role, setRole] = useState<"" | "admin" | "teacher" | "student">("");
+  const [isActive, setIsActive] = useState<boolean>(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [accountnameError, setAccountnameError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+  const { emailError, passwordError, accountnameError } = getErrorMessage(schema, { email, password, accountname: name });
+  setEmailError(emailError);
+  setPasswordError(passwordError);
+  setAccountnameError(accountnameError);
+}, [email, password, name]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    const { emailError, passwordError, accountnameError } = getErrorMessage(schema, { email, password, accountname:name });
+    setEmailError(emailError);
+    setPasswordError(passwordError);
+    setAccountnameError(accountnameError);
+    if (emailError || passwordError || accountnameError) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const response = await addAccount({
+        accountname: name,
+        email,
+        password,
+        role,
+        isActive,
+        urlAvatar: avatarUrl,
+      });
+      const newAccount = {
+        id: response.data.data.id,
+        accountname: response.data.data.accountname,
+        email: response.data.data.email,
+        role: response.data.data.role,
+        isActive: response.data.data.isActive,
+        urlAvatar: response.data.data.urlAvatar
+      };
+      dispatch(addAccountAction(newAccount))
+      toast({ title: 'Account created successfully!' })
+      setOpen(false);
+    } catch (err: any) {
+      toast({
+        title: err.response?.data?.message || 'Error creating account',
+        variant: 'error',
+      })
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+  if (!open) {
+    setName("");
+    setEmail("");
+    setPassWord("");
+    setRole("");
+    setIsActive(true);
+  }
+}, [open]);
+
+  return (
+    <CustomModal
+      open={open}
+      setOpen={setOpen}
+      title="Add Account"
+      trigger={
+        <Button className="grow bg-blue-500 text-white hover:bg-blue-800 cursor-pointer">
+        + Add new Account
+        </Button>
+     }
+      onSubmit={handleSubmit}
+      loading={loading}
+      submitLabel="+ Add new Account"
+    >
+
+      <div className="flex flex-col gap-2 dark:text-black">
+        <AuthInput
+          id="name"
+          title="Username"
+          type="text"
+          label="Username"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          error={accountnameError}
+          Icon={Person}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 dark:text-black">
+        <AuthInput
+          id="email"
+          title="Email"
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          error={emailError}
+          Icon={Email}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 dark:text-black">
+        <AuthInput
+          id="password"
+          title="Password"
+          type={showPassword ? "text" : "password"}
+          label="Password"
+          value={password}
+          onChange={(e) => setPassWord(e.target.value)}
+          error={passwordError}
+          Icon={Https}
+          showPasswordToggle={() => setShowPassword(!showPassword)}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 dark:text-black">
+        <Label htmlFor="role">Role</Label>
+        <Select value={role} onValueChange={setRole}>
+          <SelectTrigger id="role" className="w-[180px] font-semibold dark:bg-white dark:hover:bg-gray-300">
+            <SelectValue placeholder="Select role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="teacher">Teacher</SelectItem>
+            <SelectItem value="student">Student</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex flex-col gap-2 dark:text-black">
+        <Label>Status</Label>
+        <RadioGroup
+          value={isActive ? "active" : "inactive"}
+          onValueChange={(val: "active" | "inactive") => setIsActive(val === "active")}
+          className="flex space-x-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="active" id="status-active" className="dark:bg-black" />
+            <Label htmlFor="status-active">Active</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="inactive" id="status-inactive" className="dark:bg-black" />
+            <Label htmlFor="status-inactive">Inactive</Label>
+          </div>
+        </RadioGroup>
+      </div>
+
+      <UploadAvatar onUpload={setAvatarUrl} />
+    </CustomModal>
+  );
+}
+
