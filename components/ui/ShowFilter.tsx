@@ -17,7 +17,7 @@ const OPTIONS: { value: ShowOption; label: string }[] = [
 
 export function ShowFilter({ show, onChange }: ShowFilterProps) {
   return (
-    <fieldset className="flex items-center space-x-6">
+    <fieldset className="flex flex-wrap items-center space-x-6">
       <legend className="sr-only">Show Columns</legend>
       <span className="font-medium">Show:</span>
 

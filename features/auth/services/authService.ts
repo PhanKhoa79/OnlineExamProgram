@@ -1,33 +1,33 @@
 import api from 'libs/axios';
 
-export const login = (email: string, password: string) => {
-  return api.post('/auth/login', { email, password });
+export const login = async (email: string, password: string) => {
+  return await api.post('/auth/login', { email, password });
 };
 
-export const logout = () => {
-  return api.post('/auth/logout');
+export const logout = async () => {
+  return await api.post('/auth/logout');
 };
 
-export const activate = (
+export const activate = async (
   token: string,
   tempPassword: string,
   newPassword: string,
 ) => {
-  return api.post('/account/activate', {
+  return await api.post('/account/activate', {
     token,
     tempPassword,
     newPassword,
   });
 };
 
-export const forgotPassword = (email: string) => {
-  return api.post('/auth/forgot-password', { email });
+export const forgotPassword = async (email: string) => {
+  return await api.post('/auth/forgot-password', { email });
 };
 
-export const resetPassword = (code: string, newPassword: string) => {
-  return api.post('/auth/reset-password', { code, newPassword });
+export const resetPassword = async (code: string, newPassword: string) => {
+  return await api.post('/auth/reset-password', { code, newPassword });
 };
 
-export const verifyResetCode = (code: string) => {
-  return api.post('/auth/verify-reset-code', { code });
+export const verifyResetCode = async (code: string) => {
+  return await api.post('/auth/verify-reset-code', { code });
 };

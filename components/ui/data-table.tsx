@@ -21,20 +21,20 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { SkeletonLoadData } from './SkeletonLoadData';
 
 interface DataTableProps<TData, TValue> {
-  /** Column definitions */
   columns: ColumnDef<TData, TValue>[];
-  /** Raw data to display */
   data: TData[];
-  /** Rows per page */
   pageSize?: number;
+  isLoading?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   pageSize = 7,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   // Router hooks for URL pagination
   const router = useRouter();
@@ -98,47 +98,51 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      {/* Table */}
-      <div className="max-w-screen overflow-x-auto rounded border">
-        <Table className="w-full min-w-[800px] text-sm text-left">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+      { isLoading ? 
+        (
+          <SkeletonLoadData />
+        ) : (
+        <div className="max-w-screen overflow-x-auto rounded border">
+          <Table className="w-full min-w-[800px] text-sm text-left">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={memoColumns.length} className="h-24 text-center">
-                  No data.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={memoColumns.length} className="h-24 text-center">
+                      No data.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      
       {/* Pagination Controls */}
       <div className="flex flex-col items-end gap-4 lg:items-center lg:justify-between lg:flex-row py-4 text-sm cursor-pointer">
         <span>
@@ -147,6 +151,7 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center space-x-1 cursor-pointer">
           <Button
             size="sm"
+            type="button"
             variant="outline"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
@@ -161,6 +166,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <Button
                 key={item}
+                type="button"
                 size="sm"
                 variant={item === pageIndex ? 'secondary' : 'outline'}
                 onClick={() => table.setPageIndex(item as number)}
@@ -171,6 +177,7 @@ export function DataTable<TData, TValue>({
             )
           )}
           <Button
+            type="button"
             size="sm"
             variant="outline"
             onClick={() => table.nextPage()}

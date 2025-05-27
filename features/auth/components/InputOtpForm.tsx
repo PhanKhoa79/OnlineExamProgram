@@ -50,14 +50,15 @@ export function InputOTPForm({ email }: InputOTPFormProps) {
       setResetInfo(email, data.pin);
       toast({
         title: "Mã xác thực đã được xác nhận",
-        description: "Bạn có thể đặt lại mật khẩu mới."
+        description: "Bạn có thể đặt lại mật khẩu mới.",
+        variant: "success"
       })
       router.push('/reset-password');
     } catch (error: any) {
       toast({
-        variant: 'destructive',
         title: 'Xác thực thất bại',
         description: error?.response?.data?.message || 'Có lỗi xảy ra',
+        variant: "error"
       })
     }
   }
