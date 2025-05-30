@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { ReactNode } from 'react'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { Navbar } from '@/components/student/Navbar'
-import { checkUserRole } from '@/libs/checkRole'
+import { checkUserRole } from '@/lib/checkRole'
 
 export const metadata: Metadata = {
   title: 'Student Area - MegaStart Online',
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
-  const role = await checkUserRole(['student']);
+  const role = await checkUserRole({ allow: ['student'] });
 
   return (
     <ThemeProvider>

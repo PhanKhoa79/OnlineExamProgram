@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/features/auth/services/authService";
-import { schema, getErrorMessage } from "@/libs/validationAuth";
+import { schema, getErrorMessage } from "@/lib/validationAuth";
+import { useAuthStore } from "../store";
 
 export default function useLogin() {
   const router = useRouter();
@@ -35,13 +36,14 @@ export default function useLogin() {
 
     try {
       const res = await login(email, password);
-      const role: string = res.data.user.role;
-      
+      const role: string = res.data.user.role.name;
+      const user = res.data.user;
+      useAuthStore.getState().setAuthInfo(user);
       // phân quyền
-      if (role === "admin" || role === "teacher") {
-        router.push("/dashboard");
-      } else {
+      if (role === "student") {
         router.push("/home");
+      } else {
+        router.push("/dashboard");
       }
     } catch (err: any) {
       setLoginError(err.response?.data?.message || "Đăng nhập thất bại");

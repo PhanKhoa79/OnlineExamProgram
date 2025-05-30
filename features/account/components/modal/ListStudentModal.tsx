@@ -3,8 +3,6 @@
 import React, { useState} from 'react';
 import { CustomModal } from '@/components/ui/CustomModal';
 import { StudentTable } from '@/features/student/components/StudentTable';
-import { Button } from '@/components/ui/button';
-import { FileUpload } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { addAccountsForStudents } from '@/features/account/services/accountService';
@@ -12,9 +10,15 @@ import { toast } from '@/components/hooks/use-toast';
 import { addAccount as addAccountAction } from '@/store/accountSlice';
 import { useDispatch } from 'react-redux';
 
-export const ListStudentModal = () => {
+type ListStudentModalProps = {
+  open: boolean;
+  onOpenChange: (value: boolean) => void;
+};
+
+
+export const ListStudentModal = ({ open, onOpenChange }: ListStudentModalProps) => {
     const [loading, setLoading] = useState(false);
-    const [open, setOpen] = useState<boolean>(false);
+
     const dispatch = useDispatch();
 
     const selectedIds = useSelector((state: RootState) => state.student.selectedIds);
@@ -34,6 +38,7 @@ export const ListStudentModal = () => {
         }));
 
         const response = await addAccountsForStudents(accountData);
+        console.log('Response from server:', response);
         const successAccounts = response.data.data.success;
 
         const newAccounts = successAccounts.map(account => ({
@@ -47,11 +52,11 @@ export const ListStudentModal = () => {
         newAccounts.forEach(account => {
             dispatch(addAccountAction(account));
         });
-        toast({ title: 'Accounts created successfully!' })
-        setOpen(false);
+        toast({ title: 'Tạo danh sách tài khoản thành công!' })
+        onOpenChange(false);
         } catch (err) {
             toast({
-                title: err.response?.data?.message || 'Error creating accounts',
+                title: err.response?.data?.message || 'Lỗi khi tạo danh sách tài khoản',
                 variant: 'error',
               })
         } finally {
@@ -62,16 +67,10 @@ export const ListStudentModal = () => {
     return (
         <CustomModal
         open={open}
-        setOpen={setOpen}
-        title="List Students"
-        trigger={
-            <Button className="grow bg-yellow-500 text-white hover:bg-yellow-800 cursor-pointer">
-                <FileUpload />
-                Upload Students
-            </Button>
-        }
+        setOpen={onOpenChange}
+        title="Danh sách sinh viên"
         onSubmit={handleSubmit}
-        submitLabel="Create Accounts"
+        submitLabel="Tạo tài khoản cho sinh viên"
         loading={loading}
         contentClassName='lg:min-w-[900px] h-[600px] w-[600px]'
         >

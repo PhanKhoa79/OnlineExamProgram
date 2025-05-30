@@ -1,0 +1,147 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+
+import AuthInput from "@/components/ui/AuthInput";
+import {Person, Edit, Delete} from "@mui/icons-material";
+import { CustomModal } from "@/components/ui/CustomModal";
+import { getPermissionsByRoleId, getAllRolesWithPermissions, deleteRoleById } from "../../services/roleServices";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/features/auth/store";
+import { hasPermission } from "@/lib/permissions";
+import { ConfirmDeleteModal } from '@/components/ui/ConfirmDeleteModal';
+import { toast } from '@/components/hooks/use-toast';
+import { useDispatch } from 'react-redux';
+import { setRoles } from "@/store/roleSlice";
+import { getPermissionClass, getPermissionIcon } from '@/utils/permissios.util'
+
+type DetailRoleModalProps = {
+  open: boolean;
+  onOpenChange: (value: boolean) => void;
+  id: number;
+};
+
+export function DetailRoleModal({ open, onOpenChange, id }: DetailRoleModalProps) {
+    const dispatch = useDispatch();
+    const router = useRouter();
+
+    const [roleName, setRoleName] = useState<string>("");
+
+    const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+
+    const idAccountCur = useAuthStore.getState().user?.role.id;
+    
+    const [permissionsAccountCur, setPermissionsAccountCur] = useState<string[]>([]);
+
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+    useEffect(() => {
+        (async () => {
+            const res = await getPermissionsByRoleId(id);
+            if (res) {
+                setRoleName(res.name);
+                setSelectedPermissions(res.permissions);
+            } else {
+                toast({
+                    title: "Error",
+                    description: "Lỗi khi lấy thông tin quyền",
+                    variant: "error",
+                });
+            }
+
+            if (idAccountCur !== undefined) {
+                const resPermissionsAccounCur = await getPermissionsByRoleId(idAccountCur);
+                setPermissionsAccountCur(resPermissionsAccounCur.permissions);
+            }
+        })();
+    }, [id]);
+
+    return (
+        <CustomModal
+        open={open}
+        setOpen={onOpenChange}
+        title="Sửa quyền"
+        submitLabel="Cập nhật"
+        isSubmit={false}
+        >
+
+        <div className="flex flex-col gap-2 dark:text-black">
+            <AuthInput
+            id="role"
+            title="Tên quyền"
+            type="text"
+            label="Role"
+            value={roleName}
+            onChange={(e) => setRoleName(e.target.value)}
+            Icon={Person}
+            disabled
+            />
+        </div>
+
+        <div className="flex flex-col gap-1">
+            <span className="block text-sm font-bold text-black-700">Danh sách quyền</span>
+            {selectedPermissions.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                {selectedPermissions.map((permission: string) => (
+                    <span
+                    key={permission}
+                    className={`${getPermissionClass(permission)} flex items-center gap-1 text-xs font-medium mr-1 px-2.5 py-0.5 rounded`}
+                    >
+                    {getPermissionIcon(permission)}
+                    {permission}
+                    </span>
+                ))}
+                </div>
+            ) : (
+                <div className="text-gray-500 italic">Không có quyền nào được gán.</div>
+            )}
+        </div>
+
+            <div className="flex justify-between gap-4 mt-6">
+                {hasPermission(permissionsAccountCur, "role:update") && (
+                    <button
+                        type="button"
+                        className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded"
+                        onClick={() => router.push(`/dashboard/role/update-role/${id}`)}
+                    >
+                        <Edit fontSize="small" />
+                        Edit
+                    </button>
+                )}
+
+                {hasPermission(permissionsAccountCur, "role:delete") && (
+                    <button
+                        type="button"
+                        className="flex items-center gap-2 px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
+                        onClick={() => setShowConfirmDelete(true)}
+                    >
+                        <Delete fontSize="small" />
+                        Delete
+                    </button>
+                )}
+            </div>
+            <ConfirmDeleteModal
+                title="Bạn có chắc chắn muốn xóa quyền này?"
+                open={showConfirmDelete}
+                onOpenChange={setShowConfirmDelete}
+                onConfirm={async () => {
+                        try {
+                        await deleteRoleById(id);
+                        const data = await getAllRolesWithPermissions();
+                        dispatch(setRoles(data));
+                        setShowConfirmDelete(false);
+                        onOpenChange(false);
+                        toast({ title: 'Xóa quyền thành công!' });
+                        router.refresh();
+                        } catch (err: any) {
+                        toast({
+                            title: 'Lỗi khi xóa quyền',
+                            description: err?.response?.data?.message || 'Không thể quyền',
+                            variant: 'error',
+                        });
+                    }
+                }}
+            />
+        </CustomModal>
+    );
+}

@@ -17,11 +17,12 @@ interface CustomModalProps {
   title: string;
   trigger?: React.ReactNode;
   children: React.ReactNode;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit?: (e: React.FormEvent) => void;
   loading?: boolean;
   submitLabel?: string;
   contentClassName?: string;
 
+  isSubmit?: boolean;
 }
 
 export function CustomModal({
@@ -34,6 +35,7 @@ export function CustomModal({
   loading = false,
   submitLabel = "Submit",
   contentClassName = "",
+  isSubmit = true,
 }: CustomModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -51,16 +53,18 @@ export function CustomModal({
             {children}
           </form>
 
-          <DialogFooter className="mt-4">
-            <Button
-              type="submit"
-              form="reusable-dialog-form"
-              disabled={loading}
-              className="w-full dark:bg-gray-300 cursor-pointer"
-            >
-              {loading ? "Processing…" : submitLabel}
-            </Button>
-          </DialogFooter>
+          {isSubmit && (
+            <DialogFooter className="mt-4">
+              <Button
+                type="submit"
+                form="reusable-dialog-form"
+                disabled={loading}
+                className="w-full dark:bg-gray-300 cursor-pointer"
+              >
+                {loading ? "Processing…" : submitLabel}
+              </Button>
+            </DialogFooter>
+          )}
         </div>
       </DialogContent>
     </Dialog>

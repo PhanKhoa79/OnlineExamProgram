@@ -1,5 +1,4 @@
 import { AxiosInstance } from 'axios';
-import  useRedirect from 'features/auth/hooks/redirectLogin';
 
 export const setupInterceptors = (api: AxiosInstance) => {
   api.interceptors.response.use(
@@ -11,12 +10,15 @@ export const setupInterceptors = (api: AxiosInstance) => {
         originalRequest._retry = true;
 
         try {
-          await api.post('/auth/refresh-token');
-
-          return api(originalRequest);
+         if (!originalRequest._retry) {
+            originalRequest._retry = true;
+            await api.post('/auth/refresh-token');
+            return api(originalRequest);
+          }
         } catch (refreshError) {
-            const redirectToLogin = useRedirect();
-            redirectToLogin();
+            if (typeof window !== 'undefined') {
+              window.location.href = '/auth/login';
+            }
           return Promise.reject(refreshError);
         }
       }

@@ -146,7 +146,7 @@ export function DataTable<TData, TValue>({
       {/* Pagination Controls */}
       <div className="flex flex-col items-end gap-4 lg:items-center lg:justify-between lg:flex-row py-4 text-sm cursor-pointer">
         <span>
-          Showing {firstRow}-{lastRow} of {memoData.length}
+          Hiển thị {firstRow}-{lastRow} trên {memoData.length}
         </span>
         <div className="flex items-center space-x-1 cursor-pointer">
           <Button

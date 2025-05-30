@@ -51,8 +51,8 @@ export const studentColumns = (dispatch: AppDispatch): ColumnDef<StudentDto>[] =
     {
       accessorKey: "student_code",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          CODE 
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Mã sinh viên 
           <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
@@ -68,8 +68,8 @@ export const studentColumns = (dispatch: AppDispatch): ColumnDef<StudentDto>[] =
     {
       accessorKey: "fullName",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          FULL NAME 
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Họ và tên
           <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
@@ -77,8 +77,8 @@ export const studentColumns = (dispatch: AppDispatch): ColumnDef<StudentDto>[] =
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          EMAIL 
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Email 
           <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),

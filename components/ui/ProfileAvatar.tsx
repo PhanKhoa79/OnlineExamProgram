@@ -5,22 +5,28 @@ import { Avatar } from '@mui/material';
 import { ArrowDropDown } from '@mui/icons-material';
 import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
 import { logout } from '../../features/auth/services/authService'; 
+import { useAuthStore } from '@/features/auth/store';
 
 export default function ProfileAvatar() {
    const [isOpen, setIsOpen] = useState(false);
+   const { clearAuthInfo } = useAuthStore.getState();
   
-    const toggleDropdown = () => {
-      setIsOpen(!isOpen);
-    };
-  
-    const handleLogout = async () => {
-      try {
-        await logout();      
-        window.location.href = '/login';
-      } catch (error) {
-        console.error('Logout failed:', error);
-      }
-    };
+   const role = useAuthStore.getState().user?.role.name;
+   const accountName = useAuthStore.getState().user?.accountname;
+
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();      
+      clearAuthInfo();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   return (
     <div className="relative dark:text-black">
@@ -30,20 +36,24 @@ export default function ProfileAvatar() {
       </div>
       {isOpen && (
         <div className="flex flex-col justify-center gap-y-4 absolute right-0 mt-2 w-60 bg-white shadow-xl rounded-md p-4 z-999">
-          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 border-b border-gray-300">
+          <div className="flex flex-wrap items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 border-b border-gray-300">
             <Avatar alt="Avatar" src="/avatar.png" sx={{ width: 30, height: 30 }} />
-            <span>James Aldrino</span>
+            <span>{accountName}</span>
           </div>
-          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-200">
-            <AccountCircle className="text-gray-600" />
-            <span>Thông tin cá nhân</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-200">
-            <Settings className="text-gray-600" />
-            <span>Đổi mật khẩu</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-200" onClick={handleLogout}>
-            <ExitToApp className="text-gray-600" />
+          {(role === "student") && (
+              <>
+              <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-200">
+                <AccountCircle className="text-gray-600" />
+                <span>Thông tin cá nhân</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-200">
+                <Settings className="text-gray-600" />
+                <span>Đổi mật khẩu</span>
+              </div>
+              </>
+          )}
+          <div className="flex items-center gap-2 p-2 cursor-pointer hover:bg-red-400 hover:text-white" onClick={handleLogout}>
+            <ExitToApp />
             <span>Đăng xuất</span>
           </div>
         </div>

@@ -6,41 +6,34 @@ import Image from 'next/image';
 import { useResponsive } from '@/hooks/useReponsiveHook';
 import { useTheme } from '../providers/ThemeProvider';
 import { ToggleSwitch } from '../ui/ToggleSwitch';
-import { ManageAccounts,  DarkMode, LightMode, Menu, Close, Dashboard, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight }  from '@mui/icons-material';
+import { ManageAccounts,  DarkMode, LightMode, Menu, Close, Dashboard, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd }  from '@mui/icons-material';
+import { useAuthStore } from '@/features/auth/store';
+import { hasResourcePermission } from '@/lib/permissions';
 
-
-interface SidebarProps {
-  role: string | undefined;
-}
-
-export const Sidebar: React.FC<SidebarProps> = ({ role }) => {
+export const Sidebar= () => {
   const { isMobile, isTablet } = useResponsive();
   const [isOpen, setIsOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
 
+  const permissions = useAuthStore((state) => state.permissions)
+
   const toggleSidebar = () => setIsOpen(!isOpen);
 
-  const buildSidebarItems = (basePath: string) => {
-    if (role === 'admin') {
-      return [
-        { title: 'Quản lý tài khoản', icon: <ManageAccounts sx={{ fontSize: 22 }} />, path: 'account' },
-      ];
-    }
+   const basePath = '/dashboard';
 
-    if (role === 'teacher') {
-      return [
-        { title: 'Overview', icon: <Dashboard sx={{ fontSize: 22 }} />, path: '' },
-      ];
-    }
-
-    return [];
-  };
-
-  const sidebarItems = buildSidebarItems('/dashboard').map(({ path, ...rest }) => ({
-    ...rest,
-    href: path ? `/dashboard/${path}` : '/dashboard',
-  }));
+    const sidebarItems = [
+      hasResourcePermission(permissions, 'account') && {
+        title: 'Quản lý tài khoản',
+        icon: <PersonAdd sx={{ fontSize: 22 }} />,
+        href: `${basePath}/account`
+      },
+      hasResourcePermission(permissions, 'role') && {
+        title: 'Phân quyền người dùng',
+        icon: <ManageAccounts sx={{ fontSize: 22 }} />,
+        href: `${basePath}/role`
+      }
+    ].filter(Boolean);
 
   return (
     <>

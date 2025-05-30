@@ -13,23 +13,27 @@ import { RadioGroup, RadioGroupItem } from "../../../../components/ui/radio-grou
 import { UploadAvatar } from "@/components/ui/UploadAvtar";
 import { addAccount} from "../../services/accountService";
 import { toast } from "@/components/hooks/use-toast";
-import { schema, getErrorMessage } from "@/libs/validationAuth";
+import { schema, getErrorMessage } from "@/lib/validationAuth";
 import AuthInput from "@/components/ui/AuthInput";
 import {Email , Https, Person} from "@mui/icons-material";
 import { useDispatch } from 'react-redux';
 import { addAccount as addAccountAction } from '@/store/accountSlice';
 import { CustomModal } from "@/components/ui/CustomModal";
-import { Button } from "@/components/ui/button";
+import { getAllRolesWithPermissions } from "@/features/role/services/roleServices";
+import { RoleWithPermissionsDto } from "@/features/role/types/role";
 
-export function AddAccountModal() {
+type AddAccountModalProps = {
+  open: boolean;
+  onOpenChange: (value: boolean) => void;
+};
+
+export function AddAccountModal({ open, onOpenChange }: AddAccountModalProps) {
   const dispatch = useDispatch();
-
-  const [open, setOpen] = useState<boolean>(false);
 
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassWord] = useState<string>("");
-  const [role, setRole] = useState<"" | "admin" | "teacher" | "student">("");
+  const [role, setRole] = useState<string>("");
   const [isActive, setIsActive] = useState<boolean>(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,12 +43,27 @@ export function AddAccountModal() {
   const [accountnameError, setAccountnameError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [roles, setRoles] = useState<RoleWithPermissionsDto[]>([]);
+
   useEffect(() => {
-  const { emailError, passwordError, accountnameError } = getErrorMessage(schema, { email, password, accountname: name });
-  setEmailError(emailError);
-  setPasswordError(passwordError);
-  setAccountnameError(accountnameError);
-}, [email, password, name]);
+      const fetchRoles = async () => {
+        try {
+          const data = await getAllRolesWithPermissions();
+          setRoles(data);
+        } catch (error) {
+          console.error('Failed to fetch roles:', error);
+        }
+      };
+
+      fetchRoles();
+  }, []);
+  
+  useEffect(() => {
+    const { emailError, passwordError, accountnameError } = getErrorMessage(schema, { email, password, accountname: name });
+    setEmailError(emailError);
+    setPasswordError(passwordError);
+    setAccountnameError(accountnameError);
+  }, [email, password, name]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,16 +90,17 @@ export function AddAccountModal() {
         id: response.data.data.id,
         accountname: response.data.data.accountname,
         email: response.data.data.email,
-        role: response.data.data.role,
+        role: response.data.data.role.name,
         isActive: response.data.data.isActive,
         urlAvatar: response.data.data.urlAvatar
       };
+      console.log("New account created:", newAccount);
       dispatch(addAccountAction(newAccount))
-      toast({ title: 'Account created successfully!' })
-      setOpen(false);
+      toast({ title: 'Tạo tài khoản thành công!' })
+      onOpenChange(false);
     } catch (err: any) {
       toast({
-        title: err.response?.data?.message || 'Error creating account',
+        title: err.response?.data?.message || 'Lỗi khi tạo tài khoản',
         variant: 'error',
       })
     } finally {
@@ -101,22 +121,17 @@ export function AddAccountModal() {
   return (
     <CustomModal
       open={open}
-      setOpen={setOpen}
-      title="Add Account"
-      trigger={
-        <Button className="grow bg-blue-500 text-white hover:bg-blue-800 cursor-pointer">
-        + Add new Account
-        </Button>
-     }
+      setOpen={onOpenChange}
+      title="Thêm tài khoản"
       onSubmit={handleSubmit}
       loading={loading}
-      submitLabel="+ Add new Account"
+      submitLabel="+ Thêm tài khoản"
     >
 
       <div className="flex flex-col gap-2 dark:text-black">
         <AuthInput
           id="name"
-          title="Username"
+          title="Tên tài khoản"
           type="text"
           label="Username"
           value={name}
@@ -142,7 +157,7 @@ export function AddAccountModal() {
       <div className="flex flex-col gap-2 dark:text-black">
         <AuthInput
           id="password"
-          title="Password"
+          title="Mật khẩu"
           type={showPassword ? "text" : "password"}
           label="Password"
           value={password}
@@ -154,21 +169,21 @@ export function AddAccountModal() {
       </div>
 
       <div className="flex flex-col gap-2 dark:text-black">
-        <Label htmlFor="role">Role</Label>
+        <Label htmlFor="role">Quyền</Label>
         <Select value={role} onValueChange={setRole}>
           <SelectTrigger id="role" className="w-[180px] font-semibold dark:bg-white dark:hover:bg-gray-300">
-            <SelectValue placeholder="Select role" />
+            <SelectValue placeholder="-- Chọn quyền --" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="teacher">Teacher</SelectItem>
-            <SelectItem value="student">Student</SelectItem>
+            {roles.map((role) => (
+              <SelectItem value={role.name} key={role.name}>{role.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
       <div className="flex flex-col gap-2 dark:text-black">
-        <Label>Status</Label>
+        <Label>Trạng thái</Label>
         <RadioGroup
           value={isActive ? "active" : "inactive"}
           onValueChange={(val: "active" | "inactive") => setIsActive(val === "active")}
@@ -176,11 +191,11 @@ export function AddAccountModal() {
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="active" id="status-active" className="dark:bg-black" />
-            <Label htmlFor="status-active">Active</Label>
+            <Label htmlFor="status-active">Kích hoạt</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="inactive" id="status-inactive" className="dark:bg-black" />
-            <Label htmlFor="status-inactive">Inactive</Label>
+            <Label htmlFor="status-inactive">Chưa kích hoạt</Label>
           </div>
         </RadioGroup>
       </div>

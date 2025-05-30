@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { activate } from '../services/authService';
 import AuthInput from '@/components/ui/AuthInput';
 import HttpsIcon from '@mui/icons-material/Https';
-import { schema as passwordSchema, getErrorMessage } from '@/libs/validationAuth';
+import { schema as passwordSchema, getErrorMessage } from '@/lib/validationAuth';
 
 export default function ActiveAccountForm() {
   const searchParams = useSearchParams();

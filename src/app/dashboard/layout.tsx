@@ -2,9 +2,10 @@ import { ReactNode } from 'react';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Navbar } from '@/components/dashboard/Navbar';
 import { ThemeProvider } from '../../../components/providers/ThemeProvider';
+import { getPermissionsByRoleId } from '@/features/role/services/roleServices';
 import type { Metadata } from 'next';
 import '@/styles/globals.css'
-import { checkUserRole } from '@/libs/checkRole';
+import { checkUserRole } from '@/lib/checkRole';
 
 export const metadata: Metadata = {
   title: 'Dashboard - MegaStart Online',
@@ -16,13 +17,13 @@ export const metadata: Metadata = {
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   
-  const role = await checkUserRole(['admin', 'teacher']);
+  const role = await checkUserRole({ deny: ['student'] });
 
   return (
     <ThemeProvider>
       <div className="flex h-screen bg-gray-100 dark:bg-gray-800 md:gap-4 overflow-hidden">
         <div className="rounded-xl shadow-xl bg-[var(--sidebar-bg)] dark:bg-[#1f1f2e]">
-          <Sidebar role={role}/>
+          <Sidebar />
         </div>
 
         <div className="flex flex-col flex-1 min-w-0">

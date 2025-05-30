@@ -22,6 +22,16 @@ export const ImportFileModal = ({
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -66,9 +76,9 @@ export const ImportFileModal = ({
     <CustomModal
       open={open}
       setOpen={setOpen}
-      title={`Import ${fileType === 'xlsx' ? 'Excel' : 'CSV'}`}
+      title={`Nhập file ${fileType === 'xlsx' ? 'Excel' : 'CSV'}`}
       onSubmit={handleSubmit}
-      submitLabel={`Import ${fileType === 'xlsx' ? 'Excel' : 'CSV'}`}
+      submitLabel={`Nhập ${fileType === 'xlsx' ? 'Excel' : 'CSV'}`}
       contentClassName="lg:min-w-[900px] h-[600px] w-[600px]"
       loading={loading}
     >
@@ -88,21 +98,35 @@ export const ImportFileModal = ({
           </label>
 
           <input
-            id="file-upload"
             type="file"
-            accept={fileType === 'xlsx' ? '.xlsx' : '.csv'}
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="hidden"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-blue-50 file:text-blue-700
+                  hover:file:bg-blue-100"
           />
 
-          <label
-            htmlFor="file-upload"
-            className="cursor-pointer rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-          >
-            📁 Chọn file từ máy
-          </label>
-
-          {file && <p className="text-sm text-green-600">Đã chọn file: {file.name}</p>}
+          {file && (
+            <div className="relative border border-gray-300 rounded p-4 flex items-center justify-between bg-gray-50">
+              <div>
+                <p className="text-sm font-medium text-gray-800">{file.name}</p>
+                <button
+                  onClick={() => window.open(URL.createObjectURL(file), "_blank")}
+                  className="text-blue-600 text-xs hover:underline"
+                >
+                  Xem file
+                </button>
+              </div>
+              <button
+                onClick={handleRemoveFile}
+                className="absolute top-1 right-1 text-gray-400 hover:text-red-500"
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </CustomModal>
