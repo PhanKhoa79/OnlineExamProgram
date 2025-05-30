@@ -9,17 +9,17 @@ interface ShowFilterProps {
 }
 
 const OPTIONS: { value: ShowOption; label: string }[] = [
-  { value: "all",    label: "All" },
-  { value: "role",   label: "Account Role" },
+  { value: "all",    label: "Tất cả" },
+  { value: "role",   label: "Quyền" },
   { value: "email",  label: "Email" },
-  { value: "status", label: "Status" },
+  { value: "status", label: "Trạng thái" },
 ];
 
 export function ShowFilter({ show, onChange }: ShowFilterProps) {
   return (
     <fieldset className="flex flex-wrap items-center space-x-6">
       <legend className="sr-only">Show Columns</legend>
-      <span className="font-medium">Show:</span>
+      <span className="font-medium">Hiển thị:</span>
 
       {OPTIONS.map((opt) => (
         <label key={opt.value} className="inline-flex items-center space-x-2 cursor-pointer ">

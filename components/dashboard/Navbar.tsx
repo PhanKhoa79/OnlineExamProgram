@@ -20,12 +20,6 @@ export const Navbar = () => {
         <div className="flex items-center gap-8">
           {(isLaptop || isDesktop) && (
             <div className="flex items-center space-x-4">
-              {isDesktop && (
-                <div className="relative w-72">
-                  <SearchBar />
-                </div>
-              )}
-
               <button onClick={toggleDarkMode} className="cursor-pointer">
                 {isDarkMode ? (
                   <DarkMode className="text-gray-400" sx={{ fontSize: 24}} />

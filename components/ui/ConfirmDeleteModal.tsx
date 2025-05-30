@@ -1,28 +1,25 @@
 "use client";
 
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
-
 type CustomConfirmModalProps = {
   title: string;
+  open: boolean;
+  onOpenChange: (value: boolean) => void;
   onConfirm: () => void;
-  children: React.ReactNode;
 };
 
-export const ConfirmDeleteModal = ({ title, onConfirm, children }: CustomConfirmModalProps) => {
-  const [open, setOpen] = useState(false);
+export const ConfirmDeleteModal = ({ title, open, onOpenChange, onConfirm }: CustomConfirmModalProps) => {
 
   const handleConfirm = () => {
     onConfirm();
-    setOpen(false);
+    onOpenChange(false);
   };
 
   return (
     <div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>{children}</DialogTrigger>
+      <Dialog open={open} onOpenChange={onOpenChange}>
 
         <DialogContent className="max-w-sm text-center">
           <DialogHeader>
@@ -33,11 +30,11 @@ export const ConfirmDeleteModal = ({ title, onConfirm, children }: CustomConfirm
           </DialogHeader>
 
           <DialogFooter className="flex justify-center mt-4">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="cursor-pointer">
               No, cancel
             </Button>
-            <Button variant="destructive" onClick={handleConfirm}>
-              Yes, I'm sure
+            <Button variant="destructive" onClick={handleConfirm} className="cursor-pointer">
+              Yes, I&apos;m sure
             </Button>
           </DialogFooter>
         </DialogContent>

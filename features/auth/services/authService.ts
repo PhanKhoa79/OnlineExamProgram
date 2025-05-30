@@ -1,4 +1,4 @@
-import api from 'libs/axios';
+import api from '@/lib/axios';
 
 export const login = async (email: string, password: string) => {
   return await api.post('/auth/login', { email, password });
@@ -30,4 +30,8 @@ export const resetPassword = async (code: string, newPassword: string) => {
 
 export const verifyResetCode = async (code: string) => {
   return await api.post('/auth/verify-reset-code', { code });
+};
+
+export const getLoginHistoryByAccountId = async (accountId: number) => {
+  return await api.get(`/auth/login-history/${accountId}`);
 };

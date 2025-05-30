@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store"; 
-import { DataTable } from "../../../components/ui/data-table";
+import { DataTable } from "@/components/ui/data-table";
 import { studentColumns } from "./column";
 import { Input } from "@/components/ui/input";
-import { getListStudentWithoutAccount } from "../services/studentService";
-import { StudentDto } from "../types/student";
+import { getListStudentWithoutAccount } from "@/features/student/services/studentService";
+import { StudentDto } from "@/features/student/types/student";
 import { setStudents } from "@/store/studentSlice";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
 
@@ -24,7 +24,7 @@ export function StudentTable() {
         const data = await getListStudentWithoutAccount();
         dispatch(setStudents(data));
       } catch (error) {
-        console.error("Failed to fetch students", error);
+        console.error("Lỗi khi lấy danh sách sinh viên", error);
       }  finally {
       setIsLoading(false);
       }

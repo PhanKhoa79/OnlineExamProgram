@@ -4,17 +4,14 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import  { ContentCopy, Edit, Delete, MoreHoriz} from "@mui/icons-material";
+import  { Edit, Delete, MoreHoriz, Visibility} from "@mui/icons-material";
 import { AccountResponse } from "../types/account";
-import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
-import { toast } from "@/components/hooks/use-toast";
-import { deleteAccount } from "../services/accountService";
 import Image from "next/image";
 import { useDispatch } from "react-redux";
-import { deleteAccount as deleteAccountAction } from "@/store/accountSlice";
 import { setSelectedIds } from "@/store/accountSlice";
-import { EditAccountModal } from "./modal/EditAccountModal";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/features/auth/store"; 
+import { hasPermission } from "@/lib/permissions"; 
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -25,61 +22,51 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const AccountActionsCell = ({ usr }: { usr: AccountResponse }) => {
-  const dispatch = useDispatch();
-  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  const permissions = useAuthStore((state) => state.permissions);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Actions</span>
+          <span className="sr-only">Hành động</span>
           <MoreHoriz />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(String(usr.id))}>
-          <ContentCopy sx={{ fontSize: 18}} className="cursor-pointer"/>
-          Copy ID
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem asChild>
-            <>
-              <div 
-                className="flex items-center justify-start ml-2 py-1 gap-1 cursor-pointer"
-                onClick={() => setOpen(true)}
-              >
-                <Edit sx={{ fontSize: 18 }} />
-                Edit
-              </div>
-              <EditAccountModal open={open} setOpen={setOpen} id={usr.id} />
-            </>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <ConfirmDeleteModal
-            title="Are you sure you want to delete this account?"
-            onConfirm={async () => {
-              try {
-                await deleteAccount(usr.id);
-                dispatch(deleteAccountAction(usr.id));
-                toast({ title: "Deleted successfully!" });
-              } catch (err: any) {
-                toast({
-                  title: "Error deleting account",
-                  description: err?.response?.data?.message || "Something went wrong",
-                  variant: "error",
-                });
-              }
-            }}
-          >
-            <div className="flex items-center justify-start ml-2 gap-1 cursor-pointer pb-1">
-              <Delete sx={{ fontSize: 18 }} />
-              Delete
+        <DropdownMenuLabel>Hành dộng</DropdownMenuLabel>
+        {hasPermission(permissions, 'account:view') && (
+          <DropdownMenuItem>
+            <div 
+            className="flex items-center justify-start py-1 gap-1 cursor-pointer"
+            onClick={() => router.push(`/dashboard/account/detail/${usr.id}`)}
+            >
+              <Visibility sx={{ fontSize: 18}} className="cursor-pointer"/>
+              Xem trước
             </div>
-          </ConfirmDeleteModal>
-        </DropdownMenuItem>
+          </DropdownMenuItem>
+        )}
+
+        {hasPermission(permissions, 'account:update') && (
+          <DropdownMenuItem>
+                <div 
+                  className="flex items-center justify-start py-1 gap-1 cursor-pointer" onClick={() => router.push(`/dashboard/account/edit-account/${usr.id}`)}
+                >
+                  <Edit sx={{ fontSize: 18 }} />
+                  Chỉnh sửa
+                </div>
+          </DropdownMenuItem>
+        )}
+
+        {hasPermission(permissions, 'account:delete') && (
+          <DropdownMenuItem>
+              <div className="flex items-center justify-start gap-1 cursor-pointer pb-1" onClick={() => router.push(`/dashboard/account/delete-account/${usr.id}`)}>
+                <Delete sx={{ fontSize: 18 }} />
+                Xóa
+              </div>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -126,8 +113,8 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>): Column
     {
       accessorKey: "accountname",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          ACCOUNT 
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Tài khoản 
           <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
@@ -143,30 +130,24 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>): Column
     },
     {
       accessorKey: "role",
-      header: "ACCOUNT ROLE",
+      header: "Quyền",
       cell: ({ row }) => {
         const role = row.getValue<string>("role");
-        const cls =
-          role === "admin"
-            ? "bg-blue-100 text-blue-800"
-            : role === "teacher"
-            ? "bg-purple-100 text-purple-800"
-            : "bg-gray-100 text-gray-800";
-        return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{role}</span>;
+        return <span className={`px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800`}>{role}</span>;
       },
     },
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          EMAIL 
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Email 
           <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
     },
     {
       accessorKey: "isActive",
-      header: "STATUS",
+      header: "Trạng thái",
       cell: ({ row }) => {
         const isActive = row.getValue<boolean>("isActive");
         const s = (isActive ? "Active" : "Inactive");
@@ -181,7 +162,7 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>): Column
     },
     {
       id: "actions",
-      header: "ACTIONS",
+      header: "Hành động",
       enableHiding: false,
       cell: ({ row }) => {
         const usr = row.original;

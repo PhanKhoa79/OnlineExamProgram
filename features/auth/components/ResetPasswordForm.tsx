@@ -5,7 +5,7 @@ import { useRouter} from 'next/navigation';
 import { resetPassword } from '../services/authService';
 import AuthInput from '@/components/ui/AuthInput';
 import HttpsIcon from '@mui/icons-material/Https';
-import { schema as passwordSchema, getErrorMessage } from '@/libs/validationAuth';
+import { schema as passwordSchema, getErrorMessage } from '@/lib/validationAuth';
 import { toast } from '@/components/hooks/use-toast';
 import { useResetPasswordStore } from '../store';
 

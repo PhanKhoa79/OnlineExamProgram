@@ -1,6 +1,5 @@
-import api from '@/libs/axios';
+import api from '@/lib/axios';
 import { Account, AccountResponse } from '@/features/account/types/account';
-import { log } from 'console';
 
 export const uploadAvatar = async (file: File): Promise<string> => {
   const formData = new FormData();
@@ -33,7 +32,7 @@ export const deleteManyAccounts = async (ids: number[]) => {
 };
 
 export const getAccountById = async (id: number) => {
-  return api.get(`/account/${id}`);
+  return api.get(`/account/info/${id}`);
 };
 
 export const updateAccount = async (id: number, data: Partial<Account>) => {
@@ -49,15 +48,33 @@ export const exportAccounts = async (accounts: AccountResponse[], format: 'excel
     }
   );
 
-  const fileName = `accounts.${format === 'excel' ? 'xlsx' : 'csv'}`;
+  const blob = new Blob([response.data], {
+    type:
+      format === "excel"
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : "text/csv",
+  });
 
-  const url = window.URL.createObjectURL(new Blob([response.data]));
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", fileName);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  const options = {
+    suggestedName: `accounts.${format === 'excel' ? 'xlsx' : 'csv'}`,
+    types: [
+      {
+        description: format === 'excel' ? 'Excel Files' : 'CSV Files',
+        accept: {
+          [format === 'excel'
+            ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            : 'text/csv']: [format === 'excel' ? '.xlsx' : '.csv'],
+        },
+      },
+    ],
+  };
+
+  if ('showSaveFilePicker' in window) {
+    const handle = await (window as any).showSaveFilePicker(options);
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+  }
 };
 
 export const importAccountsFromFile = async (file: File, type: 'xlsx' | 'csv') => {

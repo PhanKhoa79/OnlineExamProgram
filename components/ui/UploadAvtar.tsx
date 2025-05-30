@@ -45,7 +45,7 @@ export function UploadAvatar({ onUpload }: UploadAvatarProps) {
         <div>
           <div className="flex justify-between">
             <DropzoneDescription className="font-semibold text-black">
-              Please select up to image
+              Chọn ảnh đại diện
             </DropzoneDescription>
             <DropzoneMessage />
           </div>
@@ -53,9 +53,9 @@ export function UploadAvatar({ onUpload }: UploadAvatarProps) {
             <DropzoneTrigger className="flex flex-col items-center gap-4 bg-transparent p-10 text-center text-sm">
               <CloudUploadIcon className="size-8" />
               <div>
-                <p className="font-semibold">Upload image</p>
+                <p className="font-semibold">Tải ảnh lên</p>
                 <p className="text-sm text-muted-foreground">
-                  Click here or drag and drop to upload
+                  Kéo và thả hoặc nhấp để chọn tệp. Hỗ trợ định dạng: PNG, JPG, JPEG.
                 </p>
               </div>
             </DropzoneTrigger>

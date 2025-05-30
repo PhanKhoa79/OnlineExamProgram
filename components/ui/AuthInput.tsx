@@ -9,7 +9,7 @@ interface AuthInputProps {
   label: string;
   type: string;
   value: string;
-  onChange: React.ChangeEventHandler<HTMLInputElement>;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
   error?: string | null;
   Icon: React.ElementType;
   showPasswordToggle?: () => void;

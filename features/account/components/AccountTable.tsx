@@ -1,34 +1,43 @@
 "use client";
 
 import { useState, useMemo, useEffect} from "react";
+import { useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store"; 
 import { DataTable } from "../../../components/ui/data-table";
-import { accountColumns } from "./column";
+import { accountColumns } from "@/features/account/components/column";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { ShowFilter } from "@/components/ui/ShowFilter";
 import { useShowFilter } from "@/hooks/useShowFilter";
-import { Output, Add, KeyboardArrowDown } from "@mui/icons-material";
-import { AddAccountModal } from "./modal/AddAccountModal";
-import { getAllAccounts, deleteManyAccounts, exportAccounts, importAccountsFromFile } from "../services/accountService";
-import { setAccounts, deleteAccounts, addAccount as addAccountAction } from "@/store/accountSlice";
-import { ConfirmDeleteModal } from "@/components/ui/ConfirmDeleteModal";
+import { Output, Add, KeyboardArrowDown, FileUpload, Delete } from "@mui/icons-material";
+import { getAllAccounts, exportAccounts, importAccountsFromFile } from "@/features/account/services/accountService";
+import { setAccounts, addAccount as addAccountAction } from "@/store/accountSlice";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
 import { toast } from "@/components/hooks/use-toast";
-import ListStudentModal from "./modal/ListStudentModal";
-import { AccountResponse } from "../types/account";
-import  { ImportFileModal } from "./modal/ImportFileModal";
-import { FileType } from "./modal/ImportFileModal";
+import { AccountResponse } from "@/features/account/types/account";
+import  { ImportFileModal, FileType } from "@/features/account/components/modal/ImportFileModal";
+import { RoleWithPermissionsDto } from "@/features/role/types/role";
+import { getAllRolesWithPermissions } from "@/features/role/services/roleServices";
+import { useAuthStore } from "@/features/auth/store"; 
+import { hasPermission } from "@/lib/permissions"; 
+import SearchBar from "@/components/ui/SearchBar";
 
 export function AccountTable() {
 
-  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   const selectedIds = useSelector((state: RootState) => state.account.selectedIds);
+  
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [roles, setRoles] = useState<RoleWithPermissionsDto[]>([]);
 
   const accounts = useSelector((state: RootState) => state.account.accounts);
+
+  const permissions = useAuthStore((state) => state.permissions);
+
   const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -45,6 +54,19 @@ export function AccountTable() {
     fetchAccounts();
   }, [dispatch]);
   
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const data = await getAllRolesWithPermissions();
+        setRoles(data);
+      } catch (error) {
+        console.error('Failed to fetch roles:', error);
+      }
+    };
+
+    fetchRoles();
+  }, []);
+
   // column-show filter
   const { show, setShow } = useShowFilter();
 
@@ -82,8 +104,12 @@ export function AccountTable() {
   const handleExport = async (format: 'excel' | 'csv') => {
     try {
       await exportAccounts(finalFilteredData, format);
-    } catch (error) {
-      console.error("Export failed: ", error);
+      toast({ title: 'Exporting successfully !'});
+    } catch (err) {
+      toast({
+        title: err.response?.data?.message || 'Error exporting accounts',
+        variant: 'error',
+      });
     }
   };
 
@@ -106,7 +132,7 @@ export function AccountTable() {
         toast({ title: 'Không có tài khoản nào được thêm!', variant: 'error' });
         return;
       }
-
+      console.log("Imported accounts:", successAccounts);
       successAccounts.forEach((account: any) => {
         dispatch(addAccountAction(account));
       });
@@ -123,6 +149,18 @@ export function AccountTable() {
     }
   };
 
+  const handleDeleteAllClick = () => {
+    if (selectedIds.length === 0) {
+      toast({
+        title: 'Chưa chọn tài khoản nào',
+        description: 'Vui lòng chọn ít nhất một tài khoản để xóa.',
+        variant: 'warning',
+      });
+    } else {
+      router.push('/dashboard/account/delete-all');
+    }
+  };
+
   const [open, setOpen] = useState(false);
   const [fileType, setFileType] = useState<FileType | null>(null);
 
@@ -134,42 +172,49 @@ export function AccountTable() {
   return (
     <div className="flex flex-col gap-4 container mx-auto py-6">
       <div className="flex flex-col gap-4 justify-between lg:flex-row">
-        <Input
-          type="text"
+        <SearchBar
           placeholder="Tìm kiếm tài khoản..."
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          className="max-w-screen lg:max-w-sm"
+          onChange={setInputValue}
         />
         <div className="flex flex-wrap justify-center gap-4 lg:justify-end">
-          <AddAccountModal />
-          <ListStudentModal />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="flex gap-1 grow bg-green-400 text-white hover:bg-green-500 cursor-pointer">
-                <Add />
-                Imports
+          {hasPermission(permissions, 'account:create') && (
+            <>
+              <Button className="grow bg-blue-500 text-white hover:bg-blue-800 cursor-pointer" onClick={() => router.push('/dashboard/account/add-account')}>
+                + Thêm tài khoản
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" asChild>
-              <div>
-                <DropdownMenuLabel>Imports</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => openModal('xlsx')}>Excel</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => openModal('csv')}>CSV</DropdownMenuItem>
-              </div>
-            </DropdownMenuContent>
-            <ImportFileModal open={open} setOpen={setOpen} fileType={fileType} handleImport={handleImport}/>
-          </DropdownMenu>
+              <Button className="grow bg-yellow-500 text-white hover:bg-yellow-800 cursor-pointer" onClick={() => router.push('/dashboard/account/upload-students')}>
+                <FileUpload />
+                Tải lên danh sách sinh viên
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="flex gap-1 grow bg-green-400 text-white hover:bg-green-500 cursor-pointer">
+                    <Add />
+                    Nhập file
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" asChild>
+                  <div>
+                    <DropdownMenuLabel>Định dạng</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => openModal('xlsx')}>Excel</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openModal('csv')}>CSV</DropdownMenuItem>
+                  </div>
+                </DropdownMenuContent>
+                <ImportFileModal open={open} setOpen={setOpen} fileType={fileType} handleImport={handleImport}/>
+              </DropdownMenu>
+            </>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="flex gap-2 grow bg-red-500 text-white hover:bg-red-600 cursor-pointer">
                 <Output />
-                Exports
+                Xuất file
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Exports</DropdownMenuLabel>
+              <DropdownMenuLabel>Định dạng</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => handleExport('excel')}>Excel</DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleExport('csv')}>CSV</DropdownMenuItem>
             </DropdownMenuContent>
@@ -188,10 +233,12 @@ export function AccountTable() {
               onChange={(e) => setSelectedRole(e.target.value as AccountResponse["role"] | "")}
               className="w-full appearance-none px-4 pr-24 py-1 border border-gray-300 rounded-md bg-white font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
-              <option value="">Role</option>
-              <option value="admin">Admin</option>
-              <option value="teacher">Teacher</option>
-              <option value="student">Student</option>
+              <option value="">-- Chọn quyền --</option>
+              {roles.map((role) => (
+                <option key={role.name} value={role.name}>
+                  {role.name}
+                </option>
+              ))}
             </select>
             <KeyboardArrowDown className="absolute right-1 top-1/6 text-gray-500" />
           </div>
@@ -213,9 +260,9 @@ export function AccountTable() {
               onChange={(e) => setSelectedStatus(e.target.value === "" ? undefined : e.target.value === "Active")}
               className="w-full appearance-none px-4 pr-36 py-1 border border-gray-300 rounded-md font-medium bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
-              <option value="">Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option value="">-- Chọn trạng thái --</option>
+              <option value="Active">Đã kích hoạt</option>
+              <option value="Inactive">Chưa kích hoạt</option>
             </select>
             <KeyboardArrowDown className="absolute right-1 top-1/6 text-gray-500" />
           </div>
@@ -228,33 +275,19 @@ export function AccountTable() {
           <DropdownMenuTrigger asChild>
             <Button className="flex gap-1 bg-white text-black border border-gray-300 hover:bg-gray-200 hover:text-blue-600 cursor-pointer">
               <KeyboardArrowDown />
-              Actions
+              Hành động
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="ml-4">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <ConfirmDeleteModal
-                title={`Are you sure you want to delete ${selectedIds.length} account`}
-                onConfirm={async () => {
-                  try {
-                    await deleteManyAccounts(selectedIds);
-                    dispatch(deleteAccounts(selectedIds));
-                    toast({ title: "Deleted successfully!" });
-                  } catch (err: any) {
-                    toast({
-                      title: "Error deleting account",
-                      description: err?.response?.data?.message || "Something went wrong",
-                      variant: "error",
-                    });
-                  }
-                }}
-              >
-                <div className="flex items-center justify-start text-sm ml-2 gap-1 py-2 cursor-pointer">
-                  Delete All
-                </div>
-              </ConfirmDeleteModal>
-            </DropdownMenuItem>
+            <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+            {hasPermission(permissions, 'account:delete') && (
+              <DropdownMenuItem>
+                  <div className="flex items-center justify-start text-sm gap-1 py-2 cursor-pointer" onClick={handleDeleteAllClick}>
+                    <Delete sx={{ fontSize: 18 }} />
+                    Xóa tất cả
+                  </div>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

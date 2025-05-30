@@ -1,4 +1,4 @@
-import api from '@/libs/axios';
+import api from '@/lib/axios';
 import { StudentDto } from '@/features/student/types/student';
 
 export const getListStudentWithoutAccount = async (): Promise<StudentDto[]> => {
