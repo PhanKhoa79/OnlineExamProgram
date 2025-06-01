@@ -35,3 +35,13 @@ export const verifyResetCode = async (code: string) => {
 export const getLoginHistoryByAccountId = async (accountId: number) => {
   return await api.get(`/auth/login-history/${accountId}`);
 };
+
+export const changePassword = async (
+  oldPassword: string,
+  newPassword: string,
+) => {
+  return await api.post('/auth/change-password', {
+    oldPassword,
+    newPassword,
+  });
+};

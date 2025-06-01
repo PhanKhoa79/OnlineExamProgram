@@ -2,36 +2,26 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import  ProfileAvatar  from '@/components/ui/ProfileAvatar';
+import ProfileAvatar from '@/components/ui/ProfileAvatar';
+import { MobileSidebarToggle } from '@/components/ui/MobieSidebarToggle';
 
 export const Navbar = () => {
   return (
-      <nav className="bg-white py-4 px-6 shadow-sm">
-        <div className="container mx-auto flex items-center justify-between">
+    <nav className="bg-white px-4 py-2 border-b border-gray-200 shadow-sm">
+      <div className="flex items-center justify-between">
+        {/* 🔹 Trái: Icon mở sidebar */}
+        <div className="flex items-center gap-3">
+          <MobileSidebarToggle />
+
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Logo" width={36} height={36
-              
-            } />
-            <span className="font-outfit text-xl font-bold">MegaStart</span>
+            <Image src="/logo.png" alt="Logo" width={32} height={32} />
+            <span className="text-lg font-semibold text-gray-800">MegaStar</span>
           </Link>
-
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/home" className="text-[#5D5A88] hover:text-[#4A3AFF] transition-colors font-dm-sans">
-              Home
-            </Link>
-            <Link href="/about" className="text-[#5D5A88] hover:text-[#4A3AFF] transition-colors font-dm-sans">
-              About
-            </Link>
-            <Link href="/resources" className="text-[#5D5A88] hover:text-[#4A3AFF] transition-colors font-dm-sans">
-              Resources
-            </Link>
-            <Link href="/contact" className="text-[#4A3AFF] font-dm-sans">
-              Contact
-            </Link>
-          </div>
-
-          <ProfileAvatar />
         </div>
-      </nav>
-    );
-}
+
+        {/* 🔹 Phải: Avatar */}
+        <ProfileAvatar />
+      </div>
+    </nav>
+  );
+};

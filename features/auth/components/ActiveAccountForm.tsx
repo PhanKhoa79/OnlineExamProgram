@@ -6,6 +6,7 @@ import { activate } from '../services/authService';
 import AuthInput from '@/components/ui/AuthInput';
 import HttpsIcon from '@mui/icons-material/Https';
 import { schema as passwordSchema, getErrorMessage } from '@/lib/validationAuth';
+import { toast } from '@/components/hooks/use-toast';
 
 export default function ActiveAccountForm() {
   const searchParams = useSearchParams();
@@ -66,6 +67,7 @@ export default function ActiveAccountForm() {
 
     try {
       await activate(token, currentPassword, newPassword);
+      toast({ title: 'Kích hoạt tài khoản thành công' });
       router.push('/login');
     } catch (err: any) {
       const msg = err?.response?.data?.message || err.message || 'Có lỗi xảy ra';
