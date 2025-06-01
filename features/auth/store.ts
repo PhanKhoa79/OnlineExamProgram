@@ -17,6 +17,8 @@ interface User {
   accountname: string
   email: string
   role: Role
+
+  urlAvatar:string
   permissions: {
     name: string
     permissions: string[]
