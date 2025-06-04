@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Navbar } from '@/components/student/Navbar';
-import { Sidebar } from '@/features/student/components/Sidebar';
+import { Sidebar } from '@/features/student/components/student-account/Sidebar';
 import { checkUserRole } from '@/lib/checkRole';
 
 export const metadata: Metadata = {

@@ -4,10 +4,12 @@ export const schema = z.object({
   email: z.string().min(1, "Vui lòng nhập email").email("Định dạng email không đúng"),
   password: z.string().min(8, "Mật khẩu phải dài ít nhất 8 ký tự").nonempty("Vui lòng nhập mật khẩu"),
   accountname: z.string().nonempty("Vui lòng nhập tên tài khoản"),
-  roleName: z.string().nonempty("Vui lòng nhập tên quyền")
+  roleName: z.string().nonempty("Vui lòng nhập tên quyền"),
+  className: z.string().nonempty("Vui lòng nhập tên lớp học"),
+  codeClass: z.string().nonempty("Vui lòng nhập mã lớp học"),
 });
 
-export const getErrorMessage = (schema: z.ZodSchema<any>, values: any) => {
+export const getErrorMessage = (schema: z.ZodSchema<unknown>, values: unknown) => {
   const result = schema.safeParse(values);
 
   if (result.success) {
@@ -16,6 +18,8 @@ export const getErrorMessage = (schema: z.ZodSchema<any>, values: any) => {
       passwordError: null,
       accountnameError: null,
       roleNameError: null,
+      classNameError: null,
+      codeClassError: null,
     };
   }
 
@@ -26,5 +30,7 @@ export const getErrorMessage = (schema: z.ZodSchema<any>, values: any) => {
     passwordError: errors.password?._errors[0] || null,
     accountnameError: errors.accountname?._errors[0] || null,
     roleNameError: errors.roleName?._errors[0] || null,
+    classNameError: errors.className?._errors[0] || null,
+    codeClassError: errors.codeClass?._errors[0] || null,
   };
 };

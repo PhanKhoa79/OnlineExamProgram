@@ -14,4 +14,6 @@ export type AccountResponse = {
   role: string;
   isActive: boolean;
   urlAvatar: string | null;
+  createdAt: string;
+  updatedAt: string;
 };

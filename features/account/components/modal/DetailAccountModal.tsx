@@ -33,7 +33,7 @@ export const DetailAccountModal = ({ open, onOpenChange, id }: DetailAccountModa
     const [permissions, setPermissions] = useState<string[]>([]);
     const [isActive, setIsActive] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState('');
-    const [loginHistory, setLoginHistory] = useState<string[]>([]);
+    const [loginHistory, setLoginHistory] = useState<Array<{loginTime: string; ipAddress: string; userAgent: string}>>([]);
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
     const router = useRouter();
@@ -110,7 +110,7 @@ export const DetailAccountModal = ({ open, onOpenChange, id }: DetailAccountModa
           </div>
           <div>
             <Label>Trạng thái</Label>
-            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium w-fit
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 mt-2 text-sm font-medium w-fit
               ${isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
               <span className={`h-2.5 w-2.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`} />
               {isActive ? 'Đã kích hoạt' : 'Chưa kích hoạt'}
@@ -125,6 +125,49 @@ export const DetailAccountModal = ({ open, onOpenChange, id }: DetailAccountModa
               height={96}
               className="rounded-full object-cover border border-gray-300 shadow-sm"
             />
+          </div>
+
+          {/* Thông tin chi tiết */}
+          <div className="flex flex-col gap-2 mt-6">
+            <span className="block text-sm font-bold text-black-700 dark:text-white">
+              Thông tin chi tiết
+            </span>
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="break-words">
+                  <span className="font-medium text-gray-600 dark:text-gray-400">ID:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">{id}</span>
+                </div>
+                <div className="break-words overflow-hidden">
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Email:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white break-all">{email}</span>
+                </div>
+                <div className="break-words">
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Tên tài khoản:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">{name}</span>
+                </div>
+                <div className="break-words">
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Quyền:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">{role}</span>
+                </div>
+                <div className="break-words">
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Trạng thái:</span>
+                  <span className={`ml-2 font-medium ${isActive ? 'text-green-600' : 'text-red-600'}`}>
+                    {isActive ? 'Đã kích hoạt' : 'Chưa kích hoạt'}
+                  </span>
+                </div>
+                <div className="break-words">
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Số quyền:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">{permissions.length} quyền</span>
+                </div>
+                <div className="col-span-1 md:col-span-2 break-words">
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Lịch sử đăng nhập:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white">
+                    {loginHistory.length > 0 ? `${loginHistory.length} lần đăng nhập` : 'Chưa đăng nhập'}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </Tabs.Content>
 
@@ -172,7 +215,12 @@ export const DetailAccountModal = ({ open, onOpenChange, id }: DetailAccountModa
           <button
               type="button"
               className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded"
-              onClick={() => router.push(`/dashboard/account/edit-account/${id}`)}
+               onClick={() => {
+                onOpenChange(false); 
+                setTimeout(() => {
+                  router.push(`/dashboard/account/edit/${id}`);
+                }, 50); 
+              }}
           >
               <Edit fontSize="small" />
               Edit
@@ -202,10 +250,12 @@ export const DetailAccountModal = ({ open, onOpenChange, id }: DetailAccountModa
                 onOpenChange(false);
                 toast({ title: 'Xóa tài khoản thành công!' });
                 router.refresh();
-              } catch (err: any) {
+              } catch (err: unknown) {
                 toast({
                   title: 'Lỗi khi xóa tài khoản',
-                  description: err?.response?.data?.message || 'Không thể xóa tài khoản',
+                  description: err instanceof Error 
+                    ? err.message 
+                    : (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể xóa tài khoản',
                   variant: 'error',
                 });
               }

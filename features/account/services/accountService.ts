@@ -70,7 +70,20 @@ export const exportAccounts = async (accounts: AccountResponse[], format: 'excel
   };
 
   if ('showSaveFilePicker' in window) {
-    const handle = await (window as any).showSaveFilePicker(options);
+    const handle = await (window as unknown as { 
+      showSaveFilePicker: (options: {
+        suggestedName: string;
+        types: Array<{
+          description: string;
+          accept: Record<string, string[]>;
+        }>;
+      }) => Promise<{
+        createWritable: () => Promise<{
+          write: (data: Blob) => Promise<void>;
+          close: () => Promise<void>;
+        }>;
+      }>;
+    }).showSaveFilePicker(options);
     const writable = await handle.createWritable();
     await writable.write(blob);
     await writable.close();

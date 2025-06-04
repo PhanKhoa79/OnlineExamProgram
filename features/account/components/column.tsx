@@ -12,12 +12,12 @@ import { setSelectedIds } from "@/store/accountSlice";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
+import { HighlightText } from "@/components/ui/HighlightText";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
@@ -51,7 +51,7 @@ const AccountActionsCell = ({ usr }: { usr: AccountResponse }) => {
         {hasPermission(permissions, 'account:update') && (
           <DropdownMenuItem>
                 <div 
-                  className="flex items-center justify-start py-1 gap-1 cursor-pointer" onClick={() => router.push(`/dashboard/account/edit-account/${usr.id}`)}
+                  className="flex items-center justify-start py-1 gap-1 cursor-pointer" onClick={() => router.push(`/dashboard/account/edit/${usr.id}`)}
                 >
                   <Edit sx={{ fontSize: 18 }} />
                   Chỉnh sửa
@@ -71,7 +71,7 @@ const AccountActionsCell = ({ usr }: { usr: AccountResponse }) => {
     </DropdownMenu>
   );
 };
-export const accountColumns = (dispatch: ReturnType<typeof useDispatch>): ColumnDef<AccountResponse>[] => {
+export const accountColumns = (dispatch: ReturnType<typeof useDispatch>, searchQuery: string = ""): ColumnDef<AccountResponse>[] => {
 
   return [
     {
@@ -123,7 +123,10 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>): Column
         return (
           <div className="relative flex items-center gap-2">
             <Image src={u.urlAvatar || "/avatar.png"} alt="avatar" width={72} height={72} className="rounded-full object-cover" />
-            <span>{u.accountname}</span>
+            <HighlightText 
+              text={u.accountname} 
+              searchQuery={searchQuery}
+            />
           </div>
         );
       },
@@ -144,6 +147,15 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>): Column
           <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
+      cell: ({ row }) => {
+        const u = row.original;
+        return (
+          <HighlightText 
+            text={u.email} 
+            searchQuery={searchQuery}
+          />
+        );
+      },
     },
     {
       accessorKey: "isActive",

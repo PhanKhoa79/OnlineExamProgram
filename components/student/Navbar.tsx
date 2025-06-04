@@ -13,7 +13,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-3">
           <MobileSidebarToggle />
 
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/home" className="flex items-center gap-2 ml-4">
             <Image src="/logo.png" alt="Logo" width={32} height={32} />
             <span className="text-lg font-semibold text-gray-800">MegaStar</span>
           </Link>

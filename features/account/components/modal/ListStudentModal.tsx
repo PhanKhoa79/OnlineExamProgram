@@ -2,7 +2,7 @@
 
 import React, { useState} from 'react';
 import { CustomModal } from '@/components/ui/CustomModal';
-import { StudentTable } from '@/features/student/components/StudentTable';
+import { StudentTable } from '@/features/student/components/student-account/StudentTable';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { addAccountsForStudents } from '@/features/account/services/accountService';
@@ -38,7 +38,6 @@ export const ListStudentModal = ({ open, onOpenChange }: ListStudentModalProps) 
         }));
 
         const response = await addAccountsForStudents(accountData);
-        console.log('Response from server:', response);
         const successAccounts = response.data.data.success;
 
         const newAccounts = successAccounts.map(account => ({
