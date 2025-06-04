@@ -2,7 +2,7 @@
 
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react'; 
-import { Sidebar } from '@/features/student/components/Sidebar';
+import { Sidebar } from '@/features/student/components/student-account/Sidebar';
 
 export const MobileSidebarToggle = () => {
   return (

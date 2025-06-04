@@ -1,113 +1,251 @@
 "use client";
 
-import { useState, useMemo, useEffect} from "react";
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useEffect, useCallback, useRef, memo } from "react";
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store"; 
-import { DataTable } from "../../../components/ui/data-table";
 import { accountColumns } from "@/features/account/components/column";
-import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ShowFilter } from "@/components/ui/ShowFilter";
-import { useShowFilter } from "@/hooks/useShowFilter";
-import { Output, Add, KeyboardArrowDown, FileUpload, Delete } from "@mui/icons-material";
+import { Output, Add, FileUpload, Delete } from "@mui/icons-material";
+import { FilterX, Columns, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { getAllAccounts, exportAccounts, importAccountsFromFile } from "@/features/account/services/accountService";
 import { setAccounts, addAccount as addAccountAction } from "@/store/accountSlice";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
 import { toast } from "@/components/hooks/use-toast";
-import { AccountResponse } from "@/features/account/types/account";
 import  { ImportFileModal, FileType } from "@/features/account/components/modal/ImportFileModal";
 import { RoleWithPermissionsDto } from "@/features/role/types/role";
 import { getAllRolesWithPermissions } from "@/features/role/services/roleServices";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import SearchBar from "@/components/ui/SearchBar";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type SortingState,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { AccountResponse } from "@/features/account/types/account";
 
-export function AccountTable() {
-
+function AccountTableComponent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const selectedIds = useSelector((state: RootState) => state.account.selectedIds);
   
   const [isLoading, setIsLoading] = useState(true);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [sorting, setSorting] = useState<SortingState>([]);
 
+  // Filter states
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roles, setRoles] = useState<RoleWithPermissionsDto[]>([]);
 
-  const accounts = useSelector((state: RootState) => state.account.accounts);
+  // Track if data has been fetched to prevent duplicate calls
+  const hasFetchedData = useRef(false);
 
-  const permissions = useAuthStore((state) => state.permissions);
+  // URL-based pagination - but don't auto-sync to prevent loops
+  const initialPage = Math.max(0, (Number(searchParams.get('page')) || 1) - 1);
+  const pageSize = 7;
+  const [pagination, setPagination] = useState({ pageIndex: initialPage, pageSize });
 
-  const dispatch = useDispatch<AppDispatch>();
+  // Sync pagination with URL
   useEffect(() => {
-    const fetchAccounts = async () => {
+    const currentPage = pagination.pageIndex + 1;
+    const urlPage = Number(searchParams.get('page')) || 1;
+    
+    if (currentPage !== urlPage) {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      if (currentPage === 1) {
+        newSearchParams.delete('page');
+      } else {
+        newSearchParams.set('page', currentPage.toString());
+      }
+      
+      const newUrl = `${window.location.pathname}${newSearchParams.toString() ? '?' + newSearchParams.toString() : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [pagination.pageIndex, searchParams]);
+
+  const accounts = useSelector((state: RootState) => state.account.accounts);
+  const permissions = useAuthStore((state) => state.permissions);
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Fetch data only once on mount - no dependencies at all
+  useEffect(() => {
+    if (hasFetchedData.current) return;
+    
+    const fetchData = async () => {
       try {
-        const data = await getAllAccounts();
-        dispatch(setAccounts(data));
+        setIsLoading(true);
+        const [accountsData, rolesData] = await Promise.all([
+          getAllAccounts(),
+          getAllRolesWithPermissions()
+        ]);
+        
+        dispatch(setAccounts(accountsData));
+        setRoles(rolesData);
+        hasFetchedData.current = true;
       } catch (error) {
-        console.error("Failed to fetch accounts", error);
-      }  finally {
+        console.error("Failed to fetch data", error);
+        dispatch(setAccounts([]));
+        setRoles([]);
+      } finally {
       setIsLoading(false);
       }
     };
 
-    fetchAccounts();
-  }, [dispatch]);
-  
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const data = await getAllRolesWithPermissions();
-        setRoles(data);
-      } catch (error) {
-        console.error('Failed to fetch roles:', error);
-      }
-    };
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Explicitly ignore dispatch dependency to prevent loops
 
-    fetchRoles();
-  }, []);
+  // Memoize accounts to prevent unnecessary re-calculations
+  const memoizedAccounts = useMemo(() => accounts || [], [accounts]);
 
-  // column-show filter
-  const { show, setShow } = useShowFilter();
-
-  // row filters
-  const [selectedRole, setSelectedRole] = useState<"" | AccountResponse["role"]>("");
-  const [selectedStatus, setSelectedStatus] = useState<AccountResponse["isActive"]>();
-
-  // Tính toán các cột hiển thị
-  const visibleColumns = useMemo(() => {
-    return accountColumns(dispatch).filter((col) => {
-      if (col.id === "select" || col.id === "actions") return true;
-      if (show === "all") return true;
-      if (show === "role") return col.accessorKey === "accountname" || col.accessorKey === "role";
-      if (show === "email") return col.accessorKey === "accountname" || col.accessorKey === "email";
-      if (show === "status") return col.accessorKey === "accountname" || col.accessorKey === "isActive";
-      return false;
-    });
-  }, [show]);
+  // Memoize search keys to prevent recreation
+  const searchKeys = useMemo(() => ["email", "accountname"] as (keyof AccountResponse)[], []);
 
   const {
     inputValue,
     setInputValue,
-    filteredData,
-  } = useSearchFilter(accounts, ["email"]);
-  // Lọc theo role & status
-  const finalFilteredData = useMemo(() => {
-  return filteredData.filter((acc) => {
-    const matchRole = selectedRole === "" || acc.role === selectedRole;
-    const matchStatus =
-      selectedStatus === undefined || acc.isActive === selectedStatus;
-    return matchRole && matchStatus;
+    filteredData: searchFilteredData,
+    searchQuery,
+  } = useSearchFilter(memoizedAccounts, searchKeys);
+
+  // Optimize search input handler to prevent unnecessary re-renders
+  const handleSearchChange = useCallback((value: string) => {
+    setInputValue(value);
+  }, [setInputValue]);
+
+  // Debounced filter handlers to prevent excessive filtering
+  const handleRoleFilterChange = useCallback((value: string) => {
+    setRoleFilter(value);
+  }, []);
+
+  const handleStatusFilterChange = useCallback((value: string) => {
+    setStatusFilter(value);
+  }, []);
+
+  // Combined filtering: search + role + status with better optimization
+  const filteredData = useMemo(() => {
+    if (!searchFilteredData) return [];
+    
+    let data = [...searchFilteredData]; // Create a copy to avoid mutations
+
+    // Filter by role
+    if (roleFilter !== "all") {
+      data = data.filter(account => account.role === roleFilter);
+    }
+
+    // Filter by status
+    if (statusFilter !== "all") {
+      const isActive = statusFilter === "active";
+      data = data.filter(account => account.isActive === isActive);
+    }
+
+    return data;
+  }, [searchFilteredData, roleFilter, statusFilter]);
+
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    setRoleFilter("all");
+    setStatusFilter("all");
+    setInputValue("");
+  }, [setInputValue]);
+
+  // Check if any filters are active
+  const hasActiveFilters = roleFilter !== "all" || statusFilter !== "all" || inputValue !== "";
+
+  // Create table instance - create columns inline to prevent any issues
+  const table = useReactTable({
+    data: filteredData,
+    columns: accountColumns(dispatch, searchQuery),
+    state: {
+      columnVisibility,
+      sorting,
+      pagination,
+    },
+    onColumnVisibilityChange: setColumnVisibility,
+    onSortingChange: setSorting,
+    onPaginationChange: setPagination, // Remove router sync to prevent page reload
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination },
   });
-}, [filteredData, selectedRole, selectedStatus]);
+
+  // Pagination calculations
+  const { pageIndex, pageSize: currentSize } = table.getState().pagination;
+  const totalPages = table.getPageCount();
+  const firstRow = pageIndex * currentSize + 1;
+  const lastRow = Math.min((pageIndex + 1) * currentSize, filteredData.length);
+
+  // Pagination range with ellipsis
+  const paginationRange = useMemo<(number | string)[]>(() => {
+    const maxButtons = 5;
+    if (totalPages <= maxButtons) return Array.from({ length: totalPages }, (_, i) => i);
+    const siblings = 1;
+    const left = Math.max(pageIndex - siblings, 1);
+    const right = Math.min(pageIndex + siblings, totalPages - 2);
+    const showLeftDots = left > 2;
+    const showRightDots = right < totalPages - 3;
+    const pages: (number | string)[] = [];
+    pages.push(0);
+    if (showLeftDots) pages.push('...');
+    else Array.from({ length: left - 1 }, (_, i) => pages.push(i + 1));
+    for (let i = left; i <= right; i++) pages.push(i);
+    if (showRightDots) pages.push('...');
+    else Array.from({ length: totalPages - 2 - right }, (_, i) => pages.push(right + 1 + i));
+    pages.push(totalPages - 1);
+    return pages;
+  }, [pageIndex, totalPages]);
+
+  // Column mapping for Vietnamese names
+  const columnNames: Record<string, string> = {
+    accountname: "Tên tài khoản",
+    email: "Email",
+    role: "Quyền",
+    isActive: "Trạng thái",
+    urlAvatar: "Avatar",
+  };
 
   const handleExport = async (format: 'excel' | 'csv') => {
     try {
-      await exportAccounts(finalFilteredData, format);
+      await exportAccounts(filteredData, format);
       toast({ title: 'Exporting successfully !'});
-    } catch (err) {
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message 
+        ? error.message
+        : 'Error exporting accounts';
       toast({
-        title: err.response?.data?.message || 'Error exporting accounts',
+        title: errorMessage,
         variant: 'error',
       });
     }
@@ -132,16 +270,19 @@ export function AccountTable() {
         toast({ title: 'Không có tài khoản nào được thêm!', variant: 'error' });
         return;
       }
-      console.log("Imported accounts:", successAccounts);
-      successAccounts.forEach((account: any) => {
+      
+      successAccounts.forEach((account: AccountResponse) => {
         dispatch(addAccountAction(account));
       });
 
       toast({ title: 'Accounts created successfully!' });
 
-    } catch (err: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message 
+        ? error.message
+        : 'Error creating accounts';
       toast({
-        title: err.response?.data?.message || 'Error creating accounts',
+        title: errorMessage,
         variant: 'error',
       });
     } finally {
@@ -169,134 +310,322 @@ export function AccountTable() {
     setOpen(true);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4 container mx-auto py-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4 container mx-auto py-6">
-      <div className="flex flex-col gap-4 justify-between lg:flex-row">
+    <div className="flex flex-col gap-6 container mx-auto py-6">
+      {/* Header Section with better organization */}
+      <div className="space-y-4">
+        {/* Top Row: Search and Primary Actions */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search Bar - Reduced width */}
+          <div className="flex-1 max-w-md">
         <SearchBar
           placeholder="Tìm kiếm tài khoản..."
           value={inputValue}
-          onChange={setInputValue}
+              onChange={handleSearchChange}
         />
-        <div className="flex flex-wrap justify-center gap-4 lg:justify-end">
+          </div>
+
+          {/* Primary Action Buttons */}
           {hasPermission(permissions, 'account:create') && (
-            <>
-              <Button className="grow bg-blue-500 text-white hover:bg-blue-800 cursor-pointer" onClick={() => router.push('/dashboard/account/add-account')}>
-                + Thêm tài khoản
+            <div className="flex gap-2">
+              <Button 
+                className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2" 
+                onClick={() => router.push('/dashboard/account/create')}
+              >
+                <Add sx={{ fontSize: 18 }} />
+                Thêm tài khoản
               </Button>
-              <Button className="grow bg-yellow-500 text-white hover:bg-yellow-800 cursor-pointer" onClick={() => router.push('/dashboard/account/upload-students')}>
-                <FileUpload />
-                Tải lên danh sách sinh viên
+              <Button 
+                className="bg-yellow-500 text-white hover:bg-yellow-600 transition-colors flex items-center gap-2" 
+                onClick={() => router.push('/dashboard/account/upload-students')}
+              >
+                <FileUpload sx={{ fontSize: 18 }} />
+                <span className="hidden sm:inline">Tải lên SV</span>
               </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Row: Filters and Secondary Actions */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          {/* Filters Group */}
+          <div className="flex flex-wrap gap-3">
+            {/* Role Filter */}
+            <Select value={roleFilter} onValueChange={handleRoleFilterChange}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Tất cả quyền" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả quyền</SelectItem>
+                {roles.map((role) => (
+                  <SelectItem key={role.name} value={role.name}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="active">Đã kích hoạt</SelectItem>
+                <SelectItem value="inactive">Chưa kích hoạt</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Clear Filters */}
+            {hasActiveFilters && (
+              <Button 
+                variant="outline" 
+                onClick={clearFilters}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+              >
+                <FilterX className="h-4 w-4" />
+                Xóa bộ lọc
+              </Button>
+            )}
+          </div>
+
+          {/* Actions Group */}
+          <div className="flex flex-wrap gap-2">
+            {/* Column Visibility */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Columns className="h-4 w-4" />
+                  Cột
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Hiển thị cột</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value) =>
+                          column.toggleVisibility(!!value)
+                        }
+                      >
+                        {columnNames[column.id] || column.id}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Import Actions */}
+            {hasPermission(permissions, 'account:create') && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="flex gap-1 grow bg-green-400 text-white hover:bg-green-500 cursor-pointer">
-                    <Add />
-                    Nhập file
+                  <Button size="sm" className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2">
+                    <Add sx={{ fontSize: 16 }} />
+                    Nhập
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" asChild>
-                  <div>
-                    <DropdownMenuLabel>Định dạng</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => openModal('xlsx')}>Excel</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => openModal('csv')}>CSV</DropdownMenuItem>
-                  </div>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => openModal('xlsx')}>
+                    📊 Excel (.xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openModal('csv')}>
+                    📄 CSV (.csv)
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
                 <ImportFileModal open={open} setOpen={setOpen} fileType={fileType} handleImport={handleImport}/>
               </DropdownMenu>
-            </>
-          )}
+            )}
 
+            {/* Export Actions */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-2">
+                  <Output sx={{ fontSize: 16 }} />
+                  Xuất
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleExport('excel')}>
+                  📊 Excel (.xlsx)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                  📄 CSV (.csv)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Bulk Actions */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="flex gap-2 grow bg-red-500 text-white hover:bg-red-600 cursor-pointer">
-                <Output />
-                Xuất file
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  Thao tác
+                  <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Định dạng</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleExport('excel')}>Excel</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('csv')}>CSV</DropdownMenuItem>
+                <DropdownMenuLabel>Hành động hàng loạt</DropdownMenuLabel>
+                {hasPermission(permissions, 'account:delete') && (
+                  <DropdownMenuItem onClick={handleDeleteAllClick}>
+                    <div className="flex items-center gap-2 text-red-600">
+                      <Delete sx={{ fontSize: 16 }} />
+                      Xóa đã chọn
+                    </div>
+                  </DropdownMenuItem>
+                )}
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Row filter: User Role */}
-        <div>
-          <label htmlFor="roleFilter" className="sr-only">Filter by role</label>
-          <div className="relative">
-            <select
-              id="roleFilter"
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value as AccountResponse["role"] | "")}
-              className="w-full appearance-none px-4 pr-24 py-1 border border-gray-300 rounded-md bg-white font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            >
-              <option value="">-- Chọn quyền --</option>
-              {roles.map((role) => (
-                <option key={role.name} value={role.name}>
-                  {role.name}
-                </option>
+      {/* Filter Summary */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+          <span className="font-medium">Kết quả lọc:</span>
+          <span>{filteredData.length} / {accounts.length} tài khoản</span>
+          {roleFilter !== "all" && (
+            <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs">
+              Quyền: {roleFilter}
+            </span>
+          )}
+          {statusFilter !== "all" && (
+            <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded text-xs">
+              {statusFilter === "active" ? "Đã kích hoạt" : "Chưa kích hoạt"}
+            </span>
+          )}
+          {inputValue && (
+            <span className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-1 rounded text-xs">
+              &quot;{inputValue}&quot;
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Custom Table */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table className="w-full min-w-[800px] text-sm">
+            <TableHeader className="bg-gray-50 dark:bg-gray-800">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="font-semibold text-gray-900 dark:text-gray-100">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
               ))}
-            </select>
-            <KeyboardArrowDown className="absolute right-1 top-1/6 text-gray-500" />
-          </div>
-        </div>
-
-        {/* Row filter: Status */}
-        <div>
-          <label htmlFor="statusFilter" className="sr-only">Filter by status</label>
-          <div className="relative">
-            <select
-              id="statusFilter"
-              value={
-                selectedStatus === undefined
-                  ? ""
-                  : selectedStatus
-                  ? "Active"
-                  : "Inactive"
-              }
-              onChange={(e) => setSelectedStatus(e.target.value === "" ? undefined : e.target.value === "Active")}
-              className="w-full appearance-none px-4 pr-36 py-1 border border-gray-300 rounded-md font-medium bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            >
-              <option value="">-- Chọn trạng thái --</option>
-              <option value="Active">Đã kích hoạt</option>
-              <option value="Inactive">Chưa kích hoạt</option>
-            </select>
-            <KeyboardArrowDown className="absolute right-1 top-1/6 text-gray-500" />
-          </div>
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow 
+                    key={row.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="py-3">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={table.getAllColumns().length}
+                    className="h-24 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    Không có dữ liệu tài khoản.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
-      <div className="flex flex-col items-start lg:flex-row lg:justify-between lg:items-center gap-4">
-        <ShowFilter show={show} onChange={setShow} />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="flex gap-1 bg-white text-black border border-gray-300 hover:bg-gray-200 hover:text-blue-600 cursor-pointer">
-              <KeyboardArrowDown />
-              Hành động
+      {/* Pagination */}
+      <div className="flex flex-col items-center gap-4 lg:items-center lg:justify-between lg:flex-row py-4 text-sm">
+        <span className="text-gray-600 dark:text-gray-400">
+          Hiển thị {firstRow}-{lastRow} trên {filteredData.length} kết quả
+        </span>
+        <div className="flex items-center space-x-1">
+          <Button
+            size="sm"
+            type="button"
+            variant="outline"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="flex items-center gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Trước
+          </Button>
+          {paginationRange.map((item, idx) =>
+            typeof item === 'string' ? (
+              <span key={idx} className="px-2 select-none text-gray-400">
+                …
+              </span>
+            ) : (
+              <Button
+                key={item}
+                type="button"
+                size="sm"
+                variant={item === pageIndex ? 'default' : 'outline'}
+                onClick={() => table.setPageIndex(item as number)}
+                className="min-w-[40px]"
+              >
+                {item + 1}
+              </Button>
+            )
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="flex items-center gap-1"
+          >
+            Tiếp
+            <ChevronRight className="h-4 w-4" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="ml-4">
-            <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-            {hasPermission(permissions, 'account:delete') && (
-              <DropdownMenuItem>
-                  <div className="flex items-center justify-start text-sm gap-1 py-2 cursor-pointer" onClick={handleDeleteAllClick}>
-                    <Delete sx={{ fontSize: 18 }} />
-                    Xóa tất cả
                   </div>
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
-
-      <DataTable<AccountResponse, any>
-        columns={visibleColumns}
-        data={finalFilteredData}
-        isLoading={isLoading}
-      />
     </div>
   );
 }
+
+export const AccountTable = memo(AccountTableComponent);

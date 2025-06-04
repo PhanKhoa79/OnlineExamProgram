@@ -97,12 +97,40 @@ export function DetailRoleModal({ open, onOpenChange, id }: DetailRoleModalProps
             )}
         </div>
 
+        {/* Thông tin chi tiết */}
+        <div className="flex flex-col gap-2 mt-4">
+            <span className="block text-sm font-bold text-black-700 dark:text-white">
+                Thông tin chi tiết
+            </span>
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">ID:</span>
+                        <span className="ml-2 text-gray-900 dark:text-white">{id}</span>
+                    </div>
+                    <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Tên quyền:</span>
+                        <span className="ml-2 text-gray-900 dark:text-white">{roleName}</span>
+                    </div>
+                    <div>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Số lượng quyền:</span>
+                        <span className="ml-2 text-gray-900 dark:text-white">{selectedPermissions.length} quyền</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
             <div className="flex justify-between gap-4 mt-6">
                 {hasPermission(permissionsAccountCur, "role:update") && (
                     <button
                         type="button"
                         className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded"
-                        onClick={() => router.push(`/dashboard/role/update-role/${id}`)}
+                        onClick={() => {
+                            onOpenChange(false); 
+                            setTimeout(() => {
+                            router.push(`/dashboard/role/edit/${id}`);
+                            }, 50); 
+                        }}
                     >
                         <Edit fontSize="small" />
                         Edit
@@ -133,10 +161,12 @@ export function DetailRoleModal({ open, onOpenChange, id }: DetailRoleModalProps
                         onOpenChange(false);
                         toast({ title: 'Xóa quyền thành công!' });
                         router.refresh();
-                        } catch (err: any) {
+                        } catch (err: unknown) {
                         toast({
                             title: 'Lỗi khi xóa quyền',
-                            description: err?.response?.data?.message || 'Không thể quyền',
+                            description: err instanceof Error 
+                                ? err.message 
+                                : (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể xóa quyền',
                             variant: 'error',
                         });
                     }

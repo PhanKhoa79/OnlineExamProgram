@@ -26,7 +26,7 @@ const RoleActionsCell = ({ role }: { role: RoleWithPermissionsDto }) => {
 
   const permissions = useAuthStore((state) => state.permissions);
 
-  const handleRoleAction = async (action: 'update-role' | 'delete-role' | 'detail') => {
+  const handleRoleAction = async (action: 'edit' | 'delete-role' | 'detail') => {
   try {
     const roleData = await getRoleByName(role.name);
     router.push(`/dashboard/role/${action}/${roleData.id}`);
@@ -62,7 +62,7 @@ const RoleActionsCell = ({ role }: { role: RoleWithPermissionsDto }) => {
               <>
                 <div 
                   className="flex items-center justify-start py-1 gap-1 cursor-pointer"
-                  onClick={() => handleRoleAction('update-role')}
+                  onClick={() => handleRoleAction('edit')}
                 >
                   <Edit sx={{ fontSize: 18 }} />
                   Chỉnh sửa
@@ -86,7 +86,7 @@ const RoleActionsCell = ({ role }: { role: RoleWithPermissionsDto }) => {
   );
 };
 
-export const roleColumns = (dispatch: ReturnType<typeof useDispatch>): ColumnDef<RoleWithPermissionsDto>[] => {
+export const roleColumns = (): ColumnDef<RoleWithPermissionsDto>[] => {
 
   return [
     {

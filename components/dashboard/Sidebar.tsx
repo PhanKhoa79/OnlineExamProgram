@@ -1,113 +1,228 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { SidebarItem } from './SidebarItem';
 import Image from 'next/image';
-import { useResponsive } from '@/hooks/useReponsiveHook';
 import { useTheme } from '../providers/ThemeProvider';
 import { ToggleSwitch } from '../ui/ToggleSwitch';
-import { ManageAccounts,  DarkMode, LightMode, Menu, Close, Dashboard, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd }  from '@mui/icons-material';
+import { ManageAccounts, DarkMode, LightMode, Close, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd, Groups, QuestionAnswer, AutoStories, School } from '@mui/icons-material';
 import { useAuthStore } from '@/features/auth/store';
 import { hasResourcePermission } from '@/lib/permissions';
 
-export const Sidebar= () => {
-  const { isMobile, isTablet } = useResponsive();
-  const [isOpen, setIsOpen] = useState(false);
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const router = useRouter();
 
-  const permissions = useAuthStore((state) => state.permissions)
+  // Client-side mounting
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  const toggleSidebar = () => setIsOpen(!isOpen);
+  const permissions = useAuthStore((state) => state.permissions);
 
-   const basePath = '/dashboard';
+  const basePath = '/dashboard';
 
-    const sidebarItems = [
-      hasResourcePermission(permissions, 'account') && {
-        title: 'Quản lý tài khoản',
-        icon: <PersonAdd sx={{ fontSize: 22 }} />,
-        href: `${basePath}/account`
-      },
-      hasResourcePermission(permissions, 'role') && {
-        title: 'Phân quyền người dùng',
-        icon: <ManageAccounts sx={{ fontSize: 22 }} />,
-        href: `${basePath}/role`
-      }
-    ].filter(Boolean);
+  const handleLogoClick = () => {
+    router.push('/dashboard');
+    if (onClose) onClose(); // Close mobile sidebar after navigation
+  };
+
+  type SidebarItemType = {
+    title: string;
+    icon: React.ReactElement;
+    href: string;
+  };
+
+  const sidebarItems: SidebarItemType[] = [
+    hasResourcePermission(permissions, 'account') && {
+      title: 'Quản lý tài khoản',
+      icon: <PersonAdd sx={{ fontSize: 22 }} />,
+      href: `${basePath}/account`
+    },
+    hasResourcePermission(permissions, 'role') && {
+      title: 'Phân quyền người dùng',
+      icon: <ManageAccounts sx={{ fontSize: 22 }} />,
+      href: `${basePath}/role`
+    },
+    hasResourcePermission(permissions, 'student') && {
+      title: 'Quản lý học sinh',
+      icon: <Groups sx={{ fontSize: 22 }} />,
+      href: `${basePath}/student`
+    },
+    hasResourcePermission(permissions, 'question') && {
+      title: 'Quản lý câu hỏi',
+      icon: <QuestionAnswer sx={{ fontSize: 22 }} />,
+      href: `${basePath}/question`
+    },
+    hasResourcePermission(permissions, 'subject') && {
+      title: 'Quản lý môn học',
+      icon: <AutoStories sx={{ fontSize: 22 }} />,
+      href: `${basePath}/subject`
+    },
+    hasResourcePermission(permissions, 'class') && {
+      title: 'Quản lý lớp học',
+      icon: <School sx={{ fontSize: 22 }} />,
+      href: `${basePath}/class`
+    },
+  ].filter((item): item is SidebarItemType => Boolean(item));
+
+  // Mobile Sidebar Portal Component
+  const MobileSidebar = () => {
+    if (!isOpen || !isClient || typeof document === 'undefined') return null;
+
+    return createPortal(
+      <>
+        {/* Overlay */}
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm md:hidden"
+          style={{ zIndex: 999998 }}
+          onClick={onClose}
+        />
+
+        {/* Sidebar */}
+        <aside 
+          className="fixed top-0 left-0 h-full p-6 text-sm flex flex-col bg-white dark:bg-gray-900 w-full sm:w-80 md:hidden"
+          style={{ 
+            zIndex: 999999,
+            borderRight: '4px solid #6366f1',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            transform: 'translateX(0)',
+            transition: 'all 0.3s ease-in-out'
+          }}
+        >
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 p-3 text-gray-500 hover:text-white dark:text-gray-400 dark:hover:text-white hover:bg-red-500 dark:hover:bg-red-600 rounded-full transition-all duration-200 shadow-lg cursor-pointer"
+            aria-label="Close menu"
+          >
+            <Close sx={{ fontSize: 24 }} />
+          </button>
+
+          {/* Logo Section */}
+          <div className="mb-10 ml-2 mt-2 flex gap-3 items-center cursor-pointer group/logo" onClick={handleLogoClick}>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl blur-lg opacity-20 group-hover/logo:opacity-40 transition-opacity duration-300"></div>
+              <div className="relative bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-xl">
+                <Image src="/logo.png" alt="Logo" width={32} height={32} className="relative z-10" />
+              </div>
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 transition-all duration-300">
+              MegaStar
+            </span>
+          </div>
+
+          {/* Navigation Items */}
+          <nav className="space-y-3 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+            {sidebarItems.map((item, index) => (
+              <div
+                key={index}
+                className="transform transition-all duration-300 hover:scale-105 animate-[slideInLeft_0.6s_ease-out_forwards]"
+                style={{ 
+                  animationDelay: `${index * 100}ms`
+                }}
+              >
+                <SidebarItem
+                  title={item.title}
+                  icon={item.icon}
+                  collapsed={false}
+                  openMenu={true}
+                  href={item.href}
+                />
+              </div>
+            ))}
+          </nav>
+
+          {/* Theme Toggle */}
+          <div className="mt-6 pt-6 border-t-2 border-indigo-500/20 dark:border-indigo-400/20">
+            <ToggleSwitch
+              checked={isDarkMode}
+              onChange={toggleDarkMode}
+              label={isDarkMode ? 'NIGHT MODE' : 'DAY MODE'}
+              icon={isDarkMode ? <DarkMode sx={{ fontSize: 16 }} /> : <LightMode sx={{ fontSize: 16 }} />}
+            />
+          </div>
+        </aside>
+      </>,
+      document.body
+    );
+  };
 
   return (
     <>
-      {(isMobile || isTablet) && !isOpen && (
-        <button
-          onClick={toggleSidebar}
-          className="fixed bottom-4 left-4 z-50 md:hidden bg-white p-2 rounded-lg shadow-lg hover:bg-blue-600 hover:text-white cursor-pointer"
-          aria-label="Open menu"
-        >
-          <Menu sx={{ fontSize: 24 }} />
-        </button>
-      )}
-
-      <aside
-        className={`
-          group fixed inset-0 z-40 p-4 text-sm flex flex-col transition-all duration-300 ease-in-out
-          bg-white dark:bg-[var(--dark-bg)]
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${isTablet && 'w-64'}
-          ${isMobile ? 'w-full' : ''}
-          md:translate-x-0 md:min-w-[80px] md:relative md:inset-auto
-          ${!isMobile && !isTablet && collapsed ? 'md:w-[80px]' : 'md:w-64'}
-        `}
-      >
-        <div className="flex flex-col h-full relative">
-          <div className="text-xl font-bold mb-8 ml-1.5 mt-1.5 flex gap-1.5 items-center cursor-pointer">
-            <Image src="/logo.png" alt="Logo" width={30} height={30} />
-            {!collapsed && <span className="text-gray-900 dark:text-white">MegaStar</span>}
+      {/* Desktop Sidebar - Always visible on desktop */}
+      <aside className={`
+        hidden md:flex h-full p-6 text-sm flex-col
+        bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700
+        transition-all duration-300 ease-in-out
+        ${collapsed ? 'w-[85px]' : 'w-72'}
+      `}>
+        {/* Logo Section */}
+        <div className="mb-10 ml-2 mt-2 flex gap-3 items-center cursor-pointer group/logo" onClick={handleLogoClick}>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl blur-lg opacity-20 group-hover/logo:opacity-40 transition-opacity duration-300"></div>
+            <div className="relative bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-xl">
+              <Image src="/logo.png" alt="Logo" width={32} height={32} className="relative z-10" />
+            </div>
           </div>
+          {!collapsed && (
+            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 transition-all duration-300">
+              MegaStar
+            </span>
+          )}
+        </div>
 
-          <ul className="space-y-4 flex-1">
-            {sidebarItems.map((item, index) => (
+        {/* Navigation Items */}
+        <nav className="space-y-3 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+          {sidebarItems.map((item, index) => (
+            <div
+              key={index}
+              className="transform transition-all duration-300 hover:scale-105 animate-[slideInLeft_0.6s_ease-out_forwards]"
+              style={{ 
+                animationDelay: `${index * 100}ms`
+              }}
+            >
               <SidebarItem
-                key={index}
                 title={item.title}
                 icon={item.icon}
                 collapsed={collapsed}
-                openMenu={isOpen}
+                openMenu={false}
                 href={item.href}
               />
-            ))}
+            </div>
+          ))}
+        </nav>
 
-            {(isMobile || isTablet) && (
-              <ToggleSwitch
-                checked={isDarkMode}
-                onChange={toggleDarkMode}
-                label={isDarkMode ? 'NIGHT MODE' : 'DAY MODE'}
-                icon={isDarkMode ? <DarkMode sx={{ fontSize: 16 }} /> : <LightMode sx={{ fontSize: 16 }} />}
-              />
-            )}
-          </ul>
-
-          {!isMobile && !isTablet && (
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="absolute top-1/2 -right-7 transform -translate-y-1/2 bg-blue-500 dark:bg-white text-white dark:text-gray-800 p-1 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              {collapsed ? <KeyboardDoubleArrowRight sx={{ fontSize: 18 }} /> : <KeyboardDoubleArrowLeft sx={{ fontSize: 18 }} /> }
-            </button>
-          )}
-
-          {(isMobile || isTablet) && isOpen && (
-            <button
-              onClick={toggleSidebar}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 cursor-pointer"
-              aria-label="Close menu"
-            >
-              <Close  sx={{ fontSize: 24 }} />
-            </button>
-          )}
+        {/* Desktop Collapse Button */}
+        <div className="absolute top-1/2 -right-3 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center group">
+          <div className="absolute inset-0 cursor-pointer"></div>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-white dark:border-gray-800 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
+          >
+            {collapsed ? 
+              <KeyboardDoubleArrowRight sx={{ fontSize: 18 }} className="transition-transform duration-200" /> : 
+              <KeyboardDoubleArrowLeft sx={{ fontSize: 18 }} className="transition-transform duration-200" />
+            }
+          </button>
+          <div className="absolute left-full ml-3 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 delay-200 pointer-events-none whitespace-nowrap z-50 shadow-xl">
+            {collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-gray-900 dark:border-r-gray-100"></div>
+          </div>
         </div>
       </aside>
 
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={toggleSidebar} />}
+      {/* Mobile Sidebar Portal */}
+      <MobileSidebar />
     </>
   );
 };
