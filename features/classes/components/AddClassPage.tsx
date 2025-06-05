@@ -130,6 +130,12 @@ export default function AddClassPage() {
         <BreadcrumbItem>Thêm lớp học</BreadcrumbItem>
       </Breadcrumb>
 
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Thêm lớp học mới</h1>
+        <p className="text-muted-foreground">
+          Tạo lớp học mới với các thông tin cần thiết
+        </p>
+      </div>
       {/* Card */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

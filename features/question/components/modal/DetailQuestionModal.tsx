@@ -11,7 +11,7 @@ import { ConfirmDeleteModal } from '@/components/ui/ConfirmDeleteModal';
 import { toast } from '@/components/hooks/use-toast';
 import { useDispatch } from 'react-redux';
 import { setQuestions } from "@/store/questionSlice";
-import { QuestionDto } from "../../types/service.type";
+import { QuestionDto } from "../../types/question.type";
 import { getSubjectById } from "@/features/subject/services/subjectServices";
 
 type DetailQuestionModalProps = {

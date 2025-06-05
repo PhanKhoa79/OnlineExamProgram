@@ -135,6 +135,13 @@ export default function AddRolePage() {
         <BreadcrumbItem>Thêm quyền</BreadcrumbItem>
       </Breadcrumb>
 
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Thêm quyền mới</h1>
+        <p className="text-muted-foreground">
+          Tạo quyền mới với các quyền cần thiết
+        </p>
+      </div>
+      
       {/* Card */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

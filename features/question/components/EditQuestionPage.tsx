@@ -24,7 +24,8 @@ import { getQuestionById, updateQuestion } from "../services/questionService";
 import { updateQuestion as updateQuestionAction } from "@/store/questionSlice";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
-import { UpdateAnswerDto, DifficultyLevel, QuestionDto } from "../types/service.type";
+import { UpdateAnswerDto, DifficultyLevel, QuestionDto } from "../types/question.type";
+import { formatDateTime } from "@/lib/dateUtils";
 
 // Type for API error response
 interface ApiError {
@@ -200,17 +201,6 @@ export default function EditQuestionPage({ id }: { id: number }) {
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
   const getSubjectName = (subjectId: number | null) => {
     if (!subjectId) return "Chưa phân loại";
     const subject = subjects.find(s => s.id === subjectId);
@@ -249,6 +239,13 @@ export default function EditQuestionPage({ id }: { id: number }) {
         <BreadcrumbSeparator />
         <BreadcrumbItem>Chỉnh sửa câu hỏi</BreadcrumbItem>
       </Breadcrumb>
+
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa câu hỏi</h1>
+        <p className="text-muted-foreground">
+          Chỉnh sửa câu hỏi: &quot;{questionText}&quot;
+        </p>
+      </div>
 
       {/* Form chỉnh sửa câu hỏi */}
       <Card>

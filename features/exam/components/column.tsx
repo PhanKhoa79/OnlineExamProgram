@@ -4,8 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
 import { Edit, Delete, MoreHoriz, Visibility } from "@mui/icons-material";
-import { QuestionDto } from "../types/question.type";
-import { SubjectResponseDto } from "@/features/subject/types/subject";
+import { ExamDto } from "../types/exam.type";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store";
 import { hasPermission } from "@/lib/permissions";
@@ -18,13 +17,13 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
-const QuestionActionsCell = ({ question }: { question: QuestionDto }) => {
+const ExamActionsCell = ({ exam }: { exam: ExamDto }) => {
   const router = useRouter();
   const permissions = useAuthStore((state) => state.permissions);
 
-  const handleQuestionAction = (action: 'edit' | 'delete-question' | 'detail') => {
+  const handleExamAction = (action: 'edit' | 'delete-exam' | 'detail') => {
     try {
-      router.push(`/dashboard/question/${action}/${question.id}`);
+      router.push(`/dashboard/exam/${action}/${exam.id}`);
     } catch (error) {
       console.error('Lỗi khi điều hướng:', error);
     }
@@ -40,23 +39,23 @@ const QuestionActionsCell = ({ question }: { question: QuestionDto }) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-        {hasPermission(permissions, 'question:view') && (
+        {hasPermission(permissions, 'exam:view') && (
           <DropdownMenuItem>
             <div 
               className="flex items-center justify-start py-1 gap-1 cursor-pointer"
-              onClick={() => handleQuestionAction('detail')}
+              onClick={() => handleExamAction('detail')}
             >
               <Visibility sx={{ fontSize: 18}} className="cursor-pointer"/>
-              Xem trước
+              Xem chi tiết
             </div>
           </DropdownMenuItem>
         )}
 
-        {hasPermission(permissions, 'question:update') && (
+        {hasPermission(permissions, 'exam:update') && (
           <DropdownMenuItem>
             <div 
               className="flex items-center justify-start py-1 gap-1 cursor-pointer"
-              onClick={() => handleQuestionAction('edit')}
+              onClick={() => handleExamAction('edit')}
             >
               <Edit sx={{ fontSize: 18 }} />
               Chỉnh sửa
@@ -64,11 +63,11 @@ const QuestionActionsCell = ({ question }: { question: QuestionDto }) => {
           </DropdownMenuItem>
         )}
 
-        {hasPermission(permissions, 'question:delete') && (
+        {hasPermission(permissions, 'exam:delete') && (
           <DropdownMenuItem>
             <div 
               className="flex items-center justify-start gap-1 cursor-pointer pb-1" 
-              onClick={() => handleQuestionAction('delete-question')}
+              onClick={() => handleExamAction('delete-exam')}
             >
               <Delete sx={{ fontSize: 18 }} />
               Xóa
@@ -80,31 +79,22 @@ const QuestionActionsCell = ({ question }: { question: QuestionDto }) => {
   );
 };
 
-export const questionColumns = (subjects: SubjectResponseDto[] = [], searchQuery: string = ""): ColumnDef<QuestionDto>[] => {
-  // Tạo map để lookup subject name by ID
-  const subjectMap = subjects.reduce((acc, subject) => {
-    acc[subject.id] = subject;
-    return acc;
-  }, {} as Record<number, SubjectResponseDto>);
-
+export const examColumns = (searchQuery: string = ""): ColumnDef<ExamDto>[] => {
   return [
     {
-      accessorKey: "questionText",
+      accessorKey: "name",
       header: ({ column }) => (
         <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Nội dung câu hỏi
+          Tên đề thi
           <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => {
-        const question = row.original;
-        const truncatedText = question.questionText.length > 50 
-          ? `${question.questionText.substring(0, 50)}...` 
-          : question.questionText;
+        const exam = row.original;
         return (
           <div className="relative flex items-center gap-2 ml-3">
             <HighlightText 
-              text={truncatedText} 
+              text={exam.name} 
               searchQuery={searchQuery}
             />
           </div>
@@ -112,26 +102,31 @@ export const questionColumns = (subjects: SubjectResponseDto[] = [], searchQuery
       },
     },
     {
-      accessorKey: "difficultyLevel",
+      accessorKey: "examType",
       header: ({ column }) => (
         <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Độ khó
+          Loại đề thi
           <ArrowUpDown className="h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => {
-        const question = row.original;
-        const difficultyColors = {
-          'dễ': 'bg-green-100 text-green-800',
-          'trung bình': 'bg-yellow-100 text-yellow-800',
-          'khó': 'bg-red-100 text-red-800'
+        const exam = row.original;
+        const typeColors = {
+          'practice': 'bg-blue-100 text-blue-800',
+          'official': 'bg-green-100 text-green-800'
         };
-        const colorClass = difficultyColors[question.difficultyLevel || 'trung bình'];
+        const typeLabels = {
+          'practice': 'Luyện tập',
+          'official': 'Chính thức'
+        };
+        const colorClass = typeColors[exam.examType];
+        const label = typeLabels[exam.examType];
+        
         return (
           <div className="relative flex items-center gap-2 ml-3">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
               <HighlightText 
-                text={question.difficultyLevel || 'Chưa xác định'} 
+                text={label} 
                 searchQuery={searchQuery}
               />
             </span>
@@ -140,34 +135,57 @@ export const questionColumns = (subjects: SubjectResponseDto[] = [], searchQuery
       },
     },
     {
-      accessorKey: "answers",
-      header: "Số câu trả lời",
+      accessorKey: "duration",
+      header: ({ column }) => (
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Thời gian (phút)
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      ),
       cell: ({ row }) => {
-        const question = row.original;
+        const exam = row.original;
         return (
           <div className="relative flex items-center gap-2 ml-3">
-            <span>{question.answers?.length || 0}</span>
+            <span>{exam.duration} phút</span>
           </div>
         );
       },
     },
     {
-      accessorKey: "subjectId",
-      header: "Môn học",
+      accessorKey: "totalQuestions",
+      header: "Số câu hỏi",
       cell: ({ row }) => {
-        const question = row.original;
-        if (!question.subjectId) {
-          return (
-            <div className="relative flex items-center gap-2 ml-3">
-              <span className="text-gray-500">Chưa phân loại</span>
-            </div>
-          );
-        }
-        
-        const subject = subjectMap[question.subjectId];
+        const exam = row.original;
         return (
-          <div className="relative flex items-center gap-2 ">
-            <span>{subject ? `${subject.name}` : `ID: ${question.subjectId}`}</span>
+          <div className="relative flex items-center gap-2 ml-3">
+            <span>{exam.totalQuestions}</span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "subject",
+      header: ({ column }) => (
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Môn học
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const exam = row.original;
+        
+        return (
+          <div className="relative flex items-center gap-2 ml-3">
+            <div className="flex flex-col">
+              <HighlightText 
+                text={exam.subject.name} 
+                searchQuery={searchQuery}
+                className="font-medium"
+              />
+              <span className="text-xs text-gray-500">
+                {exam.subject.code}
+              </span>
+            </div>
           </div>
         );
       },
@@ -177,8 +195,8 @@ export const questionColumns = (subjects: SubjectResponseDto[] = [], searchQuery
       header: "Hành động",
       enableHiding: false,
       cell: ({ row }) => {
-        const question = row.original;
-        return <QuestionActionsCell question={question} />;
+        const exam = row.original;
+        return <ExamActionsCell exam={exam} />;
       },
     },
   ];

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { QuestionDto } from "@/features/question/types/service.type";
+import { QuestionDto } from "@/features/question/types/question.type";
 
 interface QuestionState {
   questions: QuestionDto[];

@@ -25,7 +25,7 @@ import { createQuestion } from "../services/questionService";
 import { addQuestion } from "@/store/questionSlice";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
-import { CreateAnswerDto, DifficultyLevel } from "../types/service.type";
+import { CreateAnswerDto, DifficultyLevel } from "../types/question.type";
 
 // Type for API error response
 interface ApiError {
@@ -208,6 +208,13 @@ export default function AddQuestionPage() {
         <BreadcrumbSeparator />
         <BreadcrumbItem>Thêm câu hỏi</BreadcrumbItem>
       </Breadcrumb>
+
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Thêm câu hỏi mới</h1>
+        <p className="text-muted-foreground">
+          Tạo câu hỏi mới với các thông tin cần thiết
+        </p>
+      </div>
 
       {/* Card */}
       <Card>

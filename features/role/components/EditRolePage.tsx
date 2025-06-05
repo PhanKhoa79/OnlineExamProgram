@@ -26,6 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { RoleWithPermissionsDto } from "@/features/role/types/role";
+import { formatDateTime } from "@/lib/dateUtils";
 
 export default function EditRolePage({ id }: { id: number }) {
   const dispatch = useDispatch();
@@ -36,17 +37,6 @@ export default function EditRolePage({ id }: { id: number }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [defaultSelectedPermissions, setDefaultSelectedPermissions] = useState<string[]>([]);
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
 
   useEffect(() => {
     const fetchRoleData = async () => {
@@ -161,6 +151,13 @@ export default function EditRolePage({ id }: { id: number }) {
         <BreadcrumbSeparator />
         <BreadcrumbItem>Chỉnh sửa quyền</BreadcrumbItem>
       </Breadcrumb>
+
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa quyền</h1>
+        <p className="text-muted-foreground">
+          Chỉnh sửa quyền: &quot;{roleName}&quot;
+        </p>
+      </div>
 
       {/* Role Info Card */}
       <Card>

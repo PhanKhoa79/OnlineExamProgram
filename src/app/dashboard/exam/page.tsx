@@ -1,7 +1,9 @@
-export default function ExamPage() {
+import { ExamTable } from "@/features/exam/components/ExamTable";
+
+export default function DashboardExamPage() {
   return (
-    <div>
-      {/* Exam content will be added here */}
-    </div>
+    <>
+      <ExamTable />
+    </>
   );
 } 

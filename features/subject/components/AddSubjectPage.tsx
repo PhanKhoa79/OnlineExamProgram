@@ -100,7 +100,6 @@ export default function AddSubjectPage() {
       // Type assertion for error handling
       const apiError = error as ApiError;
       
-      // Extract error message from different possible structures
       if (apiError?.response?.data?.message) {
         errorMessage = apiError.response.data.message;
       } else if (apiError?.response?.data?.error) {
@@ -145,6 +144,13 @@ export default function AddSubjectPage() {
         <BreadcrumbSeparator />
         <BreadcrumbItem>Thêm môn học</BreadcrumbItem>
       </Breadcrumb>
+
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Thêm môn học mới</h1>
+        <p className="text-muted-foreground">
+          Tạo môn học mới với các thông tin cần thiết
+        </p>
+      </div>
 
       {/* Card */}
       <Card>

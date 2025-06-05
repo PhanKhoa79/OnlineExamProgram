@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store"; 
@@ -53,7 +53,7 @@ import {
 import { ClassResponseDto } from "@/features/classes/types/class.type";
 import { StudentDto } from "@/features/student/types/student";
 
-export function StudentTable() {
+function StudentTableComponent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -187,12 +187,10 @@ export function StudentTable() {
     setInputValue("");
   }, [setInputValue]);
 
-  // Optimize search input handler to prevent unnecessary re-renders
   const handleSearchChange = useCallback((value: string) => {
     setInputValue(value);
   }, [setInputValue]);
 
-  // Check if any filters are active
   const hasActiveFilters = classFilter !== "all" || genderFilter !== "all" || inputValue !== "";
 
   const handleExport = async (format: 'excel' | 'csv') => {
@@ -613,4 +611,6 @@ export function StudentTable() {
       </div>
     </div>
   );
-} 
+}
+
+export const StudentTable = memo(StudentTableComponent); 

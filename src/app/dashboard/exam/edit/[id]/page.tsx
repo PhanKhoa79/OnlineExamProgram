@@ -1,7 +1,10 @@
-export default function EditExamPage() {
+'use client';
+
+import EditExamPage from '@/features/exam/components/EditExamPage';
+
+
+export default function DashBoardEditExamPage() {
   return (
-    <div>
-      {/* Edit exam content will be added here */}
-    </div>
+    <EditExamPage  />
   );
 } 
