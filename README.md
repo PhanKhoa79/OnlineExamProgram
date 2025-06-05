@@ -10,6 +10,7 @@
   ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript)
   ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1.4-38B2AC?style=for-the-badge&logo=tailwind-css)
   ![Redux Toolkit](https://img.shields.io/badge/Redux_Toolkit-2.8.2-764ABC?style=for-the-badge&logo=redux)
+  ![Bun](https://img.shields.io/badge/Bun-Latest-000000?style=for-the-badge&logo=bun)
 </div>
 
 ---
@@ -56,7 +57,7 @@
 
 ### 📋 **Yêu cầu hệ thống**
 - **Node.js** >= 18.0.0
-- **Bun** (khuyến nghị) hoặc npm/yarn/pnpm
+- **Bun** >= 1.0.0 (khuyến nghị - package manager chính)
 
 ### ⚡ **Cài đặt nhanh**
 
@@ -65,19 +66,18 @@
 git clone <repository-url>
 cd OnlineExamProgram
 
-# 2️⃣ Cài đặt dependencies (sử dụng Bun - khuyến nghị)
+# 2️⃣ Cài đặt Bun (nếu chưa có)
+# Windows PowerShell:
+powershell -c "irm bun.sh/install.ps1 | iex"
+
+# macOS/Linux:
+curl -fsSL https://bun.sh/install | bash
+
+# 3️⃣ Cài đặt dependencies với Bun
 bun install
 
-# 🔄 Hoặc sử dụng package manager khác
-npm install
-# yarn install
-# pnpm install
-
-# 3️⃣ Chạy development server
+# 4️⃣ Chạy development server
 bun dev
-# npm run dev
-# yarn dev
-# pnpm dev
 ```
 
 ### 🌐 **Truy cập ứng dụng**
@@ -86,10 +86,43 @@ Mở [http://localhost:3000](http://localhost:3000) trong trình duyệt để x
 ### 📝 **Scripts có sẵn**
 ```bash
 bun dev          # 🏃‍♂️ Chạy development server với Turbopack
-bun build        # 🏗️ Build ứng dụng cho production
+bun run build    # 🏗️ Build ứng dụng cho production  
 bun start        # ▶️ Chạy ứng dụng production
-bun lint         # 🔍 Kiểm tra linting
+bun run lint     # 🔍 Kiểm tra linting
+
+# Alternative package managers (không khuyến nghị):
+# npm run dev / yarn dev / pnpm dev
 ```
+
+### 🔄 **Migration từ npm/pnpm sang Bun**
+
+Nếu bạn đang có project cũ với npm/pnpm:
+
+```powershell
+# Windows PowerShell:
+# 1. Backup các file lock cũ
+New-Item -ItemType Directory -Path "package-managers-backup" -Force
+Copy-Item "package-lock.json" "package-managers-backup/" -ErrorAction SilentlyContinue
+Copy-Item "pnpm-lock.yaml" "package-managers-backup/" -ErrorAction SilentlyContinue
+Copy-Item "pnpm-workspace.yaml" "package-managers-backup/" -ErrorAction SilentlyContinue
+
+# 2. Xóa file lock cũ và node_modules
+Remove-Item "package-lock.json" -Force -ErrorAction SilentlyContinue
+Remove-Item "pnpm-lock.yaml" -Force -ErrorAction SilentlyContinue
+Remove-Item "pnpm-workspace.yaml" -Force -ErrorAction SilentlyContinue
+Remove-Item "node_modules" -Recurse -Force -ErrorAction SilentlyContinue
+
+# 3. Cài đặt với Bun
+bun install
+```
+
+### ⚡ **Tại sao chọn Bun?**
+
+- 🚀 **Tốc độ nhanh hơn**: 2-10x nhanh hơn npm/yarn/pnpm
+- 🛠️ **All-in-one**: Package manager + bundler + test runner + runtime
+- 🔧 **Tương thích 100%**: Hoạt động với mọi package npm
+- 📦 **Built-in TypeScript**: Chạy TypeScript trực tiếp không cần build
+- 🔒 **Bảo mật**: Lock file binary nhanh và an toàn hơn
 
 ---
 
@@ -220,6 +253,6 @@ Dự án này được phân phối dưới giấy phép MIT License. Xem file `
 ---
 
 <div align="center">
-  <p>Made with ❤️ by Online Exam Team</p>
+  <p>Made with ❤️ by Online Phan Khoa</p>
   <p>🌟 Nếu thấy dự án hữu ích, hãy cho chúng tôi một star nhé! 🌟</p>
 </div>

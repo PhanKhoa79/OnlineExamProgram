@@ -5,6 +5,7 @@ import roleReducer from './roleSlice'
 import classReducer from './classSlice'
 import subjectReducer from './subjectSlice'
 import questionReducer from './questionSlice'
+import examReducer from './examSlice'
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     class: classReducer,
     subject: subjectReducer,
     question: questionReducer,
+    exam: examReducer,
   }
 })
 

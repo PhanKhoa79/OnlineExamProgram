@@ -23,6 +23,7 @@ import { getClassById, updateClass } from "@/features/classes/services/classServ
 import { updateClass as updateClassAction } from "@/store/classSlice";
 import { getErrorMessage, schema } from "@/lib/validationAuth";
 import { ClassResponseDto } from "@/features/classes/types/class.type";
+import { formatDateTime } from "@/lib/dateUtils";
 
 export default function EditClassPage({ id }: { id: number }) {
   const dispatch = useDispatch();
@@ -56,17 +57,6 @@ export default function EditClassPage({ id }: { id: number }) {
       }
     })();
   }, [id]);
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
 
   const handleSubmit = async (exitAfterSave = false) => {
     setLoading(true);
@@ -129,6 +119,12 @@ export default function EditClassPage({ id }: { id: number }) {
         <BreadcrumbItem>Chỉnh sửa lớp học</BreadcrumbItem>
       </Breadcrumb>
 
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa lớp học</h1>
+        <p className="text-muted-foreground">
+          Chỉnh sửa lớp học: &quot;{className}&quot;
+        </p>
+      </div>
       {/* Card */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, useRef, memo } from "react";
+import { useState, useMemo, useEffect, useCallback, memo } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store"; 
@@ -68,9 +68,6 @@ function AccountTableComponent() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roles, setRoles] = useState<RoleWithPermissionsDto[]>([]);
 
-  // Track if data has been fetched to prevent duplicate calls
-  const hasFetchedData = useRef(false);
-
   // URL-based pagination - but don't auto-sync to prevent loops
   const initialPage = Math.max(0, (Number(searchParams.get('page')) || 1) - 1);
   const pageSize = 7;
@@ -100,8 +97,6 @@ function AccountTableComponent() {
 
   // Fetch data only once on mount - no dependencies at all
   useEffect(() => {
-    if (hasFetchedData.current) return;
-    
     const fetchData = async () => {
       try {
         setIsLoading(true);
@@ -112,7 +107,6 @@ function AccountTableComponent() {
         
         dispatch(setAccounts(accountsData));
         setRoles(rolesData);
-        hasFetchedData.current = true;
       } catch (error) {
         console.error("Failed to fetch data", error);
         dispatch(setAccounts([]));
@@ -123,8 +117,7 @@ function AccountTableComponent() {
     };
 
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Explicitly ignore dispatch dependency to prevent loops
+  }, []); 
 
   // Memoize accounts to prevent unnecessary re-calculations
   const memoizedAccounts = useMemo(() => accounts || [], [accounts]);
@@ -153,18 +146,16 @@ function AccountTableComponent() {
     setStatusFilter(value);
   }, []);
 
-  // Combined filtering: search + role + status with better optimization
   const filteredData = useMemo(() => {
     if (!searchFilteredData) return [];
     
-    let data = [...searchFilteredData]; // Create a copy to avoid mutations
+    let data = [...searchFilteredData]; 
 
     // Filter by role
     if (roleFilter !== "all") {
       data = data.filter(account => account.role === roleFilter);
     }
 
-    // Filter by status
     if (statusFilter !== "all") {
       const isActive = statusFilter === "active";
       data = data.filter(account => account.isActive === isActive);
@@ -173,17 +164,14 @@ function AccountTableComponent() {
     return data;
   }, [searchFilteredData, roleFilter, statusFilter]);
 
-  // Clear all filters
   const clearFilters = useCallback(() => {
     setRoleFilter("all");
     setStatusFilter("all");
     setInputValue("");
   }, [setInputValue]);
 
-  // Check if any filters are active
   const hasActiveFilters = roleFilter !== "all" || statusFilter !== "all" || inputValue !== "";
 
-  // Create table instance - create columns inline to prevent any issues
   const table = useReactTable({
     data: filteredData,
     columns: accountColumns(dispatch, searchQuery),
@@ -194,7 +182,7 @@ function AccountTableComponent() {
     },
     onColumnVisibilityChange: setColumnVisibility,
     onSortingChange: setSorting,
-    onPaginationChange: setPagination, // Remove router sync to prevent page reload
+    onPaginationChange: setPagination, 
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

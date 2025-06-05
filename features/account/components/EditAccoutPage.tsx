@@ -36,6 +36,7 @@ import {
   BreadcrumbLink,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { formatDateTime } from "@/lib/dateUtils";
 
 interface ApiError {
   response?: {
@@ -106,17 +107,6 @@ export default function EditAccountPage({ id }: { id: number }) {
     setAccountnameError(accountnameError);
   }, [email, name]);
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
   const handleSubmit = async (exitAfterSave = false) => {
     setLoading(true);
     try {
@@ -185,6 +175,12 @@ export default function EditAccountPage({ id }: { id: number }) {
         <BreadcrumbItem>Chỉnh sửa</BreadcrumbItem>
       </Breadcrumb>
 
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa tài khoản</h1>
+        <p className="text-muted-foreground">
+          Chỉnh sửa tài khoản: &quot;{currentAccountData?.accountname}&quot;
+        </p>
+      </div>
       {/* Card form */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

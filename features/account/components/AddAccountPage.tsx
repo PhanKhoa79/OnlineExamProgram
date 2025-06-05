@@ -34,6 +34,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useRouter } from "next/navigation";
+import { AccountResponse } from "../types/account";
 
 // Type for API error response
 interface ApiError {
@@ -115,7 +116,7 @@ export default function AddAccountPage() {
         urlAvatar: response.data.data.urlAvatar,
       };
 
-      dispatch(addAccountAction(newAccount));
+      dispatch(addAccountAction(newAccount as AccountResponse));
       toast({ title: "Tạo tài khoản thành công!" });
 
       if (exitAfterSave) {
@@ -167,6 +168,13 @@ export default function AddAccountPage() {
         <BreadcrumbItem>Thêm tài khoản</BreadcrumbItem>
       </Breadcrumb>
 
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Thêm tài khoản mới</h1>
+        <p className="text-muted-foreground">
+          Tạo tài khoản mới với các thông tin cần thiết
+        </p>
+      </div>
+
       {/* Form */}
       <Card>
         <CardHeader>
@@ -211,7 +219,7 @@ export default function AddAccountPage() {
           <div>
             <Label htmlFor="role">Quyền</Label>
             <Select value={role} onValueChange={setRole}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full mt-2">
                 <SelectValue placeholder="-- Chọn quyền --" />
               </SelectTrigger>
               <SelectContent>

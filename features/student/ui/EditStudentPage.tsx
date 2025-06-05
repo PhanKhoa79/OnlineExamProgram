@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { formatDateTime } from "@/lib/dateUtils";
 
 interface EditStudentPageProps {
   id: number;
@@ -70,17 +71,6 @@ export function EditStudentPage({ id }: EditStudentPageProps) {
   const [classes, setClasses] = useState<ClassResponseDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -256,6 +246,13 @@ export function EditStudentPage({ id }: EditStudentPageProps) {
         <BreadcrumbSeparator />
         <BreadcrumbItem>Chỉnh sửa sinh viên</BreadcrumbItem>
       </Breadcrumb>
+
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa sinh viên</h1>
+        <p className="text-muted-foreground">
+          Chỉnh sửa sinh viên: &quot;{studentData?.fullName}&quot;
+        </p>
+      </div>
 
       {/* Card */}
       <Card>

@@ -9,6 +9,10 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+/package-managers-backup
+
+#cursor
+.cursorrules
 
 # testing
 /coverage

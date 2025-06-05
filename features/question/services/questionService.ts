@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import { CreateQuestionDto, DifficultyLevel, QuestionDto, UpdateQuestionDto } from "../types/service.type";
+import { CreateQuestionDto, DifficultyLevel, QuestionDto, UpdateQuestionDto } from "../types/question.type";
 
 
 export const getAllQuestions = async (): Promise<QuestionDto[]> => {

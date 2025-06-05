@@ -4,21 +4,18 @@ import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store"; 
-import { questionColumns } from "@/features/question/components/column";
+import { examColumns } from "@/features/exam/components/column";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Columns, ChevronLeft, ChevronRight, FilterX } from "lucide-react";
-import { Add, Output } from "@mui/icons-material";
-import { getAllQuestions, exportQuestions, importQuestionsFromFile } from "@/features/question/services/questionService";
+import { Output } from "@mui/icons-material";
+import { getAllExams, exportExams } from "@/features/exam/services/examServices";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
-import { useSearchFilter } from "@/hooks/useSearchFilter";
-import { QuestionDto } from "@/features/question/types/question.type";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
-import { setQuestions } from "@/store/questionSlice";
+import { setExams } from "@/store/examSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import SearchBar from "@/components/ui/SearchBar";
 import { toast } from "@/components/hooks/use-toast";
-import { QuestionImportFileModal, FileType } from "@/features/question/ui/modal/QuestionImportFileModal";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -53,7 +50,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 
-function QuestionTableComponent() {
+function ExamTableComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -63,7 +60,7 @@ function QuestionTableComponent() {
 
   // Filter states
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
+  const [examTypeFilter, setExamTypeFilter] = useState<string>("all");
 
   // URL-based pagination
   const initialPage = Math.max(0, (Number(searchParams.get('page')) || 1) - 1);
@@ -88,7 +85,7 @@ function QuestionTableComponent() {
     }
   }, [pagination.pageIndex, searchParams]);
 
-  const questions = useSelector((state: RootState) => state.question.questions);
+  const exams = useSelector((state: RootState) => state.exam?.exams || []);
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
@@ -96,13 +93,12 @@ function QuestionTableComponent() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Fetch both questions and subjects in parallel
-        const [questionsData, subjectsData] = await Promise.all([
-          getAllQuestions(),
+        const [examsData, subjectsData] = await Promise.all([
+          getAllExams(),
           getAllSubjects()
         ]);
         
-        dispatch(setQuestions(questionsData));
+        dispatch(setExams(examsData));
         setSubjects(subjectsData);
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -112,18 +108,31 @@ function QuestionTableComponent() {
     };
 
     fetchData();
-  }, []); 
+  }, []);
 
-  const memoizedQuestions = useMemo(() => questions || [], [questions]);
+  const memoizedExams = useMemo(() => exams || [], [exams]);
 
-  const searchKeys = useMemo(() => ["questionText", "difficultyLevel"] as (keyof QuestionDto)[], []);
+  // Custom search functionality to support nested subject names
+  const [inputValue, setInputValue] = useState("");
+  const searchQuery = inputValue.toLowerCase().trim();
 
-  const {
-    inputValue,
-    setInputValue,
-    filteredData: searchFilteredData,
-    searchQuery,
-  } = useSearchFilter(memoizedQuestions, searchKeys);
+  const searchFilteredData = useMemo(() => {
+    if (!searchQuery) return memoizedExams;
+
+    return memoizedExams.filter(exam => {
+      // Search in exam name
+      if (exam.name.toLowerCase().includes(searchQuery)) return true;
+      
+      const examTypeLabel = exam.examType === 'practice' ? 'luyện tập' : 'chính thức';
+      if (examTypeLabel.includes(searchQuery)) return true;
+      
+      if (exam.subject?.name.toLowerCase().includes(searchQuery)) return true;
+      
+      if (exam.subject?.code.toLowerCase().includes(searchQuery)) return true;
+      
+      return false;
+    });
+  }, [memoizedExams, searchQuery]);
 
   // Apply additional filters
   const filteredData = useMemo(() => {
@@ -131,16 +140,17 @@ function QuestionTableComponent() {
 
     // Filter by subject
     if (subjectFilter !== "all") {
-      data = data.filter(question => question.subjectId === parseInt(subjectFilter));
+      const targetSubjectId = parseInt(subjectFilter);
+      data = data.filter(exam => exam.subject.id === targetSubjectId);
     }
 
-    // Filter by difficulty
-    if (difficultyFilter !== "all") {
-      data = data.filter(question => question.difficultyLevel === difficultyFilter);
+    // Filter by exam type
+    if (examTypeFilter !== "all") {
+      data = data.filter(exam => exam.examType === examTypeFilter);
     }
 
     return data;
-  }, [searchFilteredData, subjectFilter, difficultyFilter]);
+  }, [searchFilteredData, subjectFilter, examTypeFilter]);
 
   const handleSearchChange = useCallback((value: string) => {
     setInputValue(value);
@@ -148,20 +158,20 @@ function QuestionTableComponent() {
 
   const clearFilters = useCallback(() => {
     setSubjectFilter("all");
-    setDifficultyFilter("all");
+    setExamTypeFilter("all");
     setInputValue("");
   }, [setInputValue]);
 
-  const hasActiveFilters = subjectFilter !== "all" || difficultyFilter !== "all" || inputValue !== "";
+  const hasActiveFilters = subjectFilter !== "all" || examTypeFilter !== "all" || inputValue !== "";
 
   const handleExport = async (format: 'excel' | 'csv') => {
     try {
-      await exportQuestions(filteredData, format);
+      await exportExams(filteredData, format);
       toast({ title: 'Export thành công!' });
     } catch (error) {
       const errorMessage = error instanceof Error && error.message 
         ? error.message
-        : 'Error exporting questions';
+        : 'Error exporting exams';
       toast({
         title: errorMessage,
         variant: 'error',
@@ -169,51 +179,8 @@ function QuestionTableComponent() {
     }
   };
 
-  const handleImport = async (file: File, fileType: FileType) => {
-    setIsLoading(true);
-    try {
-      const response = await importQuestionsFromFile(file, fileType);
-      
-      if (!response || !response.data) {
-        toast({ 
-          title: 'Có lỗi xảy ra khi xử lý dữ liệu import!', 
-          variant: 'error' 
-        });
-        return;
-      }
-      
-      const updatedQuestionsData = await getAllQuestions();
-      if (Array.isArray(updatedQuestionsData)) {
-        dispatch(setQuestions(updatedQuestionsData));
-      }
-
-      toast({ 
-        title: `Import thành công!`
-      });
-
-    } catch (error) {
-      const errorMessage = error instanceof Error && error.message 
-        ? error.message
-        : 'Error importing questions';
-      toast({
-        title: errorMessage,
-        variant: 'error',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const [open, setOpen] = useState(false);
-  const [fileType, setFileType] = useState<FileType | null>(null);
-
-  const openModal = (type: FileType) => {
-    setFileType(type);
-    setOpen(true);
-  };
-
-  // Memoize columns with subjects
-  const columns = useMemo(() => questionColumns(subjects, searchQuery), [subjects, searchQuery]);
+  // Memoize columns
+  const columns = useMemo(() => examColumns(searchQuery), [searchQuery]);
 
   // Create table instance
   const table = useReactTable({
@@ -233,11 +200,13 @@ function QuestionTableComponent() {
     initialState: { pagination },
   });
 
+  // Pagination calculations
   const { pageIndex, pageSize: currentSize } = table.getState().pagination;
   const totalPages = table.getPageCount();
   const firstRow = pageIndex * currentSize + 1;
   const lastRow = Math.min((pageIndex + 1) * currentSize, filteredData.length);
 
+  // Pagination range with ellipsis
   const paginationRange = useMemo<(number | string)[]>(() => {
     const maxButtons = 5;
     if (totalPages <= maxButtons) return Array.from({ length: totalPages }, (_, i) => i);
@@ -259,18 +228,18 @@ function QuestionTableComponent() {
 
   // Column mapping for Vietnamese names
   const columnNames: Record<string, string> = {
-    questionText: "Nội dung câu hỏi",
-    subjectId: "Môn học", 
-    difficultyLevel: "Độ khó",
-    totalAnswers: "Số câu trả lời",
+    name: "Tên đề thi",
+    examType: "Loại đề thi", 
+    duration: "Thời gian",
+    totalQuestions: "Số câu hỏi",
+    subject: "Môn học",
     actions: "Thao tác",
   };
 
-  // Difficulty options
-  const difficultyOptions = [
-    { value: "dễ", label: "Dễ" },
-    { value: "trung bình", label: "Trung bình" },
-    { value: "khó", label: "Khó" },
+  // Exam type options
+  const examTypeOptions = [
+    { value: "practice", label: "Luyện tập" },
+    { value: "official", label: "Chính thức" },
   ];
 
   if (isLoading) {
@@ -292,20 +261,20 @@ function QuestionTableComponent() {
           {/* Search Bar */}
           <div className="flex-1 max-w-md">
             <SearchBar
-              placeholder="Tìm kiếm câu hỏi..."
+              placeholder="Tìm kiếm đề thi..."
               value={inputValue}
               onChange={handleSearchChange}
             />
           </div>
 
           {/* Primary Action Button */}
-          {hasPermission(permissions, 'question:create') && (
+          {hasPermission(permissions, 'exam:create') && (
             <Button 
               className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2" 
-              onClick={() => router.push('/dashboard/question/create')}
+              onClick={() => router.push('/dashboard/exam/create')}
             >
               <span className="text-lg">+</span>
-              Thêm câu hỏi
+              Thêm đề thi
             </Button>
           )}
         </div>
@@ -329,14 +298,14 @@ function QuestionTableComponent() {
               </SelectContent>
             </Select>
 
-            {/* Difficulty Filter */}
-            <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+            {/* Exam Type Filter */}
+            <Select value={examTypeFilter} onValueChange={setExamTypeFilter}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Độ khó" />
+                <SelectValue placeholder="Loại đề thi" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả độ khó</SelectItem>
-                {difficultyOptions.map((option) => (
+                <SelectItem value="all">Tất cả loại</SelectItem>
+                {examTypeOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -391,21 +360,6 @@ function QuestionTableComponent() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Import Actions */}
-            {hasPermission(permissions, 'question:create') && (
-              <>
-                <Button 
-                  size="sm" 
-                  className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2"
-                  onClick={() => openModal('xlsx')}
-                >
-                  <Add sx={{ fontSize: 16 }} />
-                  📊 Nhập Excel
-                </Button>
-                <QuestionImportFileModal open={open} setOpen={setOpen} fileType={fileType} handleImport={handleImport}/>
-              </>
-            )}
-
             {/* Export Actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -433,15 +387,15 @@ function QuestionTableComponent() {
       {hasActiveFilters && (
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
           <span className="font-medium">Kết quả lọc:</span>
-          <span>{filteredData.length} / {questions.length} câu hỏi</span>
+          <span>{filteredData.length} / {exams.length} đề thi</span>
           {subjectFilter !== "all" && (
             <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs">
               Môn: {subjects.find(s => s.id.toString() === subjectFilter)?.name || subjectFilter}
             </span>
           )}
-          {difficultyFilter !== "all" && (
+          {examTypeFilter !== "all" && (
             <span className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded text-xs">
-              Độ khó: {difficultyFilter}
+              Loại: {examTypeOptions.find(t => t.value === examTypeFilter)?.label || examTypeFilter}
             </span>
           )}
           {inputValue && (
@@ -495,7 +449,7 @@ function QuestionTableComponent() {
                     colSpan={columns.length}
                     className="h-24 text-center text-gray-500 dark:text-gray-400"
                   >
-                    Không có dữ liệu câu hỏi.
+                    Không có dữ liệu đề thi.
                   </TableCell>
                 </TableRow>
               )}
@@ -556,4 +510,4 @@ function QuestionTableComponent() {
   );
 }
 
-export const QuestionTable = memo(QuestionTableComponent); 
+export const ExamTable = memo(ExamTableComponent); 

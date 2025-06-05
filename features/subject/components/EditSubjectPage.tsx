@@ -23,6 +23,7 @@ import { getSubjectById, updateSubject } from "@/features/subject/services/subje
 import { updateSubject as updateSubjectAction } from "@/store/subjectSlice";
 import { getSubjectErrorMessage } from "../utils/validation";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
+import { formatDateTime } from "@/lib/dateUtils";
 
 export default function EditSubjectPage({ id }: { id: number }) {
   const dispatch = useDispatch();
@@ -74,17 +75,6 @@ export default function EditSubjectPage({ id }: { id: number }) {
     })();
   }, [id]);
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
-
   const handleSubmit = async (exitAfterSave = false) => {
     setLoading(true);
 
@@ -109,7 +99,6 @@ export default function EditSubjectPage({ id }: { id: number }) {
         description: subjectDescription.trim() || undefined,
       });
 
-      // Fetch lại data để đảm bảo có thông tin mới nhất
       const updatedSubjectData = await getSubjectById(id);
       setCurrentSubjectData(updatedSubjectData);
 
@@ -154,6 +143,12 @@ export default function EditSubjectPage({ id }: { id: number }) {
         <BreadcrumbItem>Chỉnh sửa môn học</BreadcrumbItem>
       </Breadcrumb>
 
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa môn học</h1>
+        <p className="text-muted-foreground">
+          Chỉnh sửa môn học: &quot;{subjectName}&quot;
+        </p>
+      </div>
       {/* Card */}
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
