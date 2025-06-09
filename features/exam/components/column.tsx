@@ -3,12 +3,14 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import { Edit, Delete, MoreHoriz, Visibility } from "@mui/icons-material";
+import { Edit, Delete, MoreHoriz, Visibility, FileDownload } from "@mui/icons-material";
 import { ExamDto } from "../types/exam.type";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store";
 import { hasPermission } from "@/lib/permissions";
 import { HighlightText } from "@/components/ui/HighlightText";
+import { exportExamWithQuestions } from "../services/examServices";
+import { toast } from "@/components/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -26,6 +28,23 @@ const ExamActionsCell = ({ exam }: { exam: ExamDto }) => {
       router.push(`/dashboard/exam/${action}/${exam.id}`);
     } catch (error) {
       console.error('Lỗi khi điều hướng:', error);
+    }
+  };
+
+  const handleExportExam = async (format: 'excel' | 'csv') => {
+    try {
+      await exportExamWithQuestions(exam.id, format);
+      toast({ 
+        title: `Xuất file ${format.toUpperCase()} thành công!`,
+        description: `Đề thi "${exam.name}" đã được xuất thành công.`
+      });
+    } catch (error) {
+      console.error('Lỗi khi xuất đề thi:', error);
+      toast({
+        title: 'Lỗi xuất file',
+        description: 'Không thể xuất đề thi. Vui lòng thử lại.',
+        variant: 'error'
+      });
     }
   };
 
@@ -49,6 +68,29 @@ const ExamActionsCell = ({ exam }: { exam: ExamDto }) => {
               Xem chi tiết
             </div>
           </DropdownMenuItem>
+        )}
+
+        {hasPermission(permissions, 'exam:view') && (
+          <>
+            <DropdownMenuItem>
+              <div 
+                className="flex items-center justify-start py-1 gap-1 cursor-pointer"
+                onClick={() => handleExportExam('excel')}
+              >
+                <FileDownload sx={{ fontSize: 18}} className="cursor-pointer"/>
+                Xuất Excel
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <div 
+                className="flex items-center justify-start py-1 gap-1 cursor-pointer"
+                onClick={() => handleExportExam('csv')}
+              >
+                <FileDownload sx={{ fontSize: 18}} className="cursor-pointer"/>
+                Xuất CSV
+              </div>
+            </DropdownMenuItem>
+          </>
         )}
 
         {hasPermission(permissions, 'exam:update') && (

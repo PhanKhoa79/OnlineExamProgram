@@ -7,15 +7,15 @@ import { RootState, AppDispatch } from "@/store";
 import { examColumns } from "@/features/exam/components/column";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Columns, ChevronLeft, ChevronRight, FilterX } from "lucide-react";
-import { Output } from "@mui/icons-material";
-import { getAllExams, exportExams } from "@/features/exam/services/examServices";
+import {  getAllExams } from "@/features/exam/services/examServices";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
 import { setExams } from "@/store/examSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import SearchBar from "@/components/ui/SearchBar";
-import { toast } from "@/components/hooks/use-toast";
+import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
+import { examInstructions, examPermissions } from "@/features/exam/data/examInstructions";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -23,7 +23,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import {
   Select,
@@ -164,21 +163,6 @@ function ExamTableComponent() {
 
   const hasActiveFilters = subjectFilter !== "all" || examTypeFilter !== "all" || inputValue !== "";
 
-  const handleExport = async (format: 'excel' | 'csv') => {
-    try {
-      await exportExams(filteredData, format);
-      toast({ title: 'Export thành công!' });
-    } catch (error) {
-      const errorMessage = error instanceof Error && error.message 
-        ? error.message
-        : 'Error exporting exams';
-      toast({
-        title: errorMessage,
-        variant: 'error',
-      });
-    }
-  };
-
   // Memoize columns
   const columns = useMemo(() => examColumns(searchQuery), [searchQuery]);
 
@@ -270,7 +254,7 @@ function ExamTableComponent() {
           {/* Primary Action Button */}
           {hasPermission(permissions, 'exam:create') && (
             <Button 
-              className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2" 
+              className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2 cursor-pointer" 
               onClick={() => router.push('/dashboard/exam/create')}
             >
               <span className="text-lg">+</span>
@@ -288,7 +272,7 @@ function ExamTableComponent() {
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Tất cả môn học" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="cursor-pointer">
                 <SelectItem value="all">Tất cả môn học</SelectItem>
                 {subjects.map((subject) => (
                   <SelectItem key={subject.id} value={subject.id.toString()}>
@@ -303,7 +287,7 @@ function ExamTableComponent() {
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Loại đề thi" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="cursor-pointer">
                 <SelectItem value="all">Tất cả loại</SelectItem>
                 {examTypeOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
@@ -318,7 +302,7 @@ function ExamTableComponent() {
               <Button 
                 variant="outline" 
                 onClick={clearFilters}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer"
               >
                 <FilterX className="h-4 w-4" />
                 Xóa bộ lọc
@@ -328,10 +312,18 @@ function ExamTableComponent() {
 
           {/* Actions Group */}
           <div className="flex flex-wrap gap-2">
+            {/* Help Button */}
+            <TabbedHelpModal 
+              featureName="Quản lý Đề thi" 
+              entityName="đề thi"
+              permissions={examPermissions}
+              detailedInstructions={examInstructions}
+            />
+            
             {/* Column Visibility */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer">
                   <Columns className="h-4 w-4" />
                   Cột
                   <ChevronDown className="h-4 w-4" />
@@ -357,26 +349,6 @@ function ExamTableComponent() {
                       </DropdownMenuCheckboxItem>
                     );
                   })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Export Actions */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-2">
-                  <Output sx={{ fontSize: 16 }} />
-                  Xuất
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleExport('excel')}>
-                  📊 Excel (.xlsx)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
-                  📄 CSV (.csv)
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -470,7 +442,7 @@ function ExamTableComponent() {
             variant="outline"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
             Trước
@@ -487,7 +459,7 @@ function ExamTableComponent() {
                 size="sm"
                 variant={item === pageIndex ? 'default' : 'outline'}
                 onClick={() => table.setPageIndex(item as number)}
-                className="min-w-[40px]"
+                className="min-w-[40px] cursor-pointer"
               >
                 {item + 1}
               </Button>
@@ -499,7 +471,7 @@ function ExamTableComponent() {
             variant="outline"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 cursor-pointer"
           >
             Tiếp
             <ChevronRight className="h-4 w-4" />

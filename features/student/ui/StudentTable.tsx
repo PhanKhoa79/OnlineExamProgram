@@ -17,6 +17,8 @@ import { ChevronDown, Columns, ChevronLeft, ChevronRight, FilterX } from "lucide
 import { Add, Output } from "@mui/icons-material";
 import { toast } from "@/components/hooks/use-toast";
 import { StudentImportFileModal, FileType } from "@/features/student/ui/modal/StudentImportFileModal";
+import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
+import { studentInstructions, studentPermissions } from "@/features/student/data/studentInstructions";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -348,16 +350,27 @@ function StudentTableComponent() {
             />
           </div>
 
-          {/* Primary Action Button */}
-          {hasPermission(permissions, 'student:create') && (
-            <Button 
-              className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2" 
-              onClick={() => router.push('/dashboard/student/create')}
-            >
-              <span className="text-lg">+</span>
-              Thêm sinh viên
-            </Button>
-          )}
+          {/* Actions Group */}
+          <div className="flex items-center gap-2">
+            {/* Help Button */}
+            <TabbedHelpModal 
+              featureName="Quản lý Sinh viên" 
+              entityName="sinh viên"
+              permissions={studentPermissions}
+              detailedInstructions={studentInstructions}
+            />
+            
+            {/* Primary Action Button */}
+            {hasPermission(permissions, 'student:create') && (
+              <Button 
+                className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2 cursor-pointer" 
+                onClick={() => router.push('/dashboard/student/create')}
+              >
+                <span className="text-lg">+</span>
+                Thêm sinh viên
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Bottom Row: Filters and Secondary Actions */}
@@ -369,7 +382,7 @@ function StudentTableComponent() {
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Tất cả lớp" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="cursor-pointer">
                 <SelectItem value="all">Tất cả lớp</SelectItem>
                 <SelectItem value="unassigned">Chưa phân lớp</SelectItem>
                 {classes.map((cls) => (
@@ -385,7 +398,7 @@ function StudentTableComponent() {
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="Giới tính" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="cursor-pointer">
                 <SelectItem value="all">Tất cả</SelectItem>
                 <SelectItem value="Nam">Nam</SelectItem>
                 <SelectItem value="Nữ">Nữ</SelectItem>
@@ -398,7 +411,7 @@ function StudentTableComponent() {
               <Button 
                 variant="outline" 
                 onClick={clearFilters}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer"
               >
                 <FilterX className="h-4 w-4" />
                 Xóa bộ lọc
@@ -411,7 +424,7 @@ function StudentTableComponent() {
             {/* Column Visibility */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer">
                   <Columns className="h-4 w-4" />
                   Cột
                   <ChevronDown className="h-4 w-4" />
@@ -444,7 +457,7 @@ function StudentTableComponent() {
             {hasPermission(permissions, 'student:create') && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2">
+                  <Button size="sm" className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2 cursor-pointer">
                     <Add sx={{ fontSize: 16 }} />
                     Nhập
                     <ChevronDown className="h-4 w-4" />
@@ -452,10 +465,10 @@ function StudentTableComponent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => openModal('xlsx')}>
+                  <DropdownMenuItem onClick={() => openModal('xlsx')} className="cursor-pointer">
                     📊 Excel (.xlsx)
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openModal('csv')}>
+                  <DropdownMenuItem onClick={() => openModal('csv')} className="cursor-pointer">
                     📄 CSV (.csv)
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -466,7 +479,7 @@ function StudentTableComponent() {
             {/* Export Actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-2">
+                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-2 cursor-pointer">
                   <Output sx={{ fontSize: 16 }} />
                   Xuất
                   <ChevronDown className="h-4 w-4" />
@@ -474,10 +487,10 @@ function StudentTableComponent() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleExport('excel')}>
+                <DropdownMenuItem onClick={() => handleExport('excel')} className="cursor-pointer">
                   📊 Excel (.xlsx)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                <DropdownMenuItem onClick={() => handleExport('csv')} className="cursor-pointer">
                   📄 CSV (.csv)
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -573,7 +586,7 @@ function StudentTableComponent() {
             variant="outline"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
             Trước
@@ -590,7 +603,7 @@ function StudentTableComponent() {
                 size="sm"
                 variant={item === pageIndex ? 'default' : 'outline'}
                 onClick={() => table.setPageIndex(item as number)}
-                className="min-w-[40px]"
+                className="min-w-[40px] cursor-pointer"
               >
                 {item + 1}
               </Button>
@@ -602,7 +615,7 @@ function StudentTableComponent() {
             variant="outline"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 cursor-pointer"
           >
             Tiếp
             <ChevronRight className="h-4 w-4" />

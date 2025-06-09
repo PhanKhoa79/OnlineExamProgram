@@ -51,7 +51,7 @@ export const studentColumns = (dispatch: AppDispatch): ColumnDef<StudentDto>[] =
     {
       accessorKey: "student_code",
       header: ({ column }) => (
-        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="cursor-pointer">
           Mã sinh viên 
           <ArrowUpDown className="h-4 w-4" />
         </Button>
@@ -68,7 +68,7 @@ export const studentColumns = (dispatch: AppDispatch): ColumnDef<StudentDto>[] =
     {
       accessorKey: "fullName",
       header: ({ column }) => (
-        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="cursor-pointer">
           Họ và tên
           <ArrowUpDown className="h-4 w-4" />
         </Button>
@@ -77,7 +77,7 @@ export const studentColumns = (dispatch: AppDispatch): ColumnDef<StudentDto>[] =
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="cursor-pointer">
           Email 
           <ArrowUpDown className="h-4 w-4" />
         </Button>

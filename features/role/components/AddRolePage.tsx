@@ -13,6 +13,8 @@ import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
@@ -135,10 +137,13 @@ export default function AddRolePage() {
         <BreadcrumbItem>Thêm quyền</BreadcrumbItem>
       </Breadcrumb>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Thêm quyền mới</h1>
-        <p className="text-muted-foreground">
-          Tạo quyền mới với các quyền cần thiết
+      <div className="text-center space-y-3 py-6">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <Person className="h-6 w-6" />
+          <h1 className="text-2xl font-bold tracking-tight">Thêm quyền mới</h1>
+        </div>
+        <p className="text-lg text-gray-600 font-medium">
+          Tạo quyền mới với <span className="text-green-600 font-semibold bg-green-50 px-3 py-1 rounded-full">các quyền cần thiết</span>
         </p>
       </div>
       

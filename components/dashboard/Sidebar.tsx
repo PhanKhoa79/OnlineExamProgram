@@ -7,7 +7,7 @@ import { SidebarItem } from './SidebarItem';
 import Image from 'next/image';
 import { useTheme } from '../providers/ThemeProvider';
 import { ToggleSwitch } from '../ui/ToggleSwitch';
-import { ManageAccounts, DarkMode, LightMode, Close, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd, Groups, QuestionAnswer, AutoStories, School, SpeakerNotes } from '@mui/icons-material';
+import { ManageAccounts, DarkMode, LightMode, Close, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd, Groups, QuestionAnswer, AutoStories, School, SpeakerNotes, Schedule } from '@mui/icons-material';
 import { useAuthStore } from '@/features/auth/store';
 import { hasResourcePermission } from '@/lib/permissions';
 
@@ -49,7 +49,7 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
       href: `${basePath}/account`
     },
     hasResourcePermission(permissions, 'role') && {
-      title: 'Phân quyền người dùng',
+      title: 'Quản lý vai trò',
       icon: <ManageAccounts sx={{ fontSize: 22 }} />,
       href: `${basePath}/role`
     },
@@ -67,6 +67,11 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
       title: 'Quản lý đề thi',
       icon: <SpeakerNotes sx={{ fontSize: 22 }} />,
       href: `${basePath}/exam`
+    },
+    hasResourcePermission(permissions, 'schedule') && {
+      title: 'Quản lý lịch thi',
+      icon: <Schedule sx={{ fontSize: 22 }} />,
+      href: `${basePath}/schedule`
     },
     hasResourcePermission(permissions, 'subject') && {
       title: 'Quản lý môn học',

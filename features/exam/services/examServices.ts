@@ -36,14 +36,37 @@ export const getExamsBySubject = async (subjectId: number) => {
   return response.data;
 };
 
-export const exportExams = async (data: ExamDto[], format: 'excel' | 'csv') => {
 
-  console.log(`Exporting ${data.length} exams in ${format} format`);
-  
-  // Simulate export process
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(`Exported ${data.length} exams successfully`);
-    }, 1000);
+export const exportExamWithQuestions = async (examId: number, format: 'excel' | 'csv' = 'excel') => {
+  const response = await api.post(`/exam/${examId}/export?format=${format}`, {}, {
+    responseType: 'blob',
+    headers: {
+      'Accept': format === 'excel' 
+        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        : 'text/csv'
+    }
   });
+
+  // Extract filename from Content-Disposition header
+  const contentDisposition = response.headers['content-disposition'] || '';
+  const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+  const filename = filenameMatch ? filenameMatch[1] : `de_thi_${examId}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+
+  // Create download link
+  const blob = new Blob([response.data], { 
+    type: format === 'excel' 
+      ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      : 'text/csv; charset=utf-8'
+  });
+  
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+
+  return { success: true, filename };
 };

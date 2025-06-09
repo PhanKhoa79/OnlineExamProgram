@@ -265,10 +265,13 @@ const EditExamPage: React.FC = () => {
         <BreadcrumbItem>Chỉnh sửa đề thi</BreadcrumbItem>
       </Breadcrumb>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa đề thi</h1>
-        <p className="text-muted-foreground">
-          Cập nhật thông tin đề thi: &quot;{examData.name}&quot;
+      <div className="text-center space-y-3 py-6">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <PenTool className="h-6 w-6" />
+          <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa đề thi</h1>
+        </div>
+        <p className="text-lg text-gray-600 font-medium">
+          Cập nhật thông tin đề thi: <span className="text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">&quot;{examData.name}&quot;</span>
         </p>
       </div>
 

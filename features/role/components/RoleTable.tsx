@@ -15,19 +15,19 @@ import { setRoles } from "@/store/roleSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import SearchBar from "@/components/ui/SearchBar";
+import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
+import { roleInstructions, rolePermissions } from "@/features/role/data/roleInstructions";
 
 export function RoleTable() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Track if data has been fetched to prevent duplicate calls
   const hasFetchedData = useRef(false);
 
   const roles = useSelector((state: RootState) => state.role.roles);
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
-  // Fetch data only once on mount - no dependencies at all
   useEffect(() => {
     if (hasFetchedData.current) return;
     
@@ -45,13 +45,11 @@ export function RoleTable() {
     };
 
     fetchRole();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Explicitly ignore dispatch dependency to prevent loops
 
-  // Memoize roles to prevent unnecessary re-calculations
+  }, []); 
+
   const memoizedRoles = useMemo(() => roles || [], [roles]);
 
-  // Memoize search keys to prevent recreation
   const searchKeys = useMemo(() => ["name"] as (keyof RoleWithPermissionsDto)[], []);
 
   const {
@@ -82,12 +80,20 @@ export function RoleTable() {
           onChange={handleSearchChange}
         />
         <div className="flex flex-wrap justify-center gap-4 lg:justify-end">
+          {/* Help Button */}
+          <TabbedHelpModal 
+            featureName="Quản lý Vai trò" 
+            entityName="vai trò"
+            permissions={rolePermissions}
+            detailedInstructions={roleInstructions}
+          />
+          
           {/* Clear Filters */}
           {hasActiveFilters && (
             <Button 
               variant="outline" 
               onClick={clearFilters}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 cursor-pointer"
             >
               <FilterX className="h-4 w-4" />
               Xóa bộ lọc
@@ -96,7 +102,7 @@ export function RoleTable() {
           
           {hasPermission(permissions, 'role:create') && (
             <Button className="bg-blue-500 text-white hover:bg-blue-800 cursor-pointer" onClick={() => router.push('/dashboard/role/create')}>
-              + Thêm quyền
+              + Thêm vai trò
             </Button> 
           )}
         </div>

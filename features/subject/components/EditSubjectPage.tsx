@@ -9,6 +9,8 @@ import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
@@ -121,32 +123,36 @@ export default function EditSubjectPage({ id }: { id: number }) {
   return (
     <div className="space-y-6 px-6 py-4">
       {/* Breadcrumb */}
-      <Breadcrumb className="flex list-none items-center gap-2">
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard"
-            className="text-blue-600 underline font-semibold"
-          >
-            Dashboard
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard/subject"
-            className="text-blue-600 underline font-semibold"
-          >
-            Môn học
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>Chỉnh sửa môn học</BreadcrumbItem>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              href="/dashboard"
+              isHome={true}
+            >
+              Dashboard
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard/subject">
+              Môn học
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Chỉnh sửa môn học</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
       </Breadcrumb>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa môn học</h1>
-        <p className="text-muted-foreground">
-          Chỉnh sửa môn học: &quot;{subjectName}&quot;
+      <div className="text-center space-y-3 py-6">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <Edit className="h-6 w-6" />
+          <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa môn học</h1>
+        </div>
+        <p className="text-lg text-gray-600 font-medium">
+          Chỉnh sửa môn học: <span className="text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">&quot;{subjectName}&quot;</span>
         </p>
       </div>
       {/* Card */}

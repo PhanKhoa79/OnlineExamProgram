@@ -6,6 +6,7 @@ import classReducer from './classSlice'
 import subjectReducer from './subjectSlice'
 import questionReducer from './questionSlice'
 import examReducer from './examSlice'
+import scheduleReducer from './scheduleSlice'
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     subject: subjectReducer,
     question: questionReducer,
     exam: examReducer,
+    schedule: scheduleReducer,
   }
 })
 

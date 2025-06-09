@@ -18,6 +18,8 @@ import { getAllRolesWithPermissions } from "@/features/role/services/roleService
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import SearchBar from "@/components/ui/SearchBar";
+import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
+import { accountInstructions, accountPermissions } from "@/features/account/data/accountInstructions";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -327,14 +329,14 @@ function AccountTableComponent() {
           {hasPermission(permissions, 'account:create') && (
             <div className="flex gap-2">
               <Button 
-                className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2" 
+                className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2 cursor-pointer" 
                 onClick={() => router.push('/dashboard/account/create')}
               >
                 <Add sx={{ fontSize: 18 }} />
                 Thêm tài khoản
               </Button>
               <Button 
-                className="bg-yellow-500 text-white hover:bg-yellow-600 transition-colors flex items-center gap-2" 
+                className="bg-yellow-500 text-white hover:bg-yellow-600 transition-colors flex items-center gap-2 cursor-pointer" 
                 onClick={() => router.push('/dashboard/account/upload-students')}
               >
                 <FileUpload sx={{ fontSize: 18 }} />
@@ -353,7 +355,7 @@ function AccountTableComponent() {
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Tất cả quyền" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="cursor-pointer">
                 <SelectItem value="all">Tất cả quyền</SelectItem>
                 {roles.map((role) => (
                   <SelectItem key={role.name} value={role.name}>
@@ -368,7 +370,7 @@ function AccountTableComponent() {
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="cursor-pointer">
                 <SelectItem value="all">Tất cả</SelectItem>
                 <SelectItem value="active">Đã kích hoạt</SelectItem>
                 <SelectItem value="inactive">Chưa kích hoạt</SelectItem>
@@ -380,7 +382,7 @@ function AccountTableComponent() {
               <Button 
                 variant="outline" 
                 onClick={clearFilters}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer"
               >
                 <FilterX className="h-4 w-4" />
                 Xóa bộ lọc
@@ -390,10 +392,18 @@ function AccountTableComponent() {
 
           {/* Actions Group */}
           <div className="flex flex-wrap gap-2">
+            {/* Help Button */}
+            <TabbedHelpModal 
+              featureName="Quản lý Tài khoản" 
+              entityName="tài khoản"
+              permissions={accountPermissions}
+              detailedInstructions={accountInstructions}
+            />
+            
             {/* Column Visibility */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer">
                   <Columns className="h-4 w-4" />
                   Cột
                   <ChevronDown className="h-4 w-4" />
@@ -426,7 +436,7 @@ function AccountTableComponent() {
             {hasPermission(permissions, 'account:create') && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2">
+                  <Button size="sm" className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2 cursor-pointer">
                     <Add sx={{ fontSize: 16 }} />
                     Nhập
                     <ChevronDown className="h-4 w-4" />
@@ -434,10 +444,10 @@ function AccountTableComponent() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => openModal('xlsx')}>
+                  <DropdownMenuItem onClick={() => openModal('xlsx')} className="cursor-pointer">
                     📊 Excel (.xlsx)
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openModal('csv')}>
+                  <DropdownMenuItem onClick={() => openModal('csv')} className="cursor-pointer">
                     📄 CSV (.csv)
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -448,7 +458,7 @@ function AccountTableComponent() {
             {/* Export Actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-2">
+                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-2 cursor-pointer">
                   <Output sx={{ fontSize: 16 }} />
                   Xuất
                   <ChevronDown className="h-4 w-4" />
@@ -456,10 +466,10 @@ function AccountTableComponent() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleExport('excel')}>
+                <DropdownMenuItem onClick={() => handleExport('excel')} className="cursor-pointer">
                   📊 Excel (.xlsx)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                <DropdownMenuItem onClick={() => handleExport('csv')} className="cursor-pointer">
                   📄 CSV (.csv)
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -468,7 +478,7 @@ function AccountTableComponent() {
             {/* Bulk Actions */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer">
                   Thao tác
                   <ChevronDown className="h-4 w-4" />
               </Button>
@@ -477,7 +487,7 @@ function AccountTableComponent() {
                 <DropdownMenuLabel>Hành động hàng loạt</DropdownMenuLabel>
                 {hasPermission(permissions, 'account:delete') && (
                   <DropdownMenuItem onClick={handleDeleteAllClick}>
-                    <div className="flex items-center gap-2 text-red-600">
+                    <div className="flex items-center gap-2 text-red-600 cursor-pointer">
                       <Delete sx={{ fontSize: 16 }} />
                       Xóa đã chọn
                     </div>
@@ -576,7 +586,7 @@ function AccountTableComponent() {
             variant="outline"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
             Trước
@@ -593,7 +603,7 @@ function AccountTableComponent() {
                 size="sm"
                 variant={item === pageIndex ? 'default' : 'outline'}
                 onClick={() => table.setPageIndex(item as number)}
-                className="min-w-[40px]"
+                className="min-w-[40px] cursor-pointer"
               >
                 {item + 1}
               </Button>
@@ -605,7 +615,7 @@ function AccountTableComponent() {
             variant="outline"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 cursor-pointer"
           >
             Tiếp
             <ChevronRight className="h-4 w-4" />
