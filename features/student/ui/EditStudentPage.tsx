@@ -16,6 +16,8 @@ import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import {
@@ -225,32 +227,36 @@ export function EditStudentPage({ id }: EditStudentPageProps) {
   return (
     <div className="space-y-6 px-6 py-4">
       {/* Breadcrumb */}
-      <Breadcrumb className="flex list-none items-center gap-2">
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard"
-            className="text-blue-600 underline font-semibold"
-          >
-            Dashboard
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard/student"
-            className="text-blue-600 underline font-semibold"
-          >
-            Sinh viên
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>Chỉnh sửa sinh viên</BreadcrumbItem>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              href="/dashboard"
+              isHome={true}
+            >
+              Dashboard
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/dashboard/student">
+              Sinh viên
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Chỉnh sửa sinh viên</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
       </Breadcrumb>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa sinh viên</h1>
-        <p className="text-muted-foreground">
-          Chỉnh sửa sinh viên: &quot;{studentData?.fullName}&quot;
+      <div className="text-center space-y-3 py-6">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <Person className="h-6 w-6" />
+          <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa sinh viên</h1>
+        </div>
+        <p className="text-lg text-gray-600 font-medium">
+          Chỉnh sửa sinh viên: <span className="text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">&quot;{studentData?.fullName}&quot;</span>
         </p>
       </div>
 
@@ -258,7 +264,7 @@ export function EditStudentPage({ id }: EditStudentPageProps) {
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle>
-            Chỉnh sửa sinh viên {studentData?.studentCode ? `- ${studentData.studentCode}` : ''}
+            Thông tin sinh viên
           </CardTitle>
         </CardHeader>
 

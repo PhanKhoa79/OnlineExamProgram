@@ -168,10 +168,13 @@ export default function AddAccountPage() {
         <BreadcrumbItem>Thêm tài khoản</BreadcrumbItem>
       </Breadcrumb>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Thêm tài khoản mới</h1>
-        <p className="text-muted-foreground">
-          Tạo tài khoản mới với các thông tin cần thiết
+      <div className="text-center space-y-3 py-6">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <Person className="h-6 w-6" />
+          <h1 className="text-2xl font-bold tracking-tight">Thêm tài khoản mới</h1>
+        </div>
+        <p className="text-lg text-gray-600 font-medium">
+          Tạo tài khoản mới với <span className="text-green-600 font-semibold bg-green-50 px-3 py-1 rounded-full">các thông tin cần thiết</span>
         </p>
       </div>
 
@@ -217,10 +220,10 @@ export default function AddAccountPage() {
 
           {/* Vai trò */}
           <div>
-            <Label htmlFor="role">Quyền</Label>
+            <Label htmlFor="role">Vai trò</Label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger className="w-full mt-2">
-                <SelectValue placeholder="-- Chọn quyền --" />
+                <SelectValue placeholder="-- Chọn vai trò --" />
               </SelectTrigger>
               <SelectContent>
                 {roles.map((role) => (

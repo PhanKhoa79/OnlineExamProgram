@@ -15,6 +15,8 @@ import { setSubjects } from "@/store/subjectSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import SearchBar from "@/components/ui/SearchBar";
+import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
+import { subjectInstructions, subjectPermissions } from "@/features/subject/data/subjectInstructions";
 
 export function SubjectTable() {
   const router = useRouter();
@@ -82,12 +84,20 @@ export function SubjectTable() {
           onChange={handleSearchChange}
         />
         <div className="flex flex-wrap justify-center gap-4 lg:justify-end">
+          {/* Help Button */}
+          <TabbedHelpModal 
+            featureName="Quản lý Môn học" 
+            entityName="môn học"
+            permissions={subjectPermissions}
+            detailedInstructions={subjectInstructions}
+          />
+          
           {/* Clear Filters */}
           {hasActiveFilters && (
             <Button 
               variant="outline" 
               onClick={clearFilters}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 cursor-pointer"
             >
               <FilterX className="h-4 w-4" />
               Xóa bộ lọc

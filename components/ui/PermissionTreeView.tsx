@@ -49,7 +49,7 @@ const getResourceLabel = (resource: string) => {
   const labelMap: Record<string, string> = {
     'role': 'Phân quyền',
     'student': 'Sinh viên', 
-    'exam': 'Bài thi',
+    'exam': 'Đề thi',
     'question': 'Câu hỏi',
     'subject': 'Môn học',
     'schedule': 'Lịch thi',

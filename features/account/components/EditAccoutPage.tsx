@@ -175,10 +175,13 @@ export default function EditAccountPage({ id }: { id: number }) {
         <BreadcrumbItem>Chỉnh sửa</BreadcrumbItem>
       </Breadcrumb>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa tài khoản</h1>
-        <p className="text-muted-foreground">
-          Chỉnh sửa tài khoản: &quot;{currentAccountData?.accountname}&quot;
+      <div className="text-center space-y-3 py-6">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">
+          <Person className="h-6 w-6" />
+          <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa tài khoản</h1>
+        </div>
+        <p className="text-lg text-gray-600 font-medium">
+          Chỉnh sửa tài khoản: <span className="text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full">&quot;{currentAccountData?.accountname}&quot;</span>
         </p>
       </div>
       {/* Card form */}
@@ -224,10 +227,10 @@ export default function EditAccountPage({ id }: { id: number }) {
 
           {/* Vai trò */}
           <div className="space-y-2">
-            <Label htmlFor="role">Quyền</Label>
+            <Label htmlFor="role">Vai trò</Label>
             <Select value={role} onValueChange={setRole}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="-- Chọn quyền --" />
+                <SelectValue placeholder="-- Chọn vai trò --" />
               </SelectTrigger>
               <SelectContent>
                 {roles.map((role) => (

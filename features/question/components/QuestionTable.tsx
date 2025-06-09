@@ -6,9 +6,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store"; 
 import { questionColumns } from "@/features/question/components/column";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Columns, ChevronLeft, ChevronRight, FilterX } from "lucide-react";
+import { ChevronDown, Columns, ChevronLeft, ChevronRight, FilterX, Trash2 } from "lucide-react";
 import { Add, Output } from "@mui/icons-material";
-import { getAllQuestions, exportQuestions, importQuestionsFromFile } from "@/features/question/services/questionService";
+import { getAllQuestions, exportQuestions, importQuestionsFromFile, batchDeleteQuestions } from "@/features/question/services/questionService";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
 import { QuestionDto } from "@/features/question/types/question.type";
@@ -17,8 +17,11 @@ import { setQuestions } from "@/store/questionSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import SearchBar from "@/components/ui/SearchBar";
+import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
+import { questionInstructions, questionPermissions } from "@/features/question/data/questionInstructions";
 import { toast } from "@/components/hooks/use-toast";
 import { QuestionImportFileModal, FileType } from "@/features/question/ui/modal/QuestionImportFileModal";
+import { BulkDeleteConfirmModal } from "@/features/question/ui/modal/BulkDeleteConfirmModal";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -51,6 +54,7 @@ import {
   useReactTable,
   type SortingState,
   type VisibilityState,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 
 function QuestionTableComponent() {
@@ -60,6 +64,7 @@ function QuestionTableComponent() {
   const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // Filter states
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
@@ -206,6 +211,7 @@ function QuestionTableComponent() {
 
   const [open, setOpen] = useState(false);
   const [fileType, setFileType] = useState<FileType | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const openModal = (type: FileType) => {
     setFileType(type);
@@ -215,6 +221,51 @@ function QuestionTableComponent() {
   // Memoize columns with subjects
   const columns = useMemo(() => questionColumns(subjects, searchQuery), [subjects, searchQuery]);
 
+  // Handle bulk delete - opens confirmation modal
+  const handleBulkDelete = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    
+    if (selectedRows.length === 0) {
+      toast({
+        title: "Vui lòng chọn ít nhất một câu hỏi để xóa",
+        variant: "error",
+      });
+      return;
+    }
+
+    setDeleteModalOpen(true);
+  };
+
+  // Confirm bulk delete - actual deletion logic
+  const confirmBulkDelete = async () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const selectedIds = selectedRows.map(row => row.original.id);
+
+    try {
+      await batchDeleteQuestions(selectedIds);
+      
+      // Refresh data
+      const updatedQuestions = await getAllQuestions();
+      dispatch(setQuestions(updatedQuestions));
+      
+      // Clear selection
+      setRowSelection({});
+      
+      toast({
+        title: `Đã xóa thành công ${selectedIds.length} câu hỏi`,
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error && error.message 
+        ? error.message
+        : 'Error deleting questions';
+      toast({
+        title: errorMessage,
+        variant: 'error',
+      });
+      throw error; // Re-throw to let modal handle it
+    }
+  };
+
   // Create table instance
   const table = useReactTable({
     data: filteredData,
@@ -223,13 +274,16 @@ function QuestionTableComponent() {
       columnVisibility,
       sorting,
       pagination,
+      rowSelection,
     },
     onColumnVisibilityChange: setColumnVisibility,
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    enableRowSelection: true,
     initialState: { pagination },
   });
 
@@ -259,6 +313,7 @@ function QuestionTableComponent() {
 
   // Column mapping for Vietnamese names
   const columnNames: Record<string, string> = {
+    select: "Chọn",
     questionText: "Nội dung câu hỏi",
     subjectId: "Môn học", 
     difficultyLevel: "Độ khó",
@@ -298,16 +353,31 @@ function QuestionTableComponent() {
             />
           </div>
 
-          {/* Primary Action Button */}
-          {hasPermission(permissions, 'question:create') && (
-            <Button 
-              className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2" 
-              onClick={() => router.push('/dashboard/question/create')}
-            >
-              <span className="text-lg">+</span>
-              Thêm câu hỏi
-            </Button>
-          )}
+          {/* Primary Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Bulk Delete Button */}
+            {hasPermission(permissions, 'question:delete') && Object.keys(rowSelection).length > 0 && (
+              <Button 
+                variant="destructive"
+                className="flex items-center gap-2 cursor-pointer" 
+                onClick={handleBulkDelete}
+                disabled={isLoading}
+              >
+                <Trash2 className="h-4 w-4" />
+                Xóa ({Object.keys(rowSelection).length})
+              </Button>
+            )}
+            
+            {hasPermission(permissions, 'question:create') && (
+              <Button 
+                className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2 cursor-pointer" 
+                onClick={() => router.push('/dashboard/question/create')}
+              >
+                <span className="text-lg">+</span>
+                Thêm câu hỏi
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Bottom Row: Filters and Secondary Actions */}
@@ -319,7 +389,7 @@ function QuestionTableComponent() {
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Tất cả môn học" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="cursor-pointer">
                 <SelectItem value="all">Tất cả môn học</SelectItem>
                 {subjects.map((subject) => (
                   <SelectItem key={subject.id} value={subject.id.toString()}>
@@ -334,7 +404,7 @@ function QuestionTableComponent() {
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Độ khó" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="cursor-pointer">
                 <SelectItem value="all">Tất cả độ khó</SelectItem>
                 {difficultyOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
@@ -349,7 +419,7 @@ function QuestionTableComponent() {
               <Button 
                 variant="outline" 
                 onClick={clearFilters}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 cursor-pointer"
               >
                 <FilterX className="h-4 w-4" />
                 Xóa bộ lọc
@@ -359,10 +429,18 @@ function QuestionTableComponent() {
 
           {/* Actions Group */}
           <div className="flex flex-wrap gap-2">
+            {/* Help Button */}
+            <TabbedHelpModal 
+              featureName="Quản lý Câu hỏi" 
+              entityName="câu hỏi"
+              permissions={questionPermissions}
+              detailedInstructions={questionInstructions}
+            />
+            
             {/* Column Visibility */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer">
                   <Columns className="h-4 w-4" />
                   Cột
                   <ChevronDown className="h-4 w-4" />
@@ -396,7 +474,7 @@ function QuestionTableComponent() {
               <>
                 <Button 
                   size="sm" 
-                  className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2"
+                  className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2 cursor-pointer"
                   onClick={() => openModal('xlsx')}
                 >
                   <Add sx={{ fontSize: 16 }} />
@@ -406,10 +484,19 @@ function QuestionTableComponent() {
               </>
             )}
 
+            {/* Bulk Delete Confirmation Modal */}
+            <BulkDeleteConfirmModal
+              open={deleteModalOpen}
+              setOpen={setDeleteModalOpen}
+              selectedCount={Object.keys(rowSelection).length}
+              onConfirm={confirmBulkDelete}
+              isLoading={isLoading}
+            />
+
             {/* Export Actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-2">
+                <Button size="sm" className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-2 cursor-pointer">
                   <Output sx={{ fontSize: 16 }} />
                   Xuất
                   <ChevronDown className="h-4 w-4" />
@@ -417,10 +504,10 @@ function QuestionTableComponent() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleExport('excel')}>
+                <DropdownMenuItem onClick={() => handleExport('excel')} className="cursor-pointer">
                   📊 Excel (.xlsx)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport('csv')}>
+                <DropdownMenuItem onClick={() => handleExport('csv')} className="cursor-pointer">
                   📄 CSV (.csv)
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -516,7 +603,7 @@ function QuestionTableComponent() {
             variant="outline"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
             Trước
@@ -533,7 +620,7 @@ function QuestionTableComponent() {
                 size="sm"
                 variant={item === pageIndex ? 'default' : 'outline'}
                 onClick={() => table.setPageIndex(item as number)}
-                className="min-w-[40px]"
+                className="min-w-[40px] cursor-pointer"
               >
                 {item + 1}
               </Button>
@@ -545,7 +632,7 @@ function QuestionTableComponent() {
             variant="outline"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 cursor-pointer"
           >
             Tiếp
             <ChevronRight className="h-4 w-4" />

@@ -10,15 +10,12 @@ export const setupInterceptors = (api: AxiosInstance) => {
         originalRequest._retry = true;
 
         try {
-         if (!originalRequest._retry) {
-            originalRequest._retry = true;
-            await api.post('/auth/refresh-token');
-            return api(originalRequest);
-          }
+          await api.post('/auth/refresh-token');
+          return api(originalRequest);
         } catch (refreshError) {
-            if (typeof window !== 'undefined') {
-              window.location.href = '/auth/login';
-            }
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
           return Promise.reject(refreshError);
         }
       }

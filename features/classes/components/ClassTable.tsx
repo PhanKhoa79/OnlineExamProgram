@@ -15,6 +15,8 @@ import { setClasses } from "@/store/classSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import SearchBar from "@/components/ui/SearchBar";
+import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
+import { classInstructions, classPermissions } from "@/features/classes/data/classInstructions";
 
 export function ClassTable() {
   const router = useRouter();
@@ -45,10 +47,8 @@ export function ClassTable() {
     };
 
     fetchClasses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Explicitly ignore dispatch dependency to prevent loops
+  }, []); 
 
-  // Memoize classes to prevent unnecessary re-calculations
   const memoizedClasses = useMemo(() => classes || [], [classes]);
 
   // Memoize search keys to prevent recreation
@@ -60,17 +60,14 @@ export function ClassTable() {
     filteredData,
   } = useSearchFilter(memoizedClasses, searchKeys);
 
-  // Optimize search input handler to prevent unnecessary re-renders
   const handleSearchChange = useCallback((value: string) => {
     setInputValue(value);
   }, [setInputValue]);
 
-  // Clear all filters
   const clearFilters = useCallback(() => {
     setInputValue("");
   }, [setInputValue]);
 
-  // Check if any filters are active
   const hasActiveFilters = inputValue !== "";
 
   return (
@@ -82,12 +79,20 @@ export function ClassTable() {
           onChange={handleSearchChange}
         />
         <div className="flex flex-wrap justify-center gap-4 lg:justify-end">
+          {/* Help Button */}
+          <TabbedHelpModal 
+            featureName="Quản lý Lớp học" 
+            entityName="lớp học"
+            permissions={classPermissions}
+            detailedInstructions={classInstructions}
+          />
+          
           {/* Clear Filters */}
           {hasActiveFilters && (
             <Button 
               variant="outline" 
               onClick={clearFilters}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 cursor-pointer"
             >
               <FilterX className="h-4 w-4" />
               Xóa bộ lọc
