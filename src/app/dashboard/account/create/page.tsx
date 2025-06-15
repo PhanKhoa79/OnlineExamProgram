@@ -1,9 +1,15 @@
 'use client';
 
-import AddAccountPage  from '@/features/account/components/AddAccountPage';
-export default function AccountCreatePage() {
+import dynamic from 'next/dynamic';
+import { PageLoader } from '@/components/ui/PageLoader';
 
-    return (
-      <AddAccountPage  />
-    );
+const AddAccountPage = dynamic(
+  () => import('@/features/account/components/AddAccountPage'),
+  {
+    loading: () => <PageLoader isLoading={true} loadingText="Đang tải form tạo tài khoản..." />
+  }
+);
+
+export default function AccountCreatePage() {
+  return <AddAccountPage />;
 }

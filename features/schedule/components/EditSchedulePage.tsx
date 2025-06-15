@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/hooks/use-toast";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import { getScheduleById, updateSchedule } from "@/features/schedule/services/scheduleServices";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
 import { UpdateExamScheduleDto, ExamScheduleDto } from "@/features/schedule/types/schedule";
@@ -192,38 +187,20 @@ const EditSchedulePage: React.FC = () => {
     );
   }
 
-  // Get the selected subject based on both scheduleData and current form value
-  // Handle both nested subject structure and flat subjectId
+  
   const fallbackSubjectId = scheduleData?.subject?.id || scheduleData?.subjectId;
   const currentSubjectId = watch("subjectId") || fallbackSubjectId;
   const selectedSubject = subjects.find(s => s.id === currentSubjectId);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Breadcrumb */}
-      <Breadcrumb className="flex list-none items-center gap-2">
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard"
-            className="text-blue-600 underline font-semibold"
-          >
-            Dashboard
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard/schedule"
-            className="text-blue-600 underline font-semibold"
-          >
-            Quản lý lịch thi
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <span className="font-medium text-foreground">Chỉnh sửa lịch thi</span>
-        </BreadcrumbItem>
-      </Breadcrumb>
+      <NavigableBreadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard", isHome: true },
+          { label: "Lịch thi", href: "/dashboard/schedule" },
+          { label: "Sửa lịch thi", isActive: true },
+        ]}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between">

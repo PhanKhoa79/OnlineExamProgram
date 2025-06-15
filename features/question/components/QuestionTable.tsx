@@ -11,6 +11,8 @@ import { Add, Output } from "@mui/icons-material";
 import { getAllQuestions, exportQuestions, importQuestionsFromFile, batchDeleteQuestions } from "@/features/question/services/questionService";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
+import { useTableReload } from "@/hooks/useTableReload";
+import { ReloadButton } from "@/components/ui/ReloadButton";
 import { QuestionDto } from "@/features/question/types/question.type";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
 import { setQuestions } from "@/store/questionSlice";
@@ -97,27 +99,48 @@ function QuestionTableComponent() {
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
+  const fetchData = useCallback(async () => {
+    try {
+      // Fetch both questions and subjects in parallel
+      const [questionsData, subjectsData] = await Promise.all([
+        getAllQuestions(),
+        getAllSubjects()
+      ]);
+      
+      dispatch(setQuestions(questionsData));
+      setSubjects(subjectsData);
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      throw error;
+    }
+  }, [dispatch]);
+
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        // Fetch both questions and subjects in parallel
-        const [questionsData, subjectsData] = await Promise.all([
-          getAllQuestions(),
-          getAllSubjects()
-        ]);
-        
-        dispatch(setQuestions(questionsData));
-        setSubjects(subjectsData);
-      } catch (error) {
-        console.error("Failed to fetch data", error);
+        await fetchData();
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []); 
+    loadData();
+  }, [fetchData]);
+
+  const { isReloading, handleReload } = useTableReload({
+    onReload: fetchData,
+    onSuccess: () => {
+      toast({ title: 'Dữ liệu đã được làm mới!' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Lỗi khi tải dữ liệu', 
+        description: error.message,
+        variant: 'error' 
+      });
+    }
+  }); 
 
   const memoizedQuestions = useMemo(() => questions || [], [questions]);
 
@@ -429,6 +452,13 @@ function QuestionTableComponent() {
 
           {/* Actions Group */}
           <div className="flex flex-wrap gap-2">
+            {/* Reload Button */}
+            <ReloadButton 
+              onReload={handleReload}
+              isLoading={isReloading}
+              disabled={isLoading}
+            />
+            
             {/* Help Button */}
             <TabbedHelpModal 
               featureName="Quản lý Câu hỏi" 

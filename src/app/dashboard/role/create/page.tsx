@@ -1,7 +1,13 @@
-import AddRolePage from "@/features/role/components/AddRolePage";
-export default function AccountCreatePage() {
+import dynamic from 'next/dynamic';
+import { PageLoader } from '@/components/ui/PageLoader';
 
-    return (
-      <AddRolePage  />
-    );
+const AddRolePage = dynamic(
+  () => import('@/features/role/components/AddRolePage'),
+  {
+    loading: () => <PageLoader isLoading={true} loadingText="Đang tải form tạo quyền..." />
+  }
+);
+
+export default function RoleCreatePage() {
+  return <AddRolePage />;
 }

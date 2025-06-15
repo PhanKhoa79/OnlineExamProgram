@@ -1,9 +1,14 @@
-import { RoleTable } from "@/features/role/components/RoleTable";
+import dynamic from 'next/dynamic';
+import { PageLoader } from '@/components/ui/PageLoader';
 
-export default function DashboardAccountPage() {
-  return (
-    <>
-      <RoleTable />
-    </>
-  );
+// Dynamic import with loading fallback
+const RoleTable = dynamic(
+  () => import('@/features/role/components/RoleTable').then(mod => ({ default: mod.RoleTable })),
+  {
+    loading: () => <PageLoader isLoading={true} loadingText="Đang tải bảng quyền..." />
+  }
+);
+
+export default function DashboardRolePage() {
+  return <RoleTable />;
 }
