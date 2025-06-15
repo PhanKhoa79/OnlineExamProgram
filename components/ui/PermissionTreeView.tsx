@@ -55,6 +55,7 @@ const getResourceLabel = (resource: string) => {
     'schedule': 'Lịch thi',
     'class': 'Lớp học',
     'account': 'Tài khoản',
+    'room': 'Phòng thi',
   };
   return labelMap[resource] || resource;
 };

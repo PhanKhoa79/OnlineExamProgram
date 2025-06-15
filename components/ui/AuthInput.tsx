@@ -33,11 +33,11 @@ const AuthInput: React.FC<AuthInputProps> = ({
   maxLength,
 }) => (
   <div className="relative w-full">
-    <label htmlFor={id} className="block text-sm font-bold text-black-700 mb-1 dark:text-white">
-      {title}
+    <label htmlFor={id} className="block text-sm font-semibold text-gray-700 mb-2 dark:text-white">
+      {title || label}
     </label>
-    <div className="relative">
-      <span className="absolute left-3 top-5 transform -translate-y-1/2 text-gray-400">
+    <div className="relative group">
+      <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200">
         <Icon fontSize="small" />
       </span>
       <input
@@ -48,12 +48,14 @@ const AuthInput: React.FC<AuthInputProps> = ({
         onChange={onChange}
         disabled={disabled}
         maxLength={maxLength}
-        className={`w-full pl-10 pr-4 py-2 border rounded-md bg-white dark:bg-gray-700 dark:text-white focus:outline-none ${
-          error ? "border-red-500" : "border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-sky-400"
-        } ${disabled ? "bg-gray-200 dark:bg-gray-600 cursor-not-allowed" : ""}`}
+        className={`w-full pl-12 pr-12 py-3 border-2 rounded-xl bg-white dark:bg-gray-700 dark:text-white focus:outline-none transition-all duration-200 ${
+          error 
+            ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/20" 
+            : "border-gray-200 dark:border-gray-600 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 hover:border-gray-300"
+        } ${disabled ? "bg-gray-100 dark:bg-gray-600 cursor-not-allowed opacity-60" : ""}`}
       />
       {showPasswordToggle && (
-        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer">
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors duration-200">
           {type === "password" ? (
             <VisibilityOffIcon onClick={showPasswordToggle} />
           ) : (
@@ -62,7 +64,14 @@ const AuthInput: React.FC<AuthInputProps> = ({
         </div>
       )}
     </div>
-    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    {error && (
+      <div className="flex items-center mt-2">
+        <svg className="w-4 h-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        </svg>
+        <p className="text-red-500 text-sm font-medium">{error}</p>
+      </div>
+    )}
   </div>
 );
 

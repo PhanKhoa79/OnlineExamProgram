@@ -20,6 +20,22 @@ export const activate = async (
   });
 };
 
+export const verifyActivationToken = async (token: string) => {
+  return await api.get(`/auth/verify-activation-token/${token}`);
+};
+
+export const resendActivationLink = async (email: string) => {
+  return await api.post('/auth/resend-activation', { email });
+};
+
+export const requestActivation = async (email: string) => {
+  return await api.post('/auth/request-activation', { email });
+};
+
+export const getEmailByActivationToken = async (token: string) => {
+  return await api.get(`/auth/find-email-by-token/${token}`);
+};
+
 export const forgotPassword = async (email: string) => {
   return await api.post('/auth/forgot-password', { email });
 };

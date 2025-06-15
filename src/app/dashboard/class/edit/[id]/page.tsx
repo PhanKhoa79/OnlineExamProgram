@@ -1,13 +1,16 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import EditClassPage from '@/features/classes/components/EditClassPage';
+import dynamic from 'next/dynamic';
+import { PageLoader } from '@/components/ui/PageLoader';
 
-export default function DashBoardEditClassPage() {
-  const params = useParams();
+const EditClassPage = dynamic(
+  () => import('@/features/classes/components/EditClassPage'),
+  {
+    loading: () => <PageLoader isLoading={true} loadingText="Đang tải form chỉnh sửa lớp học..." />
+  }
+);
+
+export default function DashBoardEditClassPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);
-
-  return (
-    <EditClassPage id={id} />
-  );
+  return <EditClassPage id={id} />;
 }

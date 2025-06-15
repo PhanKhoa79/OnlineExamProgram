@@ -1,13 +1,16 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import EditAccountPage from '@/features/account/components/EditAccoutPage';
+import dynamic from 'next/dynamic';
+import { PageLoader } from '@/components/ui/PageLoader';
 
-export default function EditAccountModalPage() {
-  const params = useParams();
+const EditAccountPage = dynamic(
+  () => import('@/features/account/components/EditAccoutPage'),
+  {
+    loading: () => <PageLoader isLoading={true} loadingText="Đang tải form chỉnh sửa tài khoản..." />
+  }
+);
+
+export default function AccountEditPage({ params }: { params: { id: string } }) {
   const id = Number(params.id);
-
-  return (
-    <EditAccountPage id={id} />
-  );
+  return <EditAccountPage id={id} />;
 }

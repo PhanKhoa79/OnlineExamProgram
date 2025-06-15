@@ -1,14 +1,18 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { DetailQuestionModal } from '@/features/question/components/modal/DetailQuestionModal';
+import dynamic from 'next/dynamic';
+import { PageLoader } from '@/components/ui/PageLoader';
+import { useRouter } from 'next/navigation';
 
-export default function DetailQuestionModalPage() {
+const DetailQuestionModal = dynamic(
+  () => import('@/features/question/components/modal/DetailQuestionModal').then(mod => ({ default: mod.DetailQuestionModal })),
+  {
+    loading: () => <PageLoader isLoading={true} loadingText="Đang tải chi tiết câu hỏi..." />
+  }
+);
+
+export default function DetailQuestionModalPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const params = useParams();
   const id = Number(params.id);
-
-  return (
-    <DetailQuestionModal id={id} open={true} onOpenChange={() => router.back()} />
-  );
+  return <DetailQuestionModal id={id} open={true} onOpenChange={() => router.back()} />;
 } 

@@ -12,14 +12,7 @@ import { getStudentErrorMessage } from "../utils/validation";
 import { UpdateStudentDto, StudentDto } from "../types/student";
 import { toast } from '@/components/hooks/use-toast';
 import { updateStudent as updateStudentStore } from "@/store/studentSlice";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import {
   Card,
   CardContent,
@@ -227,28 +220,13 @@ export function EditStudentPage({ id }: EditStudentPageProps) {
   return (
     <div className="space-y-6 px-6 py-4">
       {/* Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href="/dashboard"
-              isHome={true}
-            >
-              Dashboard
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/student">
-              Sinh viên
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Chỉnh sửa sinh viên</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <NavigableBreadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard", isHome: true },
+          { label: "Sinh viên", href: "/dashboard/student" },
+          { label: "Chỉnh sửa sinh viên", isActive: true },
+        ]}
+      />
 
       <div className="text-center space-y-3 py-6">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">

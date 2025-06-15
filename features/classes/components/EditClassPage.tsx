@@ -5,12 +5,7 @@ import { useDispatch } from "react-redux";
 import { toast } from "@/components/hooks/use-toast";
 import AuthInput from "@/components/ui/AuthInput";
 import { Edit, SaveOutlined, Info } from "@mui/icons-material";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import {
   Card,
   CardContent,
@@ -96,28 +91,13 @@ export default function EditClassPage({ id }: { id: number }) {
 
   return (
     <div className="space-y-6 px-6 py-4">
-      {/* Breadcrumb */}
-      <Breadcrumb className="flex list-none items-center gap-2">
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard"
-            className="text-blue-600 underline font-semibold"
-          >
-            Dashboard
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard/class"
-            className="text-blue-600 underline font-semibold"
-          >
-            Lớp học
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>Chỉnh sửa lớp học</BreadcrumbItem>
-      </Breadcrumb>
+      <NavigableBreadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard", isHome: true },
+          { label: "Lớp học", href: "/dashboard/class" },
+          { label: "Sửa lớp học", isActive: true },
+        ]}
+      />
 
       <div className="text-center space-y-3 py-6">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">

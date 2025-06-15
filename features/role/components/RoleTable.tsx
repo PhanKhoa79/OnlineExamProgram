@@ -10,10 +10,13 @@ import { Button } from "@/components/ui/button";
 import { FilterX } from "lucide-react";
 import { getAllRolesWithPermissions } from "@/features/role/services/roleServices";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
+import { useTableReload } from "@/hooks/useTableReload";
+import { ReloadButton } from "@/components/ui/ReloadButton";
 import { RoleWithPermissionsDto } from '@/features/role/types/role'; 
 import { setRoles } from "@/store/roleSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
+import { toast } from "@/components/hooks/use-toast";
 import SearchBar from "@/components/ui/SearchBar";
 import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
 import { roleInstructions, rolePermissions } from "@/features/role/data/roleInstructions";
@@ -28,25 +31,45 @@ export function RoleTable() {
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
+  const fetchRole = useCallback(async () => {
+    try {
+      const data = await getAllRolesWithPermissions();
+      dispatch(setRoles(data));
+      hasFetchedData.current = true;
+    } catch (error) {
+      console.error("Failed to fetch roles", error);
+      throw error;
+    }
+  }, [dispatch]);
+
   useEffect(() => {
     if (hasFetchedData.current) return;
     
-    const fetchRole = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const data = await getAllRolesWithPermissions();
-        dispatch(setRoles(data));
-        hasFetchedData.current = true;
-      } catch (error) {
-        console.error("Failed to fetch roles", error);
+        await fetchRole();
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchRole();
+    loadData();
+  }, [fetchRole]);
 
-  }, []); 
+  const { isReloading, handleReload } = useTableReload({
+    onReload: fetchRole,
+    onSuccess: () => {
+      toast({ title: 'Dữ liệu đã được làm mới!' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Lỗi khi tải dữ liệu', 
+        description: error.message,
+        variant: 'error' 
+      });
+    }
+  }); 
 
   const memoizedRoles = useMemo(() => roles || [], [roles]);
 
@@ -80,6 +103,13 @@ export function RoleTable() {
           onChange={handleSearchChange}
         />
         <div className="flex flex-wrap justify-center gap-4 lg:justify-end">
+          {/* Reload Button */}
+          <ReloadButton 
+            onReload={handleReload}
+            isLoading={isReloading}
+            disabled={isLoading}
+          />
+          
           {/* Help Button */}
           <TabbedHelpModal 
             featureName="Quản lý Vai trò" 

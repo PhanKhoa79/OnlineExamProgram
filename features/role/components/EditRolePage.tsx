@@ -11,14 +11,7 @@ import {
   updateRolePermissions,
 } from "@/features/role/services/roleServices";
 import { updateRole } from "@/store/roleSlice";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import {
   Card,
   CardContent,
@@ -131,29 +124,13 @@ export default function EditRolePage({ id }: { id: number }) {
 
   return (
     <div className="space-y-6 px-6 py-4">
-      {/* Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href="/dashboard"
-              isHome={true}
-            >
-              Dashboard
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/role">
-              Phân quyền
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Chỉnh sửa quyền</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <NavigableBreadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard", isHome: true },
+          { label: "Vai trò", href: "/dashboard/role" },
+          { label: "Sửa vai trò", isActive: true },
+        ]}
+      />
 
       <div className="text-center space-y-3 py-6">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">

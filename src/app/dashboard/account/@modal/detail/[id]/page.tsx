@@ -1,14 +1,18 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import DetailAccountModal from '@/features/account/components/modal/DetailAccountModal';
+import dynamic from 'next/dynamic';
+import { PageLoader } from '@/components/ui/PageLoader';
+import { useRouter } from 'next/navigation';
 
-export default function DetailAccountModalPage() {
+const DetailAccountModal = dynamic(
+  () => import('@/features/account/components/modal/DetailAccountModal'),
+  {
+    loading: () => <PageLoader isLoading={true} loadingText="Đang tải chi tiết tài khoản..." />
+  }
+);
+
+export default function DetailAccountModalPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const params = useParams();
   const id = Number(params.id);
-
-  return (
-    <DetailAccountModal id={id} open={true} onOpenChange={() => router.back()} />
-  );
+  return <DetailAccountModal id={id} open={true} onOpenChange={() => router.back()} />;
 }

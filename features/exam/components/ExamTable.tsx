@@ -13,6 +13,9 @@ import { SubjectResponseDto } from "@/features/subject/types/subject";
 import { setExams } from "@/store/examSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
+import { useTableReload } from "@/hooks/useTableReload";
+import { ReloadButton } from "@/components/ui/ReloadButton";
+import { toast } from "@/components/hooks/use-toast";
 import SearchBar from "@/components/ui/SearchBar";
 import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
 import { examInstructions, examPermissions } from "@/features/exam/data/examInstructions";
@@ -88,26 +91,47 @@ function ExamTableComponent() {
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
+  const fetchData = useCallback(async () => {
+    try {
+      const [examsData, subjectsData] = await Promise.all([
+        getAllExams(),
+        getAllSubjects()
+      ]);
+      
+      dispatch(setExams(examsData));
+      setSubjects(subjectsData);
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      throw error;
+    }
+  }, [dispatch]);
+
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const [examsData, subjectsData] = await Promise.all([
-          getAllExams(),
-          getAllSubjects()
-        ]);
-        
-        dispatch(setExams(examsData));
-        setSubjects(subjectsData);
-      } catch (error) {
-        console.error("Failed to fetch data", error);
+        await fetchData();
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    loadData();
+  }, [fetchData]);
+
+  const { isReloading, handleReload } = useTableReload({
+    onReload: fetchData,
+    onSuccess: () => {
+      toast({ title: 'Dữ liệu đã được làm mới!' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Lỗi khi tải dữ liệu', 
+        description: error.message,
+        variant: 'error' 
+      });
+    }
+  });
 
   const memoizedExams = useMemo(() => exams || [], [exams]);
 
@@ -312,6 +336,13 @@ function ExamTableComponent() {
 
           {/* Actions Group */}
           <div className="flex flex-wrap gap-2">
+            {/* Reload Button */}
+            <ReloadButton 
+              onReload={handleReload}
+              isLoading={isReloading}
+              disabled={isLoading}
+            />
+            
             {/* Help Button */}
             <TabbedHelpModal 
               featureName="Quản lý Đề thi" 

@@ -10,10 +10,13 @@ import { Button } from "@/components/ui/button";
 import { FilterX } from "lucide-react";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
+import { useTableReload } from "@/hooks/useTableReload";
+import { ReloadButton } from "@/components/ui/ReloadButton";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
 import { setSubjects } from "@/store/subjectSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
+import { toast } from "@/components/hooks/use-toast";
 import SearchBar from "@/components/ui/SearchBar";
 import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
 import { subjectInstructions, subjectPermissions } from "@/features/subject/data/subjectInstructions";
@@ -29,26 +32,47 @@ export function SubjectTable() {
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
+  const fetchSubjects = useCallback(async () => {
+    try {
+      const data = await getAllSubjects();
+      dispatch(setSubjects(data));
+      hasFetchedData.current = true;
+    } catch (error) {
+      console.error("Failed to fetch subjects", error);
+      throw error;
+    }
+  }, [dispatch]);
+
   // Fetch data only once on mount - no dependencies at all
   useEffect(() => {
     if (hasFetchedData.current) return;
     
-    const fetchSubjects = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const data = await getAllSubjects();
-        dispatch(setSubjects(data));
-        hasFetchedData.current = true;
-      } catch (error) {
-        console.error("Failed to fetch subjects", error);
+        await fetchSubjects();
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSubjects();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Explicitly ignore dispatch dependency to prevent loops
+    loadData();
+  
+  }, [fetchSubjects]);
+
+  const { isReloading, handleReload } = useTableReload({
+    onReload: fetchSubjects,
+    onSuccess: () => {
+      toast({ title: 'Dữ liệu đã được làm mới!' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Lỗi khi tải dữ liệu', 
+        description: error.message,
+        variant: 'error' 
+      });
+    }
+  });
 
   // Memoize subjects to prevent unnecessary re-calculations
   const memoizedSubjects = useMemo(() => subjects || [], [subjects]);
@@ -84,6 +108,13 @@ export function SubjectTable() {
           onChange={handleSearchChange}
         />
         <div className="flex flex-wrap justify-center gap-4 lg:justify-end">
+          {/* Reload Button */}
+          <ReloadButton 
+            onReload={handleReload}
+            isLoading={isReloading}
+            disabled={isLoading}
+          />
+          
           {/* Help Button */}
           <TabbedHelpModal 
             featureName="Quản lý Môn học" 

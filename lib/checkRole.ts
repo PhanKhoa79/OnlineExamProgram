@@ -1,24 +1,34 @@
 import { cookies } from 'next/headers';
 import { decode } from 'jsonwebtoken';
 import { redirect } from 'next/navigation';
+import { cache } from 'react';
 
-export const checkUserRole = async (options?: { deny?: string[]; allow?: string[] }) => {
+// Cache the role check to avoid repeated operations
+const getRoleFromToken = cache(async () => {
   const cookieStore = await cookies();
   const token = cookieStore.get('accessToken')?.value;
 
   if (!token) {
-    redirect('/login');
-    return undefined as never;
+    return null;
   }
 
-  const decoded = decode(token);
+  try {
+    const decoded = decode(token);
 
-  if (!decoded || typeof decoded !== 'object' || !('role' in decoded)) {
-    redirect('/login');
-    return undefined as never;
+    if (!decoded || typeof decoded !== 'object' || !('role' in decoded)) {
+      return null;
+    }
+
+    const roleObj = (decoded as { role?: { id: number; name: string } }).role;
+    return roleObj || null;
+  } catch (error) {
+    console.error('Token decode error:', error);
+    return null;
   }
+});
 
-  const roleObj = (decoded as { role?: { id: number; name: string } }).role;
+export const checkUserRole = async (options?: { deny?: string[]; allow?: string[] }) => {
+  const roleObj = await getRoleFromToken();
 
   if (!roleObj) {
     redirect('/login');

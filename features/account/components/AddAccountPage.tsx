@@ -27,12 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import { useRouter } from "next/navigation";
 import { AccountResponse } from "../types/account";
 
@@ -156,17 +151,13 @@ export default function AddAccountPage() {
   return (
     <div className="space-y-6 px-6 py-4">
       {/* Breadcrumb */}
-      <Breadcrumb className="flex list-none items-center gap-2">
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/dashboard" className="text-blue-600 underline font-semibold">Dashboard</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/dashboard/account" className="text-blue-600 underline font-semibold">Tài khoản</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>Thêm tài khoản</BreadcrumbItem>
-      </Breadcrumb>
+      <NavigableBreadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard", isHome: true },
+          { label: "Tài khoản", href: "/dashboard/account" },
+          { label: "Thêm tài khoản", isActive: true },
+        ]}
+      />
 
       <div className="text-center space-y-3 py-6">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full shadow-lg">

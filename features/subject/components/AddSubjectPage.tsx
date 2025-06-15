@@ -7,14 +7,7 @@ import { getSubjectErrorMessage } from "../utils/validation";
 import AuthInput from "@/components/ui/AuthInput";
 import { SaveOutlined, Create, Description } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import {
   Card,
   CardContent,
@@ -124,29 +117,13 @@ export default function AddSubjectPage() {
 
   return (
     <div className="space-y-6 px-6 py-4">
-      {/* Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href="/dashboard"
-              isHome={true}
-            >
-              Dashboard
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/dashboard/subject">
-              Môn học
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Thêm môn học</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <NavigableBreadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard", isHome: true },
+          { label: "Môn học", href: "/dashboard/subject" },
+          { label: "Thêm môn học", isActive: true },
+        ]}
+      />
 
       <div className="text-center space-y-3 py-6">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full shadow-lg">

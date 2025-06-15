@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import ProfileAvatar from '@/components/ui/ProfileAvatar';
-import { DarkMode, LightMode, Notifications, Menu } from '@mui/icons-material';
+import { DarkMode, LightMode, Menu } from '@mui/icons-material';
 import Image from 'next/image';
 import { Sidebar } from './Sidebar';
+import NotificationBell from '@/features/notifications/components/NotificationBell';
 
 export const Navbar = () => {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -114,10 +115,7 @@ export const Navbar = () => {
           {/* Right Section - Actions */}
           <div className="flex items-center space-x-3">
             {/* Notifications */}
-            <button className="relative p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all duration-200">
-              <Notifications sx={{ fontSize: 22 }} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            <NotificationBell />
 
             {/* Theme Toggle - Only on desktop */}
             {!isSmallScreen && (

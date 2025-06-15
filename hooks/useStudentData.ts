@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { getAllStudents } from '@/features/student/services/studentService';
 import { getAllClasses } from '@/features/classes/services/classServices';
 import { StudentDto } from '@/features/student/types/student';

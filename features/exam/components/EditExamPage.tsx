@@ -7,12 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/hooks/use-toast";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import { getExamById, updateExam, getQuestionsOfExam } from "@/features/exam/services/examServices";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
 import { getAllQuestions } from "@/features/question/services/questionService";
@@ -242,28 +237,13 @@ const EditExamPage: React.FC = () => {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Breadcrumb */}
-      <Breadcrumb className="flex list-none items-center gap-2">
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard"
-            className="text-blue-600 underline font-semibold"
-          >
-            Dashboard
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard/exam"
-            className="text-blue-600 underline font-semibold"
-          >
-            Đề thi
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>Chỉnh sửa đề thi</BreadcrumbItem>
-      </Breadcrumb>
+      <NavigableBreadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard", isHome: true },
+          { label: "Đề thi", href: "/dashboard/exam" },
+          { label: "Sửa đề thi", isActive: true },
+        ]}
+      />
 
       <div className="text-center space-y-3 py-6">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full shadow-lg">

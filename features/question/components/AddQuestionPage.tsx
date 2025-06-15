@@ -6,12 +6,7 @@ import { toast } from "@/components/hooks/use-toast";
 import AuthInput from "@/components/ui/AuthInput";
 import { SaveOutlined, Create, Add, Delete } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import {
   Card,
   CardContent,
@@ -186,28 +181,13 @@ export default function AddQuestionPage() {
 
   return (
     <div className="space-y-6 px-6 py-4">
-      {/* Breadcrumb */}
-      <Breadcrumb className="flex list-none items-center gap-2">
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard"
-            className="text-blue-600 underline font-semibold"
-          >
-            Dashboard
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            href="/dashboard/question"
-            className="text-blue-600 underline font-semibold"
-          >
-            Câu hỏi
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>Thêm câu hỏi</BreadcrumbItem>
-      </Breadcrumb>
+      <NavigableBreadcrumb
+        items={[
+          { label: "Dashboard", href: "/dashboard", isHome: true },
+          { label: "Câu hỏi", href: "/dashboard/question" },
+          { label: "Thêm câu hỏi", isActive: true },
+        ]}
+      />
 
       <div className="text-center space-y-3 py-6">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-full shadow-lg">

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { getAllStudents, exportStudents, importStudentsFromFile } from "@/features/student/services/studentService";
 import { getAllClasses } from "@/features/classes/services/classServices";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
+import { useTableReload } from "@/hooks/useTableReload";
+import { ReloadButton } from "@/components/ui/ReloadButton";
 import { setStudents } from "@/store/studentSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
@@ -97,39 +99,60 @@ function StudentTableComponent() {
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [studentsData, classesData] = await Promise.all([
-          getAllStudents(),
-          getAllClasses()
-        ]);
-        
-        if (Array.isArray(studentsData)) {
-          dispatch(setStudents(studentsData));
-        } else {
-          console.error("Invalid students data format:", studentsData);
-          dispatch(setStudents([]));
-        }
-
-        if (Array.isArray(classesData)) {
-          setClasses(classesData);
-        } else {
-          console.error("Invalid classes data format:", classesData);
-          setClasses([]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch data", error);
+  const fetchData = useCallback(async () => {
+    try {
+      const [studentsData, classesData] = await Promise.all([
+        getAllStudents(),
+        getAllClasses()
+      ]);
+      
+      if (Array.isArray(studentsData)) {
+        dispatch(setStudents(studentsData));
+      } else {
+        console.error("Invalid students data format:", studentsData);
         dispatch(setStudents([]));
+      }
+
+      if (Array.isArray(classesData)) {
+        setClasses(classesData);
+      } else {
+        console.error("Invalid classes data format:", classesData);
         setClasses([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      dispatch(setStudents([]));
+      setClasses([]);
+      throw error;
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        await fetchData();
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []); 
+    loadData();
+  }, [fetchData]);
+
+  const { isReloading, handleReload } = useTableReload({
+    onReload: fetchData,
+    onSuccess: () => {
+      toast({ title: 'Dữ liệu đã được làm mới!' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Lỗi khi tải dữ liệu', 
+        description: error.message,
+        variant: 'error' 
+      });
+    }
+  }); 
 
   const memoizedStudents = useMemo(() => students || [], [students]);
 
@@ -174,7 +197,6 @@ function StudentTableComponent() {
       });
     }
 
-    // Filter by gender dropdown
     if (genderFilter !== "all") {
       data = data.filter(student => student.gender === genderFilter);
     }
@@ -313,7 +335,6 @@ function StudentTableComponent() {
     return pages;
   }, [pageIndex, totalPages]);
 
-  // Column mapping for Vietnamese names
   const columnNames: Record<string, string> = {
     studentCode: "Mã sinh viên",
     fullName: "Họ và tên", 
@@ -421,6 +442,13 @@ function StudentTableComponent() {
 
           {/* Actions Group */}
           <div className="flex flex-wrap gap-2">
+            {/* Reload Button */}
+            <ReloadButton 
+              onReload={handleReload}
+              isLoading={isReloading}
+              disabled={isLoading}
+            />
+            
             {/* Column Visibility */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { KeyboardArrowDown } from '@mui/icons-material';
 import { ReactNode, useState } from 'react';
 import { useResponsive } from '@/hooks/useReponsiveHook';
+import { useNavigationLoading } from '@/hooks/useNavigationLoading';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import classNames from 'classnames';
 import { usePathname } from 'next/navigation'; 
 
@@ -29,14 +31,19 @@ export const SidebarItem = ({
   const [open, setOpen] = useState(isOpenDefault);
   const hasChildren = !!children;
   const { isMobile, isTablet } = useResponsive();
+  const { isLoading, loadingRoute, navigateWithLoading } = useNavigationLoading();
   const showTitle = (isMobile || isTablet) ? openMenu : !collapsed;
   const pathname = usePathname();
   const isActive = pathname.startsWith(href ?? '#');
+  const isNavigating = isLoading && loadingRoute === href;
 
   const handleToggle = (e: React.MouseEvent) => {
     if (hasChildren) {
       e.preventDefault();
       setOpen(!open);
+    } else {
+      e.preventDefault();
+      navigateWithLoading(href);
     }
   };
 
@@ -45,6 +52,7 @@ export const SidebarItem = ({
       <Link
         href={href}
         onClick={handleToggle}
+        prefetch={true}
         className={classNames(
           "relative flex items-center w-full text-sm font-medium rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden group",
           {
@@ -82,7 +90,7 @@ export const SidebarItem = ({
         )}>
           {icon && (
             <div className={classNames(
-              "flex items-center justify-center rounded-xl transition-all duration-300",
+              "flex items-center justify-center rounded-xl transition-all duration-300 relative",
               {
                 // Collapsed state - larger icon container
                 "w-10 h-10": collapsed && !(isMobile || isTablet),
@@ -94,7 +102,11 @@ export const SidebarItem = ({
                 "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/50 group-hover:scale-110": !isActive
               }
             )}>
-              {icon}
+              {isNavigating ? (
+                <LoadingSpinner size="sm" color={isActive ? "white" : "primary"} />
+              ) : (
+                icon
+              )}
             </div>
           )}
           

@@ -1,7 +1,13 @@
-import AddExamPage from "@/features/exam/components/AddExamPage";
+import dynamic from 'next/dynamic';
+import { PageLoader } from '@/components/ui/PageLoader';
 
-export default function CreateExamPage() {
-  return (
-    <AddExamPage />
-  );
+const AddExamPage = dynamic(
+  () => import('@/features/exam/components/AddExamPage'),
+  {
+    loading: () => <PageLoader isLoading={true} loadingText="Đang tải form tạo bài thi..." />
+  }
+);
+
+export default function ExamCreatePage() {
+  return <AddExamPage />;
 } 

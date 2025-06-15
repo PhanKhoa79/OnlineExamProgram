@@ -13,6 +13,9 @@ import { SubjectResponseDto } from "@/features/subject/types/subject";
 import { setSchedules } from "@/store/scheduleSlice";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
+import { useTableReload } from "@/hooks/useTableReload";
+import { ReloadButton } from "@/components/ui/ReloadButton";
+import { toast } from "@/components/hooks/use-toast";
 import SearchBar from "@/components/ui/SearchBar";
 import { TabbedHelpModal } from "@/components/ui/TabbedHelpModal";
 import { scheduleInstructions } from "@/features/schedule/data/scheduleInstructions";
@@ -88,26 +91,47 @@ function ScheduleTableComponent() {
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
+  const fetchData = useCallback(async () => {
+    try {
+      const [schedulesData, subjectsData] = await Promise.all([
+        getAllSchedules(),
+        getAllSubjects()
+      ]);
+      
+      dispatch(setSchedules(schedulesData));
+      setSubjects(subjectsData);
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      throw error;
+    }
+  }, [dispatch]);
+
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const [schedulesData, subjectsData] = await Promise.all([
-          getAllSchedules(),
-          getAllSubjects()
-        ]);
-        
-        dispatch(setSchedules(schedulesData));
-        setSubjects(subjectsData);
-      } catch (error) {
-        console.error("Failed to fetch data", error);
+        await fetchData();
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    loadData();
+  }, [fetchData]);
+
+  const { isReloading, handleReload } = useTableReload({
+    onReload: fetchData,
+    onSuccess: () => {
+      toast({ title: 'Dữ liệu đã được làm mới!' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Lỗi khi tải dữ liệu', 
+        description: error.message,
+        variant: 'error' 
+      });
+    }
+  });
 
   const memoizedSchedules = useMemo(() => schedules || [], [schedules]);
 
@@ -323,6 +347,13 @@ function ScheduleTableComponent() {
 
           {/* Actions Group */}
           <div className="flex flex-wrap gap-2">
+            {/* Reload Button */}
+            <ReloadButton 
+              onReload={handleReload}
+              isLoading={isReloading}
+              disabled={isLoading}
+            />
+            
             {/* Help Button */}
             <TabbedHelpModal 
               featureName="Quản lý Lịch thi" 

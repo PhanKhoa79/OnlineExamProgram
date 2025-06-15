@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import  { Edit, Delete, MoreHoriz, Visibility} from "@mui/icons-material";
+import  { Edit, Delete, MoreHoriz, Visibility, MailOutline } from "@mui/icons-material";
 import { AccountResponse } from "../types/account";
 import Image from "next/image";
 import { useDispatch } from "react-redux";
@@ -13,6 +13,9 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import { HighlightText } from "@/components/ui/HighlightText";
+import { toast } from "@/components/hooks/use-toast";
+import { useState } from "react";
+import { resendActivationLink } from "@/features/auth/services/authService";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -21,10 +24,40 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
+interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 const AccountActionsCell = ({ usr }: { usr: AccountResponse }) => {
   const router = useRouter();
-
+  const [isResending, setIsResending] = useState(false);
   const permissions = useAuthStore((state) => state.permissions);
+
+  const handleResendActivation = async (email: string) => {
+    try {
+      setIsResending(true);
+      await resendActivationLink(email);
+      toast({
+        title: "Thành công",
+        description: "Email kích hoạt đã được gửi lại.",
+        variant: "success",
+      });
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      toast({
+        title: "Lỗi",
+        description: apiError?.response?.data?.message || apiError.message || "Không thể gửi email kích hoạt.",
+        variant: "error",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -65,6 +98,19 @@ const AccountActionsCell = ({ usr }: { usr: AccountResponse }) => {
                 <Delete sx={{ fontSize: 18 }} />
                 Xóa
               </div>
+          </DropdownMenuItem>
+        )}
+        
+        {hasPermission(permissions, 'account:create') && !usr.isActive && (
+          <DropdownMenuItem>
+            <div 
+              className="flex items-center justify-start py-1 gap-1 cursor-pointer"
+              onClick={() => handleResendActivation(usr.email)}
+              disabled={isResending}
+            >
+              <MailOutline sx={{ fontSize: 18 }} />
+              {isResending ? "Đang gửi..." : "Gửi lại email kích hoạt"}
+            </div>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
@@ -165,10 +211,16 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>, searchQ
         const s = (isActive ? "Active" : "Inactive");
         const dot = s === "Active" ? "bg-green-500" : "bg-red-500";
         return (
-          <span className="flex items-center gap-1">
-            <span className={`h-2 w-2 rounded-full ${dot}`}></span>
-            {s}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1">
+              <span className={`h-2 w-2 rounded-full ${dot}`}></span>
+              {s}
+            </span>
+            
+            {!isActive && (
+              <ResendActivationButton email={row.original.email} />
+            )}
+          </div>
         );
       },
     },
@@ -182,4 +234,60 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>, searchQ
       },
     },
   ];
+};
+
+// Component để gửi lại email kích hoạt
+const ResendActivationButton = ({ email }: { email: string }) => {
+  const [isResending, setIsResending] = useState(false);
+  const permissions = useAuthStore((state) => state.permissions);
+  
+  if (!hasPermission(permissions, 'account:create')) {
+    return null;
+  }
+
+  const handleResendActivation = async () => {
+    try {
+      setIsResending(true);
+      await resendActivationLink(email);
+      toast({
+        title: "Thành công",
+        description: "Email kích hoạt đã được gửi lại.",
+        variant: "success",
+      });
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      toast({
+        title: "Lỗi",
+        description: apiError?.response?.data?.message || apiError.message || "Không thể gửi email kích hoạt.",
+        variant: "error",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  return (
+    <Button 
+      variant="outline" 
+      size="sm" 
+      className="ml-2 text-xs py-0 h-6 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+      onClick={handleResendActivation}
+      disabled={isResending}
+    >
+      {isResending ? (
+        <span className="flex items-center">
+          <svg className="animate-spin -ml-1 mr-2 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Đang gửi
+        </span>
+      ) : (
+        <span className="flex items-center">
+          <MailOutline sx={{ fontSize: 14 }} className="mr-1" />
+          Kích hoạt
+        </span>
+      )}
+    </Button>
+  );
 };

@@ -11,6 +11,8 @@ import { FilterX, Columns, ChevronDown, ChevronLeft, ChevronRight } from "lucide
 import { getAllAccounts, exportAccounts, importAccountsFromFile } from "@/features/account/services/accountService";
 import { setAccounts, addAccount as addAccountAction } from "@/store/accountSlice";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
+import { useTableReload } from "@/hooks/useTableReload";
+import { ReloadButton } from "@/components/ui/ReloadButton";
 import { toast } from "@/components/hooks/use-toast";
 import  { ImportFileModal, FileType } from "@/features/account/components/modal/ImportFileModal";
 import { RoleWithPermissionsDto } from "@/features/role/types/role";
@@ -97,34 +99,53 @@ function AccountTableComponent() {
   const permissions = useAuthStore((state) => state.permissions);
   const dispatch = useDispatch<AppDispatch>();
 
+  const fetchData = useCallback(async () => {
+    try {
+      const [accountsData, rolesData] = await Promise.all([
+        getAllAccounts(),
+        getAllRolesWithPermissions()
+      ]);
+      
+      dispatch(setAccounts(accountsData));
+      setRoles(rolesData);
+    } catch (error) {
+      console.error("Failed to fetch data", error);
+      dispatch(setAccounts([]));
+      setRoles([]);
+      throw error;
+    }
+  }, [dispatch]);
+
   // Fetch data only once on mount - no dependencies at all
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const [accountsData, rolesData] = await Promise.all([
-          getAllAccounts(),
-          getAllRolesWithPermissions()
-        ]);
-        
-        dispatch(setAccounts(accountsData));
-        setRoles(rolesData);
-      } catch (error) {
-        console.error("Failed to fetch data", error);
-        dispatch(setAccounts([]));
-        setRoles([]);
+        await fetchData();
       } finally {
-      setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []); 
+    loadData();
+  }, [fetchData]);
 
-  // Memoize accounts to prevent unnecessary re-calculations
+  const { isReloading, handleReload } = useTableReload({
+    onReload: fetchData,
+    onSuccess: () => {
+      toast({ title: 'Dữ liệu đã được làm mới!' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Lỗi khi tải dữ liệu', 
+        description: error.message,
+        variant: 'error' 
+      });
+    }
+  }); 
+
   const memoizedAccounts = useMemo(() => accounts || [], [accounts]);
 
-  // Memoize search keys to prevent recreation
   const searchKeys = useMemo(() => ["email", "accountname"] as (keyof AccountResponse)[], []);
 
   const {
@@ -325,25 +346,34 @@ function AccountTableComponent() {
         />
           </div>
 
-          {/* Primary Action Buttons */}
-          {hasPermission(permissions, 'account:create') && (
-            <div className="flex gap-2">
-              <Button 
-                className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2 cursor-pointer" 
-                onClick={() => router.push('/dashboard/account/create')}
-              >
-                <Add sx={{ fontSize: 18 }} />
-                Thêm tài khoản
-              </Button>
-              <Button 
-                className="bg-yellow-500 text-white hover:bg-yellow-600 transition-colors flex items-center gap-2 cursor-pointer" 
-                onClick={() => router.push('/dashboard/account/upload-students')}
-              >
-                <FileUpload sx={{ fontSize: 18 }} />
-                <span className="hidden sm:inline">Tải lên SV</span>
-              </Button>
-            </div>
-          )}
+          
+          <div className="flex flex-wrap gap-2">
+            <ReloadButton 
+              onReload={handleReload}
+              isLoading={isReloading}
+              disabled={isLoading}
+            />
+
+            {/* Primary Action Buttons */}
+            {hasPermission(permissions, 'account:create') && (
+              <div className="flex gap-2">
+                <Button 
+                  className="bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2 cursor-pointer" 
+                  onClick={() => router.push('/dashboard/account/create')}
+                >
+                  <Add sx={{ fontSize: 18 }} />
+                  Thêm tài khoản
+                </Button>
+                <Button 
+                  className="bg-yellow-500 text-white hover:bg-yellow-600 transition-colors flex items-center gap-2 cursor-pointer" 
+                  onClick={() => router.push('/dashboard/account/upload-students')}
+                >
+                  <FileUpload sx={{ fontSize: 18 }} />
+                  <span className="hidden sm:inline">Tải lên SV</span>
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Bottom Row: Filters and Secondary Actions */}
@@ -392,6 +422,7 @@ function AccountTableComponent() {
 
           {/* Actions Group */}
           <div className="flex flex-wrap gap-2">
+            
             {/* Help Button */}
             <TabbedHelpModal 
               featureName="Quản lý Tài khoản" 
@@ -620,7 +651,7 @@ function AccountTableComponent() {
             Tiếp
             <ChevronRight className="h-4 w-4" />
             </Button>
-                  </div>
+            </div>
       </div>
     </div>
   );
