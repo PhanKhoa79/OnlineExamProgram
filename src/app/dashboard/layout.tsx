@@ -20,6 +20,8 @@ const NavigationLoader = dynamic(() => import('@/components/dashboard/Navigation
 
 const ThemeProvider = dynamic(() => import('../../../components/providers/ThemeProvider').then(mod => ({ default: mod.ThemeProvider })));
 
+const ActivityLogToast = dynamic(() => import('@/features/activity-logs/components/ActivityLogToast').then(mod => ({ default: mod.ActivityLogToast })));
+
 export const metadata: Metadata = {
   title: 'Dashboard - MegaStart Online',
   description: 'Trang quản trị dành cho Admin và Giảng viên',
@@ -37,6 +39,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <ThemeProvider>
         <PreloadPages />
         <NavigationLoader />
+        <ActivityLogToast />
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-indigo-950 p-2 md:p-4">
           {/* Background Pattern */}
           <div 

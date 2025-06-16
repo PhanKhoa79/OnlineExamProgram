@@ -34,7 +34,10 @@ export const SidebarItem = ({
   const { isLoading, loadingRoute, navigateWithLoading } = useNavigationLoading();
   const showTitle = (isMobile || isTablet) ? openMenu : !collapsed;
   const pathname = usePathname();
-  const isActive = pathname.startsWith(href ?? '#');
+  // Exact match for dashboard root, startsWith for sub-routes
+  const isActive = href === '/dashboard' 
+    ? pathname === '/dashboard' 
+    : pathname.startsWith(href ?? '#');
   const isNavigating = isLoading && loadingRoute === href;
 
   const handleToggle = (e: React.MouseEvent) => {

@@ -7,7 +7,7 @@ import { SidebarItem } from './SidebarItem';
 import Image from 'next/image';
 import { useTheme } from '../providers/ThemeProvider';
 import { ToggleSwitch } from '../ui/ToggleSwitch';
-import { ManageAccounts, DarkMode, LightMode, Close, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd, Groups, QuestionAnswer, AutoStories, School, SpeakerNotes, Schedule } from '@mui/icons-material';
+import { ManageAccounts, DarkMode, LightMode, Close, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd, Groups, QuestionAnswer, AutoStories, School, SpeakerNotes, Schedule, MeetingRoom, Dashboard } from '@mui/icons-material';
 import { useAuthStore } from '@/features/auth/store';
 import { hasResourcePermission } from '@/lib/permissions';
 
@@ -43,6 +43,11 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   };
 
   const sidebarItems: SidebarItemType[] = [
+    {
+      title: 'Trang chủ',
+      icon: <Dashboard sx={{ fontSize: 22 }} />,
+      href: `${basePath}`
+    },
     hasResourcePermission(permissions, 'account') && {
       title: 'Quản lý tài khoản',
       icon: <PersonAdd sx={{ fontSize: 22 }} />,
@@ -72,6 +77,11 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
       title: 'Quản lý lịch thi',
       icon: <Schedule sx={{ fontSize: 22 }} />,
       href: `${basePath}/schedule`
+    },
+    hasResourcePermission(permissions, 'room') && {
+      title: 'Quản lý phòng thi',
+      icon: <MeetingRoom sx={{ fontSize: 22 }} />,
+      href: `${basePath}/room`
     },
     hasResourcePermission(permissions, 'subject') && {
       title: 'Quản lý môn học',

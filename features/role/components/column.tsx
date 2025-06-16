@@ -70,7 +70,7 @@ const RoleActionsCell = ({ role }: { role: RoleWithPermissionsDto }) => {
           </DropdownMenuItem>
         )}
 
-        {hasPermission(permissions, 'role:delete') && (
+        {hasPermission(permissions, 'role:delete') && role.name !== 'moderator' && (
           <DropdownMenuItem>
             <>
               <div className="flex items-center justify-start gap-1 cursor-pointer pb-1" onClick={() => handleRoleAction('delete-role')}>
@@ -80,6 +80,8 @@ const RoleActionsCell = ({ role }: { role: RoleWithPermissionsDto }) => {
             </>
           </DropdownMenuItem>
         )}
+        
+
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -99,8 +101,13 @@ export const roleColumns = (): ColumnDef<RoleWithPermissionsDto>[] => {
       cell: ({ row }) => {
         const u = row.original;
         return (
-          <div className="relative flex items-center gap-2 ml-3">
+          <div className="relative flex flex-col gap-1 ml-3">
             <span>{u.name}</span>
+            {u.name === 'moderator' && (
+              <div className="text-xs text-red-600 font-medium">
+                Lưu ý*: Đây là quyền cao nhất <br /> trong hệ thống không được phép xóa
+              </div>
+            )}
           </div>
         );
       },

@@ -72,11 +72,21 @@ const EditSchedulePage: React.FC = () => {
         const startTime = new Date(scheduleResult.startTime);
         const endTime = new Date(scheduleResult.endTime);
         
+        // Chuyển đổi thời gian về múi giờ địa phương để hiển thị đúng
+        const formatDateTimeLocal = (date: Date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+        
         const subjectId = scheduleResult.subject?.id || scheduleResult.subjectId;
         const formData = {
           code: scheduleResult.code,
-          startTime: startTime.toISOString().slice(0, 16),
-          endTime: endTime.toISOString().slice(0, 16),
+          startTime: formatDateTimeLocal(startTime),
+          endTime: formatDateTimeLocal(endTime),
           status: scheduleResult.status,
           description: scheduleResult.description || '',
           subjectId: Number(subjectId),
@@ -119,14 +129,65 @@ const EditSchedulePage: React.FC = () => {
         return;
       }
 
-      const updateData: UpdateExamScheduleDto = {
-        code: data.code,
-        startTime: data.startTime,
-        endTime: data.endTime,
-        status: data.status,
-        description: data.description,
-        subjectId: data.subjectId,
+      if (!scheduleData) {
+        toast({
+          title: "Lỗi",
+          description: "Không tìm thấy dữ liệu lịch thi gốc.",
+          variant: "error",
+        });
+        return;
+      }
+
+      // Chỉ gửi những field thực sự thay đổi
+      const updateData: UpdateExamScheduleDto = {};
+
+      // So sánh và chỉ thêm field nào thay đổi
+      if (data.code !== scheduleData.code) {
+        updateData.code = data.code;
+      }
+
+      // Chuyển đổi thời gian để so sánh (sử dụng formatDateTimeLocal để đồng nhất)
+      const formatDateTimeLocal = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
       };
+
+      const originalStartTime = formatDateTimeLocal(new Date(scheduleData.startTime));
+      const originalEndTime = formatDateTimeLocal(new Date(scheduleData.endTime));
+      
+      if (data.startTime !== originalStartTime) {
+        updateData.startTime = new Date(data.startTime).toISOString();
+      }
+
+      if (data.endTime !== originalEndTime) {
+        updateData.endTime = new Date(data.endTime).toISOString();
+      }
+
+      if (data.status !== scheduleData.status) {
+        updateData.status = data.status;
+      }
+
+      if (data.description !== (scheduleData.description || '')) {
+        updateData.description = data.description;
+      }
+
+      const originalSubjectId = scheduleData.subject?.id || scheduleData.subjectId;
+      if (data.subjectId !== originalSubjectId) {
+        updateData.subjectId = data.subjectId;
+      }
+
+      // Kiểm tra xem có thay đổi gì không
+      if (Object.keys(updateData).length === 0) {
+        toast({
+          title: "Thông báo",
+          description: "Không có thay đổi nào để lưu.",
+        });
+        return;
+      }
 
       await updateSchedule(scheduleId, updateData);
 
@@ -141,17 +202,28 @@ const EditSchedulePage: React.FC = () => {
       if (exitAfterSave) {
         router.push("/dashboard/schedule");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating schedule:", error);
       
       let errorMessage = "Có lỗi xảy ra khi cập nhật lịch thi. Vui lòng thử lại.";
       
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error?.message) {
-        errorMessage = error.message;
+      if (error && typeof error === 'object') {
+        const errorObj = error as {
+          response?: {
+            data?: {
+              message?: string;
+              error?: string;
+            };
+          };
+          message?: string;
+        };
+        if (errorObj?.response?.data?.message) {
+          errorMessage = errorObj.response.data.message;
+        } else if (errorObj?.response?.data?.error) {
+          errorMessage = errorObj.response.data.error;
+        } else if (errorObj?.message) {
+          errorMessage = errorObj.message;
+        }
       }
 
       toast({

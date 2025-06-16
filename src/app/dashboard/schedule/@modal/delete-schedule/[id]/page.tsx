@@ -19,6 +19,7 @@ export default function DeleteScheduleModalPage() {
   const [schedule, setSchedule] = useState<ExamScheduleDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   useEffect(() => {
     const fetchSchedule = async () => {
@@ -43,7 +44,8 @@ export default function DeleteScheduleModalPage() {
 
   const handleClose = () => {
     if (!isDeleting) {
-      router.push("/dashboard/schedule");
+      setIsOpen(false);
+      setTimeout(() => router.back(), 150);
     }
   };
 
@@ -63,13 +65,25 @@ export default function DeleteScheduleModalPage() {
         description: `Lịch thi "${schedule.code}" đã được xóa.`,
       });
 
-      // Navigate back to main page
-      router.push("/dashboard/schedule");
-    } catch (error) {
+      // Close modal and go back
+      setIsOpen(false);
+      setTimeout(() => router.back(), 150);
+    } catch (error: unknown) {
       console.error("Error deleting schedule:", error);
+      
+      let errorMessage = "Có lỗi xảy ra khi xóa lịch thi. Vui lòng thử lại.";
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Lỗi khi xóa lịch thi",
-        description: "Có lỗi xảy ra khi xóa lịch thi. Vui lòng thử lại.",
+        description: errorMessage,
         variant: "error",
       });
       setIsDeleting(false);
@@ -87,13 +101,10 @@ export default function DeleteScheduleModalPage() {
   return (
     <ConfirmDeleteModal
       title={schedule ? `Bạn có chắc chắn muốn xóa lịch thi "${schedule.code}"?` : "Xác nhận xóa lịch thi"}
-      open={!isDeleting}
-      onOpenChange={(open) => {
-        if (!open && !isDeleting) {
-          handleClose();
-        }
-      }}
+      open={isOpen}
+      onOpenChange={handleClose}
       onConfirm={handleConfirmDelete}
+      isLoading={isDeleting}
     />
   );
 } 

@@ -8,6 +8,7 @@ import questionReducer from './questionSlice'
 import examReducer from './examSlice'
 import scheduleReducer from './scheduleSlice'
 import notificationReducer from './notificationSlice'
+import roomReducer from './roomSlice'
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     exam: examReducer,
     schedule: scheduleReducer,
     notification: notificationReducer,
+    room: roomReducer,
   }
 })
 
