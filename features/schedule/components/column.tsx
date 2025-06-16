@@ -48,11 +48,34 @@ const ScheduleActionsCell = ({ schedule }: { schedule: ExamScheduleDto }) => {
         title: 'Hủy lịch thi thành công!',
         description: `Lịch thi "${schedule.code}" đã được hủy.`
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Lỗi khi hủy lịch thi:', error);
+      
+      let errorMessage = 'Không thể hủy lịch thi. Vui lòng thử lại.';
+      
+      if (error && typeof error === 'object') {
+        const errorObj = error as {
+          response?: {
+            data?: {
+              message?: string;
+              error?: string;
+            };
+          };
+          message?: string;
+        };
+        
+        if (errorObj?.response?.data?.message) {
+          errorMessage = errorObj.response.data.message;
+        } else if (errorObj?.response?.data?.error) {
+          errorMessage = errorObj.response.data.error;
+        } else if (errorObj?.message) {
+          errorMessage = errorObj.message;
+        }
+      }
+      
       toast({
         title: 'Lỗi hủy lịch thi',
-        description: 'Không thể hủy lịch thi. Vui lòng thử lại.',
+        description: errorMessage,
         variant: 'error'
       });
     }
@@ -81,7 +104,7 @@ const ScheduleActionsCell = ({ schedule }: { schedule: ExamScheduleDto }) => {
             </DropdownMenuItem>
           )}
 
-          {hasPermission(permissions, 'schedule:update') && (
+          {hasPermission(permissions, 'schedule:update') && schedule.status === 'active' && (
             <DropdownMenuItem>
               <div 
                 className="flex items-center justify-start py-1 gap-1 cursor-pointer"

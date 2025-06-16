@@ -8,13 +8,14 @@ type CustomConfirmModalProps = {
   open: boolean;
   onOpenChange: (value: boolean) => void;
   onConfirm: () => void;
+  isLoading?: boolean;
 };
 
-export const ConfirmDeleteModal = ({ title, open, onOpenChange, onConfirm }: CustomConfirmModalProps) => {
+export const ConfirmDeleteModal = ({ title, open, onOpenChange, onConfirm, isLoading = false }: CustomConfirmModalProps) => {
 
   const handleConfirm = () => {
     onConfirm();
-    onOpenChange(false);
+    // Let the parent component handle closing the modal
   };
 
   return (
@@ -30,11 +31,31 @@ export const ConfirmDeleteModal = ({ title, open, onOpenChange, onConfirm }: Cus
           </DialogHeader>
 
           <DialogFooter className="flex justify-center mt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="cursor-pointer">
-              No, cancel
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)} 
+              className="cursor-pointer"
+              disabled={isLoading}
+            >
+              Hủy
             </Button>
-            <Button variant="destructive" onClick={handleConfirm} className="cursor-pointer">
-              Yes, I&apos;m sure
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirm} 
+              className="cursor-pointer flex items-center gap-2"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Đang xóa...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Xác nhận xóa
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

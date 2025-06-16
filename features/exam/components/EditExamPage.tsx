@@ -160,10 +160,33 @@ const EditExamPage: React.FC = () => {
       if (exitAfterSave) {
         router.push("/dashboard/exam");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error updating exam:", error);
+      
+      let errorMessage = "Có lỗi xảy ra khi cập nhật đề thi. Vui lòng thử lại.";
+      
+      if (error && typeof error === 'object') {
+        const errorObj = error as {
+          response?: {
+            data?: {
+              message?: string;
+              error?: string;
+            };
+          };
+          message?: string;
+        };
+        if (errorObj?.response?.data?.message) {
+          errorMessage = errorObj.response.data.message;
+        } else if (errorObj?.response?.data?.error) {
+          errorMessage = errorObj.response.data.error;
+        } else if (errorObj?.message) {
+          errorMessage = errorObj.message;
+        }
+      }
+
       toast({
         title: "Lỗi khi cập nhật đề thi",
+        description: errorMessage,
         variant: "error",
       });
     } finally {

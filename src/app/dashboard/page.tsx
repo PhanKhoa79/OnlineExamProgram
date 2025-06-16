@@ -1,4 +1,11 @@
+'use client';
+
 import { UsersIcon, DocumentTextIcon, AcademicCapIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
+import { useAuthStore } from '@/features/auth/store';
+import { useRouter } from 'next/navigation';
+import { useActivityLogs } from '@/features/activity-logs/hooks/useActivityLogs';
+import { ActivityLogBadge } from '@/features/activity-logs/components/ActivityLogBadge';
+import { RelativeTime } from '@/components/ui/RelativeTime';
 
 const stats = [
   { 
@@ -39,14 +46,14 @@ const stats = [
   },
 ];
 
-const recentActivities = [
-  { id: 1, action: 'Học sinh Nguyễn Văn A đã hoàn thành bài kiểm tra Toán 12', time: '5 phút trước', type: 'exam' },
-  { id: 2, action: 'Giáo viên Trần Thị B đã tạo bài kiểm tra mới cho lớp 11A1', time: '15 phút trước', type: 'create' },
-  { id: 3, action: 'Có 3 học sinh mới đăng ký vào hệ thống', time: '1 giờ trước', type: 'register' },
-  { id: 4, action: 'Bài kiểm tra Vật lý 10 đã được kích hoạt', time: '2 giờ trước', type: 'activate' },
-];
-
 export default function DashboardPage() {
+  const { user } = useAuthStore();
+  const router = useRouter();
+  const isModerator = user?.role.name === 'moderator';
+  
+  // Sử dụng hook cho activity logs với real-time updates
+  const { activities: recentActivities, loading: loadingActivities } = useActivityLogs(10);
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -118,9 +125,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${isModerator ? 'lg:grid-cols-3' : 'lg:grid-cols-1'}`}>
         {/* Chart Placeholder */}
-        <div className="lg:col-span-2 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/30 p-6 shadow-xl">
+        <div className={`${isModerator ? 'lg:col-span-2' : ''} bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/30 p-6 shadow-xl`}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Thống kê hoạt động
@@ -145,35 +152,67 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Recent Activities */}
-        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/30 p-6 shadow-xl">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-            Hoạt động gần đây
-          </h3>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-xl hover:bg-white/40 dark:hover:bg-gray-800/40 transition-colors duration-200">
-                <div className={`w-2 h-2 rounded-full mt-2 ${
-                  activity.type === 'exam' ? 'bg-blue-500' :
-                  activity.type === 'create' ? 'bg-green-500' :
-                  activity.type === 'register' ? 'bg-purple-500' :
-                  'bg-orange-500'
-                }`}></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900 dark:text-white font-medium leading-5">
-                    {activity.action}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {activity.time}
+        {/* Recent Activities - Only show for moderators */}
+        {isModerator && (
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/30 p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Hoạt động gần đây
+              </h3>
+              <ActivityLogBadge onNewActivity={(count) => console.log(`${count} hoạt động mới`)}>
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform duration-200">
+                  <span className="text-white text-xs font-bold">📊</span>
+                </div>
+              </ActivityLogBadge>
+            </div>
+            <div className="space-y-4">
+              {loadingActivities ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              ) : recentActivities.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    Chưa có hoạt động nào gần đây
                   </p>
                 </div>
-              </div>
-            ))}
+              ) : (
+                recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-xl hover:bg-white/40 dark:hover:bg-gray-800/40 transition-colors duration-200">
+                    <div className={`w-2 h-2 rounded-full mt-2 ${
+                      activity.action === 'CREATE' ? 'bg-green-500' :
+                      activity.action === 'UPDATE' ? 'bg-blue-500' :
+                      activity.action === 'DELETE' ? 'bg-red-500' :
+                      'bg-orange-500'
+                    }`}></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 dark:text-white font-medium leading-5">
+                        {activity.displayMessage}
+                      </p>
+                      <RelativeTime 
+                        date={activity.createdAt}
+                        className="text-xs text-gray-500 dark:text-gray-400 mt-1"
+                        updateInterval={60000}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <button 
+              className="w-full mt-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors duration-200 cursor-pointer"
+              onClick={() => {
+                router.push('/dashboard/activity-logs');
+                // Reset badge khi user xem trang activity logs
+                if (typeof window !== 'undefined' && 'resetActivityBadge' in window) {
+                  (window as { resetActivityBadge?: () => void }).resetActivityBadge?.();
+                }
+              }}
+            >
+              Xem tất cả hoạt động
+            </button>
           </div>
-          <button className="w-full mt-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors duration-200">
-            Xem tất cả hoạt động
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

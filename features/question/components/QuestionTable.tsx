@@ -501,27 +501,25 @@ function QuestionTableComponent() {
 
             {/* Import Actions */}
             {hasPermission(permissions, 'question:create') && (
-              <>
-                <Button 
-                  size="sm" 
-                  className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2 cursor-pointer"
-                  onClick={() => openModal('xlsx')}
-                >
-                  <Add sx={{ fontSize: 16 }} />
-                  📊 Nhập Excel
-                </Button>
-                <QuestionImportFileModal open={open} setOpen={setOpen} fileType={fileType} handleImport={handleImport}/>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="bg-green-500 text-white hover:bg-green-600 flex items-center gap-2 cursor-pointer">
+                    <Add sx={{ fontSize: 16 }} />
+                    Nhập
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Định dạng file</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => openModal('xlsx')} className="cursor-pointer">
+                    📊 Excel (.xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => openModal('csv')} className="cursor-pointer">
+                    📄 CSV (.csv)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-
-            {/* Bulk Delete Confirmation Modal */}
-            <BulkDeleteConfirmModal
-              open={deleteModalOpen}
-              setOpen={setDeleteModalOpen}
-              selectedCount={Object.keys(rowSelection).length}
-              onConfirm={confirmBulkDelete}
-              isLoading={isLoading}
-            />
 
             {/* Export Actions */}
             <DropdownMenu>
@@ -545,6 +543,17 @@ function QuestionTableComponent() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <QuestionImportFileModal open={open} setOpen={setOpen} fileType={fileType} handleImport={handleImport}/>
+      
+      <BulkDeleteConfirmModal
+        open={deleteModalOpen}
+        setOpen={setDeleteModalOpen}
+        selectedCount={Object.keys(rowSelection).length}
+        onConfirm={confirmBulkDelete}
+        isLoading={isLoading}
+      />
 
       {/* Filter Summary */}
       {hasActiveFilters && (

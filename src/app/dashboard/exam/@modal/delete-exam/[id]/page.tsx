@@ -21,11 +21,32 @@ export default function DeleteExamModalPage() {
       toast({ title: 'Xóa đề thi thành công!' });
       router.replace('/dashboard/exam');
     } catch (err: unknown) {
+      console.error("Error deleting exam:", err);
+      
+      let errorMessage = "Có lỗi xảy ra khi xóa đề thi. Vui lòng thử lại.";
+      
+      if (err && typeof err === 'object') {
+        const errorObj = err as {
+          response?: {
+            data?: {
+              message?: string;
+              error?: string;
+            };
+          };
+          message?: string;
+        };
+        if (errorObj?.response?.data?.message) {
+          errorMessage = errorObj.response.data.message;
+        } else if (errorObj?.response?.data?.error) {
+          errorMessage = errorObj.response.data.error;
+        } else if (errorObj?.message) {
+          errorMessage = errorObj.message;
+        }
+      }
+
       toast({
         title: 'Lỗi khi xóa đề thi',
-        description: err instanceof Error 
-          ? err.message 
-          : (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Không thể xóa đề thi',
+        description: errorMessage,
         variant: 'error',
       });
     }
