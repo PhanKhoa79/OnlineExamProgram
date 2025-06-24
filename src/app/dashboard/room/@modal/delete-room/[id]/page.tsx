@@ -29,7 +29,7 @@ export default function DeleteRoomModalPage() {
       // Close modal and navigate back
       setIsOpen(false);
       setTimeout(() => {
-        router.back();
+        router.replace('/dashboard/room');
       }, 100);
       
     } catch (err: unknown) {

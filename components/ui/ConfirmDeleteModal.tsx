@@ -7,15 +7,21 @@ type CustomConfirmModalProps = {
   title: string;
   open: boolean;
   onOpenChange: (value: boolean) => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   isLoading?: boolean;
 };
 
 export const ConfirmDeleteModal = ({ title, open, onOpenChange, onConfirm, isLoading = false }: CustomConfirmModalProps) => {
 
-  const handleConfirm = () => {
-    onConfirm();
-    // Let the parent component handle closing the modal
+  const handleConfirm = async () => {
+    try {
+      await onConfirm();
+      // Automatically close the modal after successful confirmation
+      onOpenChange(false);
+    } catch (error) {
+      // If there's an error, keep the modal open so user can retry
+      console.error('Error during confirmation:', error);
+    }
   };
 
   return (

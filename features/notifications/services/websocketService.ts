@@ -11,9 +11,9 @@ class WebSocketService {
     onDisconnect?: (reason: string) => void;
     onError?: (error: Error) => void;
   } = {};
-  private currentUser: { accountname: string; permissions?: { permissions: string[] } } | null = null;
+  private currentUser: { accountname: string; permissions?: { permissions: string[] }; id?: number } | null = null;
 
-  connect(user: { accountname: string; permissions?: { permissions: string[] } }) {
+  connect(user: { accountname: string; permissions?: { permissions: string[] }; id?: number }) {
     // Nếu đã connected với cùng user, không cần reconnect
     if (this.socket?.connected && this.currentUser?.accountname === user.accountname) {
       console.log('🔗 Already connected for user:', user.accountname);
@@ -60,6 +60,14 @@ class WebSocketService {
       console.log('🧪 Testing socket connection...');
       this.socket?.emit('test', { message: 'Hello from client' });
       
+      // Đăng ký người dùng với socket server
+      if (this.currentUser && this.currentUser.id && this.socket) {
+        console.log('📝 Registering user with socket server:', this.currentUser.id);
+        this.socket.emit('register', { userId: this.currentUser.id });
+      } else {
+        console.warn('⚠️ Cannot register user: Missing user ID or socket not connected');
+      }
+      
       this.callbacks.onConnect?.();
     });
 
@@ -75,12 +83,17 @@ class WebSocketService {
       this.callbacks.onError?.(error as Error);
     });
 
+    // Lắng nghe phản hồi từ sự kiện register
+    this.socket.on('registered', (response: { success: boolean; error?: string }) => {
+      if (response.success) {
+        console.log('✅ User registration successful');
+      } else {
+        console.error('❌ User registration failed:', response.error);
+      }
+    });
+
     // Lắng nghe thông báo trực tiếp
     this.socket.on('notification', (newNotification: Notification) => {
-      console.log('📨 [WebSocket] Received direct notification:', newNotification);
-      console.log('📨 [WebSocket] Notification structure:', JSON.stringify(newNotification, null, 2));
-      console.log('📨 [WebSocket] Notification ID type:', typeof newNotification.id);
-      console.log('📨 [WebSocket] Current callbacks available:', !!this.callbacks.onNotification);
       
       if (this.callbacks.onNotification) {
         this.callbacks.onNotification(newNotification);
@@ -91,12 +104,6 @@ class WebSocketService {
 
     // Lắng nghe thông báo theo permission
     this.socket.on('notification-permission', (data: { permission: string; notification: Notification }) => {
-      console.log('📨 [WebSocket] Received permission-based notification:', data);
-      console.log('📨 [WebSocket] Data structure:', JSON.stringify(data, null, 2));
-      console.log('📨 [WebSocket] Required permission:', data.permission);
-      console.log('📨 [WebSocket] Notification ID:', data.notification?.id);
-      console.log('📨 [WebSocket] Notification ID type:', typeof data.notification?.id);
-      console.log('📨 [WebSocket] Current callbacks available:', !!this.callbacks.onPermissionNotification);
       
       if (this.callbacks.onPermissionNotification) {
         this.callbacks.onPermissionNotification(data);

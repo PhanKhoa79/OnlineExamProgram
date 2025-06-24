@@ -32,10 +32,10 @@ export default function QueryProvider({ children }: { children: React.ReactNode 
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {/* Dev tools only in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* Dev tools removed to prevent TanStack logo display */}
+      {/* {process.env.NODE_ENV === 'development' && (
         <ReactQueryDevtools initialIsOpen={false} />
-      )}
+      )} */}
     </QueryClientProvider>
   );
 } 

@@ -11,8 +11,7 @@ import { toast } from "@/components/hooks/use-toast";
 import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import { bulkCreateRooms } from "@/features/room/services/roomServices";
 import { getAllExams } from "@/features/exam/services/examServices";
-import { getSchedulesByStatus } from "@/features/schedule/services/scheduleServices";
-import { getAllClasses } from "@/features/classes/services/classServices";
+import { getSchedulesByStatus, getClassesByScheduleId } from "@/features/schedule/services/scheduleServices";
 import { BulkCreateRoomDto } from "@/features/room/types/room";
 import { ExamDto } from "@/features/exam/types/exam.type";
 import { ExamScheduleDto } from "@/features/schedule/types/schedule";
@@ -56,10 +55,11 @@ const BulkCreateRoomPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [exams, setExams] = useState<ExamDto[]>([]);
   const [schedules, setSchedules] = useState<ExamScheduleDto[]>([]);
-  const [classes, setClasses] = useState<ClassResponseDto[]>([]);
+  const [availableClasses, setAvailableClasses] = useState<ClassResponseDto[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
   const [selectedExams, setSelectedExams] = useState<number[]>([]);
-  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<number | 'all'>('all');
+  const [filteredExams, setFilteredExams] = useState<ExamDto[]>([]);
+  const [selectedScheduleSubject, setSelectedScheduleSubject] = useState<{id: number, name: string, code: string} | null>(null);
 
   const {
     register,
@@ -78,34 +78,15 @@ const BulkCreateRoomPage: React.FC = () => {
 
   const selectedScheduleId = watch("examScheduleId");
 
-  // Get unique subjects from exams
-  const availableSubjects = React.useMemo(() => {
-    const subjects = exams.map(exam => exam.subject).filter(Boolean);
-    const uniqueSubjects = subjects.filter((subject, index, self) => 
-      index === self.findIndex(s => s.id === subject.id)
-    );
-    return uniqueSubjects;
-  }, [exams]);
-
-  // Filter exams by selected subject
-  const filteredExams = React.useMemo(() => {
-    if (selectedSubjectFilter === 'all') {
-      return exams;
-    }
-    return exams.filter(exam => exam.subject?.id === selectedSubjectFilter);
-  }, [exams, selectedSubjectFilter]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [examsData, schedulesData, classesData] = await Promise.all([
+        const [examsData, schedulesData] = await Promise.all([
           getAllExams(),
           getSchedulesByStatus('active'),
-          getAllClasses(),
         ]);
         setExams(examsData);
         setSchedules(schedulesData);
-        setClasses(classesData);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         toast({
@@ -118,21 +99,66 @@ const BulkCreateRoomPage: React.FC = () => {
     fetchData();
   }, []);
 
+  // Update available classes and filter exams when schedule is selected
+  useEffect(() => {
+    if (selectedScheduleId) {
+      const scheduleId = parseInt(selectedScheduleId.toString());
+      const selectedSchedule = schedules.find(s => s.id === scheduleId);
+      
+      // Reset selected exams when schedule changes
+      setSelectedExams([]);
+      
+      const fetchClassesForSchedule = async () => {
+        try {
+          const classesData = await getClassesByScheduleId(scheduleId);
+          setAvailableClasses(classesData);
+          
+          // Update selected classes to only include available ones
+          setSelectedClasses(prevSelected => {
+            const validSelectedClasses = prevSelected.filter(classId => 
+              classesData.some((c: ClassResponseDto) => c.id === classId)
+            );
+            
+            return validSelectedClasses;
+          });
+        } catch (error) {
+          console.error("Failed to fetch classes for schedule:", error);
+          setAvailableClasses([]);
+          setSelectedClasses([]);
+          toast({
+            title: "Lỗi khi tải danh sách lớp học",
+            variant: "error",
+          });
+        }
+      };
+
+      fetchClassesForSchedule();
+      
+      // Filter exams by subject from the selected schedule
+      if (selectedSchedule?.subject) {
+        setSelectedScheduleSubject(selectedSchedule.subject);
+        // Filter official exams that match the subject of the selected schedule
+        const matchingExams = exams.filter(exam => 
+          exam.examType === 'official' && 
+          exam.subject?.id === selectedSchedule.subject?.id
+        );
+        setFilteredExams(matchingExams);
+      } else {
+        setSelectedScheduleSubject(null);
+        setFilteredExams([]);
+      }
+    } else {
+      setAvailableClasses([]);
+      setSelectedClasses([]);
+      setFilteredExams([]);
+      setSelectedScheduleSubject(null);
+    }
+  }, [selectedScheduleId, schedules, exams]);
+
   useEffect(() => {
     setValue("examIds", selectedExams);
     setValue("classIds", selectedClasses);
   }, [selectedExams, selectedClasses, setValue]);
-
-  // Reset selected exams when filter changes to avoid selecting exams not visible
-  useEffect(() => {
-    if (selectedSubjectFilter !== 'all') {
-      const filteredExamIds = filteredExams.map(exam => exam.id);
-      const validSelectedExams = selectedExams.filter(examId => filteredExamIds.includes(examId));
-      if (validSelectedExams.length !== selectedExams.length) {
-        setSelectedExams(validSelectedExams);
-      }
-    }
-  }, [selectedSubjectFilter, filteredExams, selectedExams]);
 
   const handleExamToggle = (examId: number, checked: boolean) => {
     let newSelectedExams: number[];
@@ -155,9 +181,7 @@ const BulkCreateRoomPage: React.FC = () => {
 
   const handleDeselectAllExams = () => {
     // Deselect all exams from current filtered list
-    const filteredExamIds = filteredExams.map(exam => exam.id);
-    const newSelectedExams = selectedExams.filter(examId => !filteredExamIds.includes(examId));
-    setSelectedExams(newSelectedExams);
+    setSelectedExams([]);
   };
 
   const handleClassToggle = (classId: number, checked: boolean) => {
@@ -173,7 +197,7 @@ const BulkCreateRoomPage: React.FC = () => {
   };
 
   const handleSelectAllClasses = () => {
-    const allClassIds = classes.map(cls => cls.id);
+    const allClassIds = availableClasses.map(cls => cls.id);
     setSelectedClasses(allClassIds);
     setValue("classIds", allClassIds);
   };
@@ -283,7 +307,7 @@ const BulkCreateRoomPage: React.FC = () => {
                   <SelectContent>
                     {schedules.map((schedule) => (
                       <SelectItem key={schedule.id} value={schedule.id.toString()}>
-                        {schedule.code}
+                        {schedule.code} {schedule.subject && `- ${schedule.subject.name}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -336,6 +360,18 @@ const BulkCreateRoomPage: React.FC = () => {
                 />
               </div>
             </div>
+            
+            {selectedScheduleSubject && (
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600">📚</span>
+                  <p className="text-sm text-blue-700">
+                    <span className="font-medium">Môn học từ lịch thi: </span>
+                    {selectedScheduleSubject.name} ({selectedScheduleSubject.code})
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -345,6 +381,7 @@ const BulkCreateRoomPage: React.FC = () => {
             <CardTitle>Chọn đề thi</CardTitle>
             <CardDescription>
               Chọn các đề thi để phân phối ngẫu nhiên cho các lớp học. Số lượng đề thi phải bằng số lượng lớp học.
+              {!selectedScheduleId && " Hãy chọn lịch thi trước."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -356,6 +393,7 @@ const BulkCreateRoomPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={handleSelectAllExams}
+                    disabled={!selectedScheduleId || filteredExams.length === 0}
                   >
                     Chọn tất cả
                   </Button>
@@ -364,38 +402,14 @@ const BulkCreateRoomPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={handleDeselectAllExams}
+                    disabled={selectedExams.length === 0}
                   >
                     Bỏ chọn tất cả
                   </Button>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="subjectFilter" className="text-sm whitespace-nowrap">Lọc theo môn:</Label>
-                  <Select
-                    value={selectedSubjectFilter.toString()}
-                    onValueChange={(value) => setSelectedSubjectFilter(value === 'all' ? 'all' : parseInt(value))}
-                  >
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Chọn môn học" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tất cả môn học</SelectItem>
-                      {availableSubjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.id.toString()}>
-                          {subject.name} ({subject.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
                 <div className="ml-auto text-sm text-gray-500">
                   Đã chọn: {selectedExams.length}/{filteredExams.length} đề thi
-                  {selectedSubjectFilter !== 'all' && (
-                    <span className="ml-1 text-blue-600">
-                      (đã lọc từ {exams.length} đề thi)
-                    </span>
-                  )}
                 </div>
               </div>
 
@@ -412,12 +426,18 @@ const BulkCreateRoomPage: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredExams.length === 0 ? (
+                    {!selectedScheduleId ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                          {selectedSubjectFilter === 'all' 
-                            ? 'Không có đề thi nào' 
-                            : 'Không có đề thi nào cho môn học đã chọn'
+                          Vui lòng chọn lịch thi trước
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredExams.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          {selectedScheduleSubject 
+                            ? `Không có đề thi nào cho môn ${selectedScheduleSubject.name}` 
+                            : 'Không có đề thi nào cho lịch thi đã chọn'
                           }
                         </TableCell>
                       </TableRow>
@@ -433,7 +453,9 @@ const BulkCreateRoomPage: React.FC = () => {
                                 onCheckedChange={(checked) => handleExamToggle(exam.id, !!checked)}
                               />
                             </TableCell>
-                            <TableCell className="font-medium">{exam.name}</TableCell>
+                            <TableCell className="font-medium max-w-[200px]">
+                              <div className="truncate" title={exam.name}>{exam.name}</div>
+                            </TableCell>
                             <TableCell>
                               <div className="flex flex-col">
                                 <span className="font-medium">{exam.subject?.name}</span>
@@ -468,6 +490,11 @@ const BulkCreateRoomPage: React.FC = () => {
             <CardTitle>Chọn lớp học</CardTitle>
             <CardDescription>
               Chọn các lớp học để tạo phòng thi. Mỗi lớp sẽ có một phòng thi riêng.
+              {selectedScheduleId ? (
+                availableClasses.length > 0 ? 
+                  ` Hiển thị ${availableClasses.length} lớp học của lịch thi đã chọn.` :
+                  " Lịch thi đã chọn không có lớp học nào."
+              ) : " Hãy chọn lịch thi trước."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -478,6 +505,7 @@ const BulkCreateRoomPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleSelectAllClasses}
+                  disabled={availableClasses.length === 0}
                 >
                   Chọn tất cả
                 </Button>
@@ -486,11 +514,12 @@ const BulkCreateRoomPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleDeselectAllClasses}
+                  disabled={selectedClasses.length === 0}
                 >
                   Bỏ chọn tất cả
                 </Button>
                 <div className="ml-auto text-sm text-gray-500">
-                  Đã chọn: {selectedClasses.length}/{classes.length} lớp
+                  Đã chọn: {selectedClasses.length}/{availableClasses.length} lớp
                 </div>
               </div>
 
@@ -505,25 +534,35 @@ const BulkCreateRoomPage: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {classes.map((cls) => {
-                      const isSelected = selectedClasses.includes(cls.id);
-                      
-                      return (
-                        <TableRow key={cls.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => handleClassToggle(cls.id, !!checked)}
-                            />
-                          </TableCell>
-                          <TableCell className="font-medium">{cls.name}</TableCell>
-                          <TableCell>{cls.code}</TableCell>
-                          <TableCell className="text-sm text-gray-500">
-                            Sẽ được phân phối ngẫu nhiên
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {availableClasses.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                          {selectedScheduleId ? 
+                            "Lịch thi đã chọn không có lớp học nào" : 
+                            "Hãy chọn lịch thi trước"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      availableClasses.map((cls) => {
+                        const isSelected = selectedClasses.includes(cls.id);
+                        
+                        return (
+                          <TableRow key={cls.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => handleClassToggle(cls.id, !!checked)}
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium">{cls.name}</TableCell>
+                            <TableCell>{cls.code}</TableCell>
+                            <TableCell className="text-sm text-gray-500">
+                              Sẽ được phân phối ngẫu nhiên
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -556,6 +595,9 @@ const BulkCreateRoomPage: React.FC = () => {
             <CardContent>
               <div className="space-y-2 text-sm">
                 <p><strong>Lịch thi:</strong> {selectedSchedule.code}</p>
+                {selectedScheduleSubject && (
+                  <p><strong>Môn học:</strong> {selectedScheduleSubject.name} ({selectedScheduleSubject.code})</p>
+                )}
                 <p><strong>Số đề thi được chọn:</strong> {selectedExams.length}</p>
                 <p><strong>Số lớp được chọn:</strong> {selectedClasses.length}</p>
                 <p><strong>Số phòng thi sẽ tạo:</strong> {selectedClasses.length}</p>

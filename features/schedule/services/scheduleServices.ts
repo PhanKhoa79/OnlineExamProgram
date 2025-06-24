@@ -11,6 +11,16 @@ export const getScheduleById = async (id: number): Promise<ExamScheduleDto> => {
   return response.data;
 };
 
+export const getScheduleByClassId = async (classId: number): Promise<ExamScheduleDto> => {
+  const response = await api.get(`/exam-schedules/class/${classId}`);
+  return response.data;
+};
+  
+export const getClassesByScheduleId = async (scheduleId: number) => {
+  const response = await api.get(`/exam-schedules/${scheduleId}/classes`);
+  return response.data;
+};
+
 export const createSchedule = async (
   data: CreateExamScheduleDto
 ): Promise<ExamScheduleDto> => {

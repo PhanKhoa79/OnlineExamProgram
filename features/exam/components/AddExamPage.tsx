@@ -113,6 +113,7 @@ const AddExamPage: React.FC = () => {
         duration: data.duration,
         examType: data.examType,
         totalQuestions: data.totalQuestions,
+        maxScore: data.maxScore,
         subjectId: data.subjectId,
         questionIds: selectedQuestions.length > 0 ? selectedQuestions : undefined,
       };
@@ -252,7 +253,7 @@ const AddExamPage: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="examType">Loại đề thi *</Label>
-                <Select onValueChange={(value) => setValue("examType", value as "practice" | "official")}>
+                <Select onValueChange={(value) => setValue("examType", value as "practice" | "official", { shouldValidate: true })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn loại đề thi" />
                   </SelectTrigger>
@@ -268,7 +269,7 @@ const AddExamPage: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="subjectId">Môn học *</Label>
-                <Select onValueChange={(value) => setValue("subjectId", parseInt(value))}>
+                <Select onValueChange={(value) => setValue("subjectId", parseInt(value), { shouldValidate: true })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Chọn môn học" />
                   </SelectTrigger>
@@ -302,6 +303,26 @@ const AddExamPage: React.FC = () => {
                 />
                 {errors.totalQuestions && (
                   <p className="text-sm text-red-500">{errors.totalQuestions.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maxScore">Điểm tối đa *</Label>
+                <Input
+                  id="maxScore"
+                  type="number"
+                  min="1"
+                  max="1000"
+                  placeholder="100"
+                  {...register("maxScore", {
+                    required: "Điểm tối đa là bắt buộc",
+                    min: { value: 1, message: "Điểm tối đa phải lớn hơn 0" },
+                    max: { value: 1000, message: "Điểm tối đa không được vượt quá 1000" },
+                    valueAsNumber: true,
+                  })}
+                />
+                {errors.maxScore && (
+                  <p className="text-sm text-red-500">{errors.maxScore.message}</p>
                 )}
               </div>
             </CardContent>

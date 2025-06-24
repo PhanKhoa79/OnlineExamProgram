@@ -21,7 +21,7 @@ import { ExamScheduleDto } from "@/features/schedule/types/schedule";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
 import { useAuthStore } from "@/features/auth/store";
 import { hasPermission } from "@/lib/permissions";
-import { Clock, BookOpen, Hash, Calendar, FileText, MapPin } from "lucide-react";
+import { Clock, BookOpen, Hash, Calendar, FileText, MapPin, Users } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -286,6 +286,41 @@ export const DetailScheduleModal: React.FC<DetailScheduleModalProps> = ({
                       </p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Classes Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Danh sách lớp học
+                  </CardTitle>
+                  <CardDescription>Các lớp học tham gia lịch thi</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {schedule.classes && schedule.classes.length > 0 ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                        {schedule.classes.map((classItem) => (
+                          <div 
+                            key={classItem.id} 
+                            className="flex items-center p-2 rounded-md border bg-gray-50"
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{classItem.name}</p>
+                              <p className="text-xs text-gray-500">Mã lớp: {classItem.code}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Tổng cộng: {schedule.classes.length} lớp học
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Không có lớp học nào được gán cho lịch thi này.</p>
+                  )}
                 </CardContent>
               </Card>
 

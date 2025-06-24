@@ -10,8 +10,10 @@ import { toast } from "@/components/hooks/use-toast";
 import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import { createSchedule } from "@/features/schedule/services/scheduleServices";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
+import { getAllClasses } from "@/features/classes/services/classServices";
 import { CreateExamScheduleDto } from "@/features/schedule/types/schedule";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
+import { ClassResponseDto } from "@/features/classes/types/class.type";
 import {
   Select,
   SelectContent,
@@ -27,11 +29,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const AddSchedulePage: React.FC = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
+  const [classes, setClasses] = useState<ClassResponseDto[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
 
   const {
     register,
@@ -45,8 +51,12 @@ const AddSchedulePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const subjectsData = await getAllSubjects();
+        const [subjectsData, classesData] = await Promise.all([
+          getAllSubjects(),
+          getAllClasses()
+        ]);
         setSubjects(subjectsData);
+        setClasses(classesData);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         toast({
@@ -58,6 +68,16 @@ const AddSchedulePage: React.FC = () => {
 
     fetchData();
   }, []);
+
+  const toggleClass = (classId: number) => {
+    setSelectedClasses(prev => {
+      if (prev.includes(classId)) {
+        return prev.filter(id => id !== classId);
+      } else {
+        return [...prev, classId];
+      }
+    });
+  };
 
   const onSubmit = async (data: CreateExamScheduleDto, exitAfterSave = false) => {
     try {
@@ -80,6 +100,7 @@ const AddSchedulePage: React.FC = () => {
         status: data.status || 'active',
         description: data.description,
         subjectId: data.subjectId,
+        classIds: selectedClasses.length > 0 ? selectedClasses : undefined,
       };
 
       const response = await createSchedule(scheduleData);
@@ -305,6 +326,46 @@ const AddSchedulePage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Class Selection Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Danh sách lớp học</CardTitle>
+              <CardDescription>
+                Chọn các lớp học tham gia lịch thi này
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {classes.length > 0 ? (
+                <ScrollArea className="h-[200px] rounded-md border p-4">
+                  <div className="space-y-4">
+                    {classes.map((classItem) => (
+                      <div key={classItem.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`class-${classItem.id}`} 
+                          checked={selectedClasses.includes(classItem.id)}
+                          onCheckedChange={() => toggleClass(classItem.id)}
+                        />
+                        <label
+                          htmlFor={`class-${classItem.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {classItem.name} ({classItem.code})
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-sm text-muted-foreground">Không có lớp học nào.</p>
+              )}
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Đã chọn {selectedClasses.length} lớp học
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column - Summary */}
@@ -360,6 +421,12 @@ const AddSchedulePage: React.FC = () => {
                     }
                   </span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Số lớp học:</span>
+                  <span className="font-medium">
+                    {selectedClasses.length} lớp
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -373,6 +440,7 @@ const AddSchedulePage: React.FC = () => {
               <p>• Thời gian kết thúc phải sau thời gian bắt đầu</p>
               <p>• Trạng thái mặc định là &quot;Hoạt động&quot;</p>
               <p>• Bạn có thể thêm mô tả để ghi chú thêm thông tin</p>
+              <p>• Chọn các lớp học sẽ tham gia lịch thi này</p>
             </CardContent>
           </Card>
         </div>

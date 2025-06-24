@@ -12,7 +12,7 @@ import { toast } from "@/components/hooks/use-toast";
 import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import { getRoomById, updateRoom } from "@/features/room/services/roomServices";
 import { getAllExams } from "@/features/exam/services/examServices";
-import { getSchedulesByStatus } from "@/features/schedule/services/scheduleServices";
+import { getSchedulesByStatus, getClassesByScheduleId } from "@/features/schedule/services/scheduleServices";
 import { getAllClasses } from "@/features/classes/services/classServices";
 import { UpdateRoomDto, RoomDto } from "@/features/room/types/room";
 import { ExamDto } from "@/features/exam/types/exam.type";
@@ -46,7 +46,9 @@ const EditRoomPage: React.FC = () => {
   const [exams, setExams] = useState<ExamDto[]>([]);
   const [schedules, setSchedules] = useState<ExamScheduleDto[]>([]);
   const [classes, setClasses] = useState<ClassResponseDto[]>([]);
-  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<number | 'all'>('all');
+  const [availableClasses, setAvailableClasses] = useState<ClassResponseDto[]>([]);
+  const [filteredExams, setFilteredExams] = useState<ExamDto[]>([]);
+  const [selectedScheduleSubject, setSelectedScheduleSubject] = useState<{id: number, name: string, code: string} | null>(null);
 
   const {
     register,
@@ -56,23 +58,6 @@ const EditRoomPage: React.FC = () => {
     watch,
     reset,
   } = useForm<UpdateRoomDto>();
-
-  // Get unique subjects from exams
-  const availableSubjects = React.useMemo(() => {
-    const subjects = exams.map(exam => exam.subject).filter(Boolean);
-    const uniqueSubjects = subjects.filter((subject, index, self) => 
-      index === self.findIndex(s => s.id === subject.id)
-    );
-    return uniqueSubjects;
-  }, [exams]);
-
-  // Filter exams by selected subject
-  const filteredExams = React.useMemo(() => {
-    if (selectedSubjectFilter === 'all') {
-      return exams;
-    }
-    return exams.filter(exam => exam.subject?.id === selectedSubjectFilter);
-  }, [exams, selectedSubjectFilter]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -125,10 +110,38 @@ const EditRoomPage: React.FC = () => {
       };
       
       reset(formData);
-
-      // Set subject filter based on selected exam
-      if (room.exam?.subject?.id) {
-        setSelectedSubjectFilter(room.exam.subject.id);
+      
+      // Set available classes and filter exams based on selected schedule
+      const selectedSchedule = schedules.find(s => s.id === (room.examSchedule?.id || room.examScheduleId));
+      if (selectedSchedule) {
+        // Filter exams by subject from the selected schedule
+        if (selectedSchedule.subject) {
+          setSelectedScheduleSubject(selectedSchedule.subject);
+          // Filter official exams that match the subject of the selected schedule
+          const matchingExams = exams.filter(exam => 
+            exam.examType === 'official' && 
+            exam.subject?.id === selectedSchedule.subject?.id
+          );
+          setFilteredExams(matchingExams);
+        }
+        
+        // Set available classes
+        if (selectedSchedule.classes && selectedSchedule.classes.length > 0) {
+          setAvailableClasses(selectedSchedule.classes);
+        } else {
+          const fetchClassesForSchedule = async () => {
+            try {
+              const classesData = await getClassesByScheduleId(selectedSchedule.id);
+              setAvailableClasses(classesData);
+            } catch (error) {
+              console.error("Failed to fetch classes for schedule:", error);
+              setAvailableClasses([]);
+            }
+          };
+          fetchClassesForSchedule();
+        }
+      } else {
+        setAvailableClasses(classes);
       }
     }
   }, [room, exams, schedules, classes, reset]);
@@ -291,31 +304,31 @@ const EditRoomPage: React.FC = () => {
 
             {/* Exam, Schedule, Class Selection */}
             <div className="space-y-4">
-              {/* Subject Filter */}
-              <div className="flex items-center gap-2">
-                <Label htmlFor="subjectFilter" className="text-sm whitespace-nowrap">Lọc đề thi theo môn:</Label>
-                <Select
-                  value={selectedSubjectFilter.toString()}
-                  onValueChange={(value) => setSelectedSubjectFilter(value === 'all' ? 'all' : parseInt(value))}
-                >
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Chọn môn học" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả môn học</SelectItem>
-                    {availableSubjects.map((subject) => (
-                      <SelectItem key={subject.id} value={subject.id.toString()}>
-                        {subject.name} ({subject.code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-gray-500">
-                  {filteredExams.length}/{exams.length} đề thi
-                </span>
+              {/* Schedule and Subject Info */}
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-600">🗓️</span>
+                    <p className="text-sm text-blue-700">
+                      <span className="font-medium">Lịch thi: </span>
+                      {room?.examSchedule?.code || 'Không xác định'}
+                      <span className="text-xs text-gray-500 ml-2">(Không thể thay đổi lịch thi khi chỉnh sửa phòng)</span>
+                    </p>
+                  </div>
+                  
+                  {selectedScheduleSubject && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">📚</span>
+                      <p className="text-sm text-blue-700">
+                        <span className="font-medium">Môn học từ lịch thi: </span>
+                        {selectedScheduleSubject.name} ({selectedScheduleSubject.code})
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="examId">
                     Bài thi <span className="text-red-500">*</span>
@@ -324,32 +337,35 @@ const EditRoomPage: React.FC = () => {
                     value={watch("examId")?.toString()}
                     onValueChange={(value) => setValue("examId", parseInt(value))}
                   >
-                    <SelectTrigger className={errors.examId ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Chọn bài thi" />
+                    <SelectTrigger className={`${errors.examId ? "border-red-500" : ""} pr-2`}>
+                      <SelectValue placeholder="Chọn bài thi" className="truncate" />
                     </SelectTrigger>
                     <SelectContent>
-                      {filteredExams.map((exam) => (
-                        <SelectItem key={exam.id} value={exam.id.toString()}>
-                          {exam.name} ({exam.examType === 'practice' ? 'Luyện tập' : 'Chính thức'})
+                      {filteredExams.length > 0 ? (
+                        filteredExams.map((exam) => (
+                          <SelectItem key={exam.id} value={exam.id.toString()}>
+                            <div className="flex items-center gap-2 max-w-full">
+                              <span className={exam.examType === 'practice' ? '🎯' : '🏆'}></span>
+                              <div className="truncate">
+                                <span className="truncate block" title={exam.name}>{exam.name}</span>
+                                <span className="text-xs text-gray-500">({exam.examType === 'practice' ? 'Luyện tập' : 'Chính thức'})</span>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-exams" disabled>
+                          {selectedScheduleSubject 
+                            ? `Không có đề thi nào cho môn ${selectedScheduleSubject.name}`
+                            : 'Không có đề thi nào cho lịch thi đã chọn'
+                          }
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                   {errors.examId && (
                     <p className="text-sm text-red-500">Vui lòng chọn bài thi</p>
                   )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Lịch thi hiện tại</Label>
-                  <div className="p-3 bg-gray-50 rounded-md border">
-                    <p className="text-sm font-medium">
-                      {room?.examSchedule?.code || 'Chưa có lịch thi'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Không thể thay đổi lịch thi khi chỉnh sửa phòng
-                    </p>
-                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -364,11 +380,17 @@ const EditRoomPage: React.FC = () => {
                       <SelectValue placeholder="Chọn lớp học" />
                     </SelectTrigger>
                     <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id.toString()}>
-                          {cls.name} ({cls.code})
+                      {availableClasses.length > 0 ? (
+                        availableClasses.map((cls) => (
+                          <SelectItem key={cls.id} value={cls.id.toString()}>
+                            {cls.name} ({cls.code})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-classes" disabled>
+                          Lịch thi này không có lớp nào
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                   {errors.classId && (

@@ -358,11 +358,11 @@ function RoomTableComponent() {
           
           {hasPermission(permissions, 'room:create') && (
             <>
-              <Button onClick={handleBulkCreate} variant="outline" size="sm">
+              <Button onClick={handleBulkCreate} variant="outline" size="sm" className="cursor-pointer">
                 <Plus className="h-4 w-4 mr-2" />
                 Tạo hàng loạt
               </Button>
-              <Button onClick={handleCreateRoom} size="sm">
+              <Button onClick={handleCreateRoom} size="sm" className="cursor-pointer">
                 <Plus className="h-4 w-4 mr-2" />
                 Thêm phòng thi
               </Button>
@@ -374,7 +374,7 @@ function RoomTableComponent() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px] cursor-pointer">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
@@ -388,7 +388,7 @@ function RoomTableComponent() {
         </Select>
 
         <Select value={examFilter} onValueChange={setExamFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] cursor-pointer">
             <SelectValue placeholder="Bài thi" />
           </SelectTrigger>
           <SelectContent>
@@ -402,7 +402,7 @@ function RoomTableComponent() {
         </Select>
 
         <Select value={scheduleFilter} onValueChange={setScheduleFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] cursor-pointer">
             <SelectValue placeholder="Lịch thi" />
           </SelectTrigger>
           <SelectContent>
@@ -416,7 +416,7 @@ function RoomTableComponent() {
         </Select>
 
         <Select value={classFilter} onValueChange={setClassFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px] cursor-pointer">
             <SelectValue placeholder="Lớp học" />
           </SelectTrigger>
           <SelectContent>
@@ -430,7 +430,7 @@ function RoomTableComponent() {
         </Select>
 
         {hasActiveFilters && (
-          <Button variant="ghost" onClick={clearFilters} size="sm">
+          <Button variant="ghost" onClick={clearFilters} size="sm" className="cursor-pointer">
             <FilterX className="h-4 w-4 mr-2" />
             Xóa bộ lọc
           </Button>
@@ -438,7 +438,7 @@ function RoomTableComponent() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="cursor-pointer">
               <Columns className="h-4 w-4 mr-2" />
               Cột hiển thị
               <ChevronDown className="h-4 w-4 ml-2" />
@@ -522,6 +522,7 @@ function RoomTableComponent() {
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            className="cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
             Trước
@@ -531,6 +532,7 @@ function RoomTableComponent() {
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            className="cursor-pointer"
           >
             Sau
             <ChevronRight className="h-4 w-4" />

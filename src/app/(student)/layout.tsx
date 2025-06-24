@@ -1,31 +1,38 @@
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
-import { Navbar } from '@/components/student/Navbar';
-import { Sidebar } from '@/features/student/components/student-account/Sidebar';
+import { StudentNavbar } from '@/components/student/StudentNavbar';
+import { StudentSidebar } from '@/components/student/StudentSidebar';
 import { checkUserRole } from '@/lib/checkRole';
 
 export const metadata: Metadata = {
-  title: 'Student Area - MegaStart Online',
-  description: 'Trang dành cho sinh viên',
+  title: 'Student Portal - MegaStar Online Exam',
+  description: 'Hệ thống thi trắc nghiệm trực tuyến dành cho sinh viên',
 };
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
-  const role = await checkUserRole({ allow: ['student'] });
+  await checkUserRole({ allow: ['student'] });
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-[#FAFAFC]">
-        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
+          {/* Header */}
+          <StudentNavbar />
 
-        <div className="flex">
-          <Sidebar className="hidden md:block" />
+          <div className="flex h-[calc(100vh-80px)]">
+            {/* Sidebar */}
+            <StudentSidebar />
 
-          <main className="flex-1 p-4 md:p-6 overflow-auto">
-            {children}
-          </main>
+            {/* Main Content */}
+            <main className="flex-1 overflow-auto">
+              <div className="p-6 lg:p-8">
+                <div className="max-w-7xl mx-auto">
+                  {children}
+                </div>
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
     </ThemeProvider>
   );
 }

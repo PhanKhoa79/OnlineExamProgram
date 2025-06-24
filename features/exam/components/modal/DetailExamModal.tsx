@@ -166,6 +166,12 @@ export const DetailExamModal: React.FC<DetailExamModalProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Điểm tối đa:</span>
+                    <span className="text-sm">{exam.maxScore} điểm</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
                     <PenTool className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Loại đề thi:</span>
                     <Badge className={getExamTypeColor(exam.examType)}>
