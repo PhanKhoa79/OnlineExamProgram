@@ -10,8 +10,10 @@ import { toast } from "@/components/hooks/use-toast";
 import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import { getScheduleById, updateSchedule } from "@/features/schedule/services/scheduleServices";
 import { getAllSubjects } from "@/features/subject/services/subjectServices";
+import { getAllClasses } from "@/features/classes/services/classServices";
 import { UpdateExamScheduleDto, ExamScheduleDto } from "@/features/schedule/types/schedule";
 import { SubjectResponseDto } from "@/features/subject/types/subject";
+import { ClassResponseDto } from "@/features/classes/types/class.type";
 import {
   Select,
   SelectContent,
@@ -26,8 +28,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar, Clock, BookOpen, Hash, FileText, Info } from "lucide-react";
+import { Calendar, Clock, BookOpen, Hash, FileText, Info, Users } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EditScheduleFormData {
   code: string;
@@ -46,6 +50,8 @@ const EditSchedulePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
+  const [classes, setClasses] = useState<ClassResponseDto[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
   const [scheduleData, setScheduleData] = useState<ExamScheduleDto | null>(null);
 
   const {
@@ -61,13 +67,21 @@ const EditSchedulePage: React.FC = () => {
     const fetchData = async () => {
       try {
         setIsDataLoading(true);
-        const [scheduleResult, subjectsData] = await Promise.all([
+        const [scheduleResult, subjectsData, classesData] = await Promise.all([
           getScheduleById(scheduleId),
           getAllSubjects(),
+          getAllClasses(),
         ]);
 
         setScheduleData(scheduleResult);
         setSubjects(subjectsData);
+        setClasses(classesData);
+
+        // Set selected classes from schedule data
+        if (scheduleResult.classes && scheduleResult.classes.length > 0) {
+          const classIds = scheduleResult.classes.map(cls => cls.id);
+          setSelectedClasses(classIds);
+        }
 
         const startTime = new Date(scheduleResult.startTime);
         const endTime = new Date(scheduleResult.endTime);
@@ -114,6 +128,16 @@ const EditSchedulePage: React.FC = () => {
       fetchData();
     }
   }, [scheduleId, reset, setValue]);
+
+  const toggleClass = (classId: number) => {
+    setSelectedClasses(prev => {
+      if (prev.includes(classId)) {
+        return prev.filter(id => id !== classId);
+      } else {
+        return [...prev, classId];
+      }
+    });
+  };
 
   const onSubmit = async (data: EditScheduleFormData, exitAfterSave = false) => {
     try {
@@ -178,6 +202,16 @@ const EditSchedulePage: React.FC = () => {
       const originalSubjectId = scheduleData.subject?.id || scheduleData.subjectId;
       if (data.subjectId !== originalSubjectId) {
         updateData.subjectId = data.subjectId;
+      }
+
+      // Check if class selection has changed
+      const originalClassIds = scheduleData.classes?.map(cls => cls.id) || [];
+      const classIdsChanged = 
+        selectedClasses.length !== originalClassIds.length || 
+        selectedClasses.some(id => !originalClassIds.includes(id));
+      
+      if (classIdsChanged) {
+        updateData.classIds = selectedClasses;
       }
 
       // Kiểm tra xem có thay đổi gì không
@@ -438,6 +472,46 @@ const EditSchedulePage: React.FC = () => {
             </CardContent>
           </Card>
 
+          {/* Class Selection Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center space-y-0 pb-3">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <CardTitle className="text-lg">Danh sách lớp học</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {classes.length > 0 ? (
+                <ScrollArea className="h-[200px] rounded-md border p-4">
+                  <div className="space-y-4">
+                    {classes.map((classItem) => (
+                      <div key={classItem.id} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`class-${classItem.id}`} 
+                          checked={selectedClasses.includes(classItem.id)}
+                          onCheckedChange={() => toggleClass(classItem.id)}
+                        />
+                        <label
+                          htmlFor={`class-${classItem.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {classItem.name} ({classItem.code})
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-sm text-muted-foreground">Không có lớp học nào.</p>
+              )}
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground">
+                  Đã chọn {selectedClasses.length} lớp học
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Schedule Details Section */}
           <Card>
             <CardHeader className="flex flex-row items-center space-y-0 pb-3">
@@ -574,6 +648,12 @@ const EditSchedulePage: React.FC = () => {
                     }
                   </span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Số lớp học:</span>
+                  <span className="font-medium">
+                    {selectedClasses.length} lớp
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -587,6 +667,7 @@ const EditSchedulePage: React.FC = () => {
               <p>• Thời gian kết thúc phải sau thời gian bắt đầu</p>
               <p>• Hãy cẩn thận khi thay đổi trạng thái lịch thi</p>
               <p>• Mô tả có thể để trống hoặc ghi chú thêm thông tin</p>
+              <p>• Thay đổi danh sách lớp học sẽ ảnh hưởng đến việc tham gia lịch thi</p>
             </CardContent>
           </Card>
         </div>

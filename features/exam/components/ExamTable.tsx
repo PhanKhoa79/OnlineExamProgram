@@ -240,6 +240,7 @@ function ExamTableComponent() {
     examType: "Loại đề thi", 
     duration: "Thời gian",
     totalQuestions: "Số câu hỏi",
+    maxScore: "Điểm tối đa",
     subject: "Môn học",
     actions: "Thao tác",
   };

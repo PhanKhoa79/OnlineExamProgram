@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { X, Check, Bell, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/features/auth/store';
 
 
 interface NotificationPanelProps {
@@ -15,6 +16,7 @@ interface NotificationPanelProps {
 
 export default function NotificationPanel({ onClose }: NotificationPanelProps) {
   const { notifications, isLoading, error, markNotificationAsRead, markAllNotificationsAsRead, deleteNotificationById } = useNotifications();
+  const { user } = useAuthStore();
   
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const router = useRouter();
@@ -48,7 +50,19 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
     setOpenDropdownId(openDropdownId === notificationId ? null : notificationId);
   };
 
-  const renderNotificationItem = (notification: Notification, index: number) => {
+  const handleViewAllNotifications = () => {
+    // Kiểm tra vai trò người dùng và chuyển hướng phù hợp
+    if (user?.role.name === 'student') {
+      // Chuyển hướng đến trang home của sinh viên
+      router.push('/home');
+    } else {
+      // Chuyển hướng đến trang thông báo của dashboard
+      router.push('/dashboard/notifications');
+    }
+    onClose();
+  };
+
+  const renderNotificationItem = (notification: Notification) => {
     return (
       <div 
         key={notification.id}
@@ -184,7 +198,7 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
               <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Mới</h4>
             </div>
             <div className="relative overflow-visible">
-              {notifications.map((notification, index) => renderNotificationItem(notification, index))}
+              {notifications.map((notification) => renderNotificationItem(notification))}
             </div>
           </div>
         )}
@@ -194,10 +208,7 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
       <div className="p-3 border-t border-gray-200/50 dark:border-gray-700/50 text-center bg-gray-50/30 dark:bg-gray-800/30">
         <button 
           className="w-full py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-200 font-medium"
-          onClick={() => {
-            router.push('/dashboard/notifications');
-            onClose();
-          }}
+          onClick={handleViewAllNotifications}
         >
           Xem tất cả thông báo
         </button>

@@ -40,6 +40,7 @@ interface EditExamFormData {
   duration: number;
   examType: "practice" | "official";
   totalQuestions: number;
+  maxScore: number;
   subjectId: number;
 }
 
@@ -89,6 +90,7 @@ const EditExamPage: React.FC = () => {
           duration: examResult.duration,
           examType: examResult.examType,
           totalQuestions: examResult.totalQuestions,
+          maxScore: examResult.maxScore,
           subjectId: examResult.subject.id,
         });
 
@@ -141,6 +143,7 @@ const EditExamPage: React.FC = () => {
         duration: data.duration,
         examType: data.examType,
         totalQuestions: data.totalQuestions,
+        maxScore: data.maxScore,
         subjectId: data.subjectId,
         questionIds: selectedQuestions.length > 0 ? selectedQuestions : undefined,
       };
@@ -387,6 +390,26 @@ const EditExamPage: React.FC = () => {
                   <p className="text-sm text-red-500">{errors.totalQuestions.message}</p>
                 )}
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maxScore">Điểm tối đa *</Label>
+                <Input
+                  id="maxScore"
+                  type="number"
+                  min="1"
+                  max="1000"
+                  placeholder="100"
+                  {...register("maxScore", {
+                    required: "Điểm tối đa là bắt buộc",
+                    min: { value: 1, message: "Điểm tối đa phải lớn hơn 0" },
+                    max: { value: 1000, message: "Điểm tối đa không được vượt quá 1000" },
+                    valueAsNumber: true,
+                  })}
+                />
+                {errors.maxScore && (
+                  <p className="text-sm text-red-500">{errors.maxScore.message}</p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -535,6 +558,14 @@ const EditExamPage: React.FC = () => {
                     <span className="text-sm font-medium">Số câu hỏi:</span>
                     <span className="text-sm text-muted-foreground">
                       {examData.totalQuestions} câu
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Điểm tối đa:</span>
+                    <span className="text-sm text-muted-foreground">
+                      {examData.maxScore} điểm
                     </span>
                   </div>
                 </div>

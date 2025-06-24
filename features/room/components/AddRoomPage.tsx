@@ -12,7 +12,7 @@ import { toast } from "@/components/hooks/use-toast";
 import { NavigableBreadcrumb } from "@/components/ui/NavigableBreadcrumb";
 import { createRoom } from "@/features/room/services/roomServices";
 import { getAllExams } from "@/features/exam/services/examServices";
-import { getSchedulesByStatus } from "@/features/schedule/services/scheduleServices";
+import { getSchedulesByStatus, getClassesByScheduleId } from "@/features/schedule/services/scheduleServices";
 import { getAllClasses } from "@/features/classes/services/classServices";
 import { CreateRoomDto } from "@/features/room/types/room";
 import { ExamDto } from "@/features/exam/types/exam.type";
@@ -41,7 +41,9 @@ const AddRoomPage: React.FC = () => {
   const [exams, setExams] = useState<ExamDto[]>([]);
   const [schedules, setSchedules] = useState<ExamScheduleDto[]>([]);
   const [classes, setClasses] = useState<ClassResponseDto[]>([]);
-  const [selectedSubjectFilter, setSelectedSubjectFilter] = useState<number | 'all'>('all');
+  const [availableClasses, setAvailableClasses] = useState<ClassResponseDto[]>([]);
+  const [filteredExams, setFilteredExams] = useState<ExamDto[]>([]);
+  const [selectedScheduleSubject, setSelectedScheduleSubject] = useState<{id: number, name: string, code: string} | null>(null);
 
   const {
     register,
@@ -62,23 +64,7 @@ const AddRoomPage: React.FC = () => {
   const selectedScheduleId = watch("examScheduleId");
   const selectedClassId = watch("classId");
 
-  // Get unique subjects from exams
-  const availableSubjects = React.useMemo(() => {
-    const subjects = exams.map(exam => exam.subject).filter(Boolean);
-    const uniqueSubjects = subjects.filter((subject, index, self) => 
-      index === self.findIndex(s => s.id === subject.id)
-    );
-    return uniqueSubjects;
-  }, [exams]);
-
-  // Filter exams by selected subject
-  const filteredExams = React.useMemo(() => {
-    if (selectedSubjectFilter === 'all') {
-      return exams;
-    }
-    return exams.filter(exam => exam.subject?.id === selectedSubjectFilter);
-  }, [exams, selectedSubjectFilter]);
-
+  // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -101,6 +87,56 @@ const AddRoomPage: React.FC = () => {
 
     fetchData();
   }, []);
+
+  // Update available classes and filter exams when schedule is selected
+  useEffect(() => {
+    if (selectedScheduleId) {
+      const scheduleId = parseInt(selectedScheduleId.toString());
+      const selectedSchedule = schedules.find(s => s.id === scheduleId);
+      
+      // Reset exam selection when schedule changes
+      setValue("examId", 0, { shouldValidate: false });
+      
+      const fetchClassesForSchedule = async () => {
+        try {
+          const classesData = await getClassesByScheduleId(scheduleId);
+          setAvailableClasses(classesData);
+          
+          const currentClassId = selectedClassId ? parseInt(selectedClassId.toString()) : null;
+          if (currentClassId && !classesData.some((c: ClassResponseDto) => c.id === currentClassId)) {
+            setValue("classId", 0, { shouldValidate: false });
+          }
+        } catch (error) {
+          console.error("Failed to fetch classes for schedule:", error);
+          setAvailableClasses([]);
+          toast({
+            title: "Lỗi khi tải danh sách lớp học",
+            variant: "error",
+          });
+        }
+      };
+
+      fetchClassesForSchedule();
+      
+      // Filter exams by subject from the selected schedule
+      if (selectedSchedule?.subject) {
+        setSelectedScheduleSubject(selectedSchedule.subject);
+        // Filter official exams that match the subject of the selected schedule
+        const matchingExams = exams.filter(exam => 
+          exam.examType === 'official' && 
+          exam.subject?.id === selectedSchedule.subject?.id
+        );
+        setFilteredExams(matchingExams);
+      } else {
+        setSelectedScheduleSubject(null);
+        setFilteredExams([]);
+      }
+    } else {
+      setAvailableClasses([]);
+      setFilteredExams([]);
+      setSelectedScheduleSubject(null);
+    }
+  }, [selectedScheduleId, schedules, exams, setValue]);
 
   // Auto-generate room code when exam, schedule, and class are selected
   useEffect(() => {
@@ -191,8 +227,6 @@ const AddRoomPage: React.FC = () => {
         });
         return;
       }
-
-      console.log('Creating room with data:', roomData);
 
       const response = await createRoom(roomData);
 
@@ -293,7 +327,7 @@ const AddRoomPage: React.FC = () => {
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 Thông tin cơ bản
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-3">
                   <Label htmlFor="code" className="text-sm font-medium text-gray-700">
                     Mã phòng thi <span className="text-red-500">*</span>
@@ -335,68 +369,10 @@ const AddRoomPage: React.FC = () => {
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                Lựa chọn bài thi và lịch thi
+                Lựa chọn lịch thi và bài thi
               </h3>
-              
-              {/* Subject Filter */}
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Label htmlFor="subjectFilter" className="text-sm font-medium text-blue-800 whitespace-nowrap">
-                    🔍 Lọc đề thi theo môn:
-                  </Label>
-                  <Select
-                    value={selectedSubjectFilter.toString()}
-                    onValueChange={(value) => setSelectedSubjectFilter(value === 'all' ? 'all' : parseInt(value))}
-                  >
-                    <SelectTrigger className="w-64 h-10 bg-white border-blue-300 focus:border-blue-500">
-                      <SelectValue placeholder="Chọn môn học" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">📚 Tất cả môn học</SelectItem>
-                      {availableSubjects.map((subject) => (
-                        <SelectItem key={subject.id} value={subject.id.toString()}>
-                          📖 {subject.name} ({subject.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                    {filteredExams.length}/{exams.length} đề thi
-                  </div>
-                </div>
-              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="examId" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    📝 Bài thi <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={selectedExamId?.toString()}
-                    onValueChange={(value) => setValue("examId", parseInt(value))}
-                  >
-                    <SelectTrigger className={`h-11 transition-colors ${errors.examId ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-500"}`}>
-                      <SelectValue placeholder="Chọn bài thi" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredExams.map((exam) => (
-                        <SelectItem key={exam.id} value={exam.id.toString()}>
-                          <div className="flex items-center gap-2">
-                            <span className={exam.examType === 'practice' ? '🎯' : '🏆'}></span>
-                            {exam.name} ({exam.examType === 'practice' ? 'Luyện tập' : 'Chính thức'})
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.examId && (
-                    <p className="text-sm text-red-500 flex items-center gap-1">
-                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                      Vui lòng chọn bài thi
-                    </p>
-                  )}
-                </div>
-
                 <div className="space-y-3">
                   <Label htmlFor="examScheduleId" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     📅 Lịch thi <span className="text-red-500">*</span>
@@ -413,7 +389,7 @@ const AddRoomPage: React.FC = () => {
                         <SelectItem key={schedule.id} value={schedule.id.toString()}>
                           <div className="flex items-center gap-2">
                             <span>🗓️</span>
-                            {schedule.code}
+                            {schedule.code} {schedule.subject && `- ${schedule.subject.name}`}
                           </div>
                         </SelectItem>
                       ))}
@@ -428,25 +404,83 @@ const AddRoomPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
+                  <Label htmlFor="examId" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    📝 Bài thi <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={selectedExamId?.toString()}
+                    onValueChange={(value) => setValue("examId", parseInt(value))}
+                    disabled={!selectedScheduleId}
+                  >
+                    <SelectTrigger className={`h-11 transition-colors ${errors.examId ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-500"}`}>
+                      <SelectValue placeholder={selectedScheduleId ? "Chọn bài thi" : "Chọn lịch thi trước"} className="truncate" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedScheduleSubject ? (
+                        filteredExams.length > 0 ? (
+                          filteredExams.map((exam) => (
+                            <SelectItem key={exam.id} value={exam.id.toString()}>
+                              <div className="flex items-center gap-2 max-w-full">
+                                <span>🏆</span>
+                                <div className="truncate">
+                                  <span className="truncate block" title={exam.name}>{exam.name}</span>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-exams" disabled>
+                            Không có đề thi nào cho môn {selectedScheduleSubject.name}
+                          </SelectItem>
+                        )
+                      ) : (
+                        <SelectItem value="select-schedule" disabled>
+                          Vui lòng chọn lịch thi trước
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.examId && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                      Vui lòng chọn bài thi
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-3">
                   <Label htmlFor="classId" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     👥 Lớp học <span className="text-red-500">*</span>
                   </Label>
                   <Select
                     value={selectedClassId?.toString()}
                     onValueChange={(value) => setValue("classId", parseInt(value))}
+                    disabled={!selectedScheduleId}
                   >
                     <SelectTrigger className={`h-11 transition-colors ${errors.classId ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-500"}`}>
-                      <SelectValue placeholder="Chọn lớp học" />
+                      <SelectValue placeholder={selectedScheduleId ? "Chọn lớp học" : "Chọn lịch thi trước"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id.toString()}>
-                          <div className="flex items-center gap-2">
-                            <span>🎓</span>
-                            {cls.name} ({cls.code})
-                          </div>
+                      {selectedScheduleId ? (
+                        availableClasses.length > 0 ? (
+                          availableClasses.map((cls) => (
+                            <SelectItem key={cls.id} value={cls.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <span>🎓</span>
+                                {cls.name} ({cls.code})
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-classes" disabled>
+                            Lịch thi này không có lớp nào
+                          </SelectItem>
+                        )
+                      ) : (
+                        <SelectItem value="select-schedule" disabled>
+                          Vui lòng chọn lịch thi trước
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                   {errors.classId && (
@@ -457,6 +491,18 @@ const AddRoomPage: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {selectedScheduleSubject && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-600">📚</span>
+                    <p className="text-sm text-blue-700">
+                      <span className="font-medium">Môn học từ lịch thi: </span>
+                      {selectedScheduleSubject.name} ({selectedScheduleSubject.code})
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Additional Settings */}

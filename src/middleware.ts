@@ -1,15 +1,15 @@
-// src/middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  let accessToken  = request.cookies.get('accessToken')?.value;
+  let accessToken = request.cookies.get('accessToken')?.value;
   const refreshToken = request.cookies.get('refreshToken')?.value;
 
   if (accessToken) {
     try {
       const [, payloadB64] = accessToken.split('.');
       const payload = JSON.parse(atob(payloadB64));
-      if (typeof payload.exp === 'number' && Date.now() / 1000 >= payload.exp) {
+      // Thêm buffer 30 giây để tránh trường hợp token hết hạn ngay sau khi kiểm tra
+      if (typeof payload.exp === 'number' && Date.now() / 1000 >= payload.exp - 30) {
         accessToken = undefined;
       }
     } catch {
@@ -22,26 +22,76 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!accessToken && refreshToken) {
-    const refreshUrl = 'http://localhost:5000/api/auth/refresh-token';
-    const refreshRes = await fetch(refreshUrl, {
-      method: 'POST',
-      headers: { Cookie: `refreshToken=${refreshToken}` },
-    });
+    try {
+      // Sử dụng URL từ biến môi trường nếu có
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const refreshUrl = `${apiUrl}/auth/refresh-token`;
+      
+      const refreshRes = await fetch(refreshUrl, {
+        method: 'POST',
+        headers: { 
+          Cookie: `refreshToken=${refreshToken}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // Đảm bảo cookies được gửi và nhận
+      });
 
-    if (!refreshRes.ok) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+      if (!refreshRes.ok) {
+        // Clear cookies và redirect về login
+        const response = NextResponse.redirect(new URL('/login', request.url));
+        response.cookies.delete('accessToken');
+        response.cookies.delete('refreshToken');
+        return response;
+      }
 
-    const setCookie = refreshRes.headers.get('set-cookie');
-    if (setCookie) {
-      const response = NextResponse.redirect(request.nextUrl);
-      response.headers.set('set-cookie', setCookie);
+      // Lấy response data để extract access token
+      const setCookieHeaders = refreshRes.headers.getSetCookie();
+      
+      if (setCookieHeaders.length > 0) {
+        const response = NextResponse.next();
+        
+        // Set tất cả cookies từ response
+        setCookieHeaders.forEach(cookie => {
+          response.headers.append('set-cookie', cookie);
+        });
+        
+        return response;
+      } else {
+        // Kiểm tra nếu có accessToken trong response body
+        try {
+          const data = await refreshRes.json();
+          if (data.accessToken) {
+            const response = NextResponse.next();
+            // Thiết lập cookie từ dữ liệu trả về
+            response.cookies.set('accessToken', data.accessToken, {
+              path: '/',
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'lax',
+              maxAge: 15 * 60, // 15 phút
+            });
+            return response;
+          }
+        } catch (e) {
+          console.error('Error parsing refresh token response:', e);
+        }
+        
+        // Fallback: clear cookies và redirect
+        const response = NextResponse.redirect(new URL('/login', request.url));
+        response.cookies.delete('accessToken');
+        response.cookies.delete('refreshToken');
+        return response;
+      }
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      // Clear cookies và redirect về login khi có lỗi
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('accessToken');
+      response.cookies.delete('refreshToken');
       return response;
-    } else {
-      return NextResponse.redirect(new URL('/login', request.url));
     }
-   
   }
+  
   return NextResponse.next();
 }
 

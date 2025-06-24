@@ -5,6 +5,7 @@ export interface CreateExamScheduleDto {
   status?: 'active' | 'completed' | 'cancelled';
   description?: string;
   subjectId: number;
+  classIds?: number[];
 }
 
 export interface UpdateExamScheduleDto {
@@ -14,6 +15,7 @@ export interface UpdateExamScheduleDto {
   status?: 'active' | 'completed' | 'cancelled';
   description?: string;
   subjectId?: number;
+  classIds?: number[];
 }
 
 export interface ExamScheduleDto {
@@ -32,6 +34,11 @@ export interface ExamScheduleDto {
     createdAt: string;
     updatedAt: string;
   };
+  classes?: Array<{
+    id: number;
+    name: string;
+    code: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }

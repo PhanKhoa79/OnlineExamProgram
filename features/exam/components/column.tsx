@@ -206,6 +206,23 @@ export const examColumns = (searchQuery: string = ""): ColumnDef<ExamDto>[] => {
       },
     },
     {
+      accessorKey: "maxScore",
+      header: ({ column }) => (
+        <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Điểm tối đa
+          <ArrowUpDown className="h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const exam = row.original;
+        return (
+          <div className="relative flex items-center gap-2 ml-3">
+            <span>{exam.maxScore} điểm</span>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "subject",
       header: ({ column }) => (
         <Button type="button" variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>

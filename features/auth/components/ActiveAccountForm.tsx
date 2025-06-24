@@ -55,7 +55,7 @@ export default function ActiveAccountForm() {
     const verifyToken = async () => {
       if (!token) {
         setIsTokenValid(false);
-        setTokenError('Token kích hoạt không hợp lệ');
+        setTokenError('Token kích hoạt không được cung cấp');
         setIsLoading(false);
         return;
       }
@@ -67,37 +67,56 @@ export default function ActiveAccountForm() {
           if (emailResponse && emailResponse.data && emailResponse.data.email) {
             setEmail(emailResponse.data.email);
           }
-        } catch (error) {
-          console.log("Không thể lấy email từ token:", error);
+        } catch (emailError) {
+          console.log("Không thể lấy email từ token:", emailError);
+          // Không set token invalid ở đây, vì có thể token vẫn hợp lệ
         }
 
         // Kiểm tra tính hợp lệ của token
-        const response = await verifyActivationToken(token);
+        const tokenResponse = await verifyActivationToken(token);
+        
+        console.log("Token verification response:", tokenResponse);
         
         // Kiểm tra kết quả từ API
-        if (!response.data || response.data.valid === false) {
+        if (tokenResponse && tokenResponse.data && tokenResponse.data.valid === true) {
+          // Token hợp lệ
+          setIsTokenValid(true);
+          setTokenError(null);
+        } else {
+          // Token không hợp lệ hoặc response không đúng định dạng
           setIsTokenValid(false);
-          setTokenError(response.data?.message || 'Token đã hết hạn hoặc không hợp lệ');
-          setIsLoading(false);
-          return;
+          const errorMessage = tokenResponse?.data?.message || 'Token không hợp lệ hoặc đã hết hạn';
+          console.log("Token invalid with message:", errorMessage);
+          setTokenError(errorMessage);
         }
-        
-        // Token hợp lệ
-        setIsTokenValid(true);
-      } catch (err: unknown) {
+      } catch (err) {
         console.error('Token verification error:', err);
         setIsTokenValid(false);
-        const error = err as ApiError;
-        setTokenError(error?.response?.data?.message || error.message || 'Token đã hết hạn hoặc không hợp lệ');
         
-        // Không cần kiểm tra email trong response lỗi vì đã lấy trước đó
+        const error = err as ApiError;
+        let errorMessage = 'Không thể xác minh token. Vui lòng thử lại hoặc yêu cầu token mới.';
+        
+        if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error?.response?.status === 401) {
+          errorMessage = 'Missing access token';
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
+        console.log("Setting token error to:", errorMessage);
+        setTokenError(errorMessage);
       } finally {
+        // Đảm bảo luôn set isLoading thành false để tránh bị kẹt ở màn hình loading
         setIsLoading(false);
       }
     };
 
-    verifyToken();
-  }, [token]);
+    // Chỉ gọi verifyToken nếu đang ở trạng thái loading
+    if (isLoading) {
+      verifyToken();
+    }
+  }, [token, isLoading]);
 
   // Xử lý khi người dùng yêu cầu gửi lại mã kích hoạt
   const handleRequestActivation = async () => {
@@ -132,7 +151,7 @@ export default function ActiveAccountForm() {
         description: "Yêu cầu kích hoạt tài khoản đã được gửi đến quản trị viên.",
         variant: "success"
       });
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err as ApiError;
       const msg = error?.response?.data?.message || error.message || 'Không thể gửi yêu cầu kích hoạt tài khoản.';
       toast({
@@ -180,10 +199,15 @@ export default function ActiveAccountForm() {
 
     // Kiểm tra lại tính hợp lệ của token trước khi submit
     try {
-      await verifyActivationToken(token);
+      const response = await verifyActivationToken(token);
+      if (!response.data || response.data.valid !== true) {
+        setIsTokenValid(false);
+        setTokenError('Token đã hết hạn hoặc không hợp lệ');
+        return;
+      }
     } catch (err) {
       setIsTokenValid(false);
-      setTokenError('Token đã hết hạn hoặc không hợp lệ');
+      setTokenError('Không thể xác minh token. Vui lòng thử lại hoặc yêu cầu token mới.');
       return;
     }
 
@@ -197,7 +221,7 @@ export default function ActiveAccountForm() {
         variant: "success"
       });
       router.push('/login');
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err as ApiError;
       const msg = error?.response?.data?.message || error.message || 'Có lỗi xảy ra';
       if (msg.includes('tạm thời không đúng')) {
@@ -215,15 +239,21 @@ export default function ActiveAccountForm() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-8">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-600">Đang kiểm tra tính hợp lệ của link kích hoạt...</p>
+      <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-100 flex items-center justify-center">
+          <svg className="w-10 h-10 text-blue-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Đang xác minh...</h2>
+        <p className="text-gray-600">Hệ thống đang kiểm tra tính hợp lệ của link kích hoạt.</p>
       </div>
     );
   }
 
   // Show error state if token is invalid
-  if (!isTokenValid) {
+  if (isTokenValid === false) {
     return (
       <div className="bg-white p-8 rounded-lg shadow-lg text-center">
         <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
@@ -233,7 +263,7 @@ export default function ActiveAccountForm() {
         </div>
         
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Link kích hoạt đã hết hạn</h2>
-        <p className="text-gray-600 mb-6">{tokenError || 'Link kích hoạt tài khoản đã hết hạn hoặc không hợp lệ.'}</p>
+        <p className="text-gray-600 mb-6">{tokenError === 'Missing access token' ? 'Không thể xác thực token kích hoạt' : tokenError || 'Link kích hoạt tài khoản đã hết hạn hoặc không hợp lệ.'}</p>
         
         <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
           <h3 className="font-semibold text-gray-700 mb-2">Bạn cần làm gì?</h3>

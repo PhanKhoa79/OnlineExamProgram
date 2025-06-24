@@ -4,10 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Avatar } from '@mui/material';
 import { ArrowDropDown } from '@mui/icons-material';
-import { AccountCircle, ExitToApp, Settings } from '@mui/icons-material';
+import { ExitToApp } from '@mui/icons-material';
 import { logout } from '@/features/auth/services/authService'; 
 import { useAuthStore } from '@/features/auth/store';
-import Link from 'next/link';
 
 export default function ProfileAvatar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -92,36 +91,6 @@ export default function ProfileAvatar() {
 
         {/* Menu Items */}
         <div className="py-2">
-          {role === "student" && (
-            <>
-              <Link href="/account/profile" onClick={closeDropdown}>
-                <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200 group">
-                  <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-200">
-                    <AccountCircle sx={{ fontSize: 20 }} />
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-900 dark:text-white">Thông tin cá nhân</span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Quản lý hồ sơ của bạn</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/account/security" onClick={closeDropdown}>
-                <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200 group">
-                  <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform duration-200">
-                    <Settings sx={{ fontSize: 20 }} />
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-900 dark:text-white">Đổi mật khẩu</span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Cập nhật bảo mật tài khoản</p>
-                  </div>
-                </div>
-              </Link>
-
-              <div className="border-t border-gray-200/50 dark:border-gray-700/50 my-2"></div>
-            </>
-          )}
-
           {/* Logout */}
           <div 
             className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 group"
@@ -159,9 +128,6 @@ export default function ProfileAvatar() {
         
         <div className="hidden md:block">
           <div className="flex items-center gap-1">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[100px] truncate">
-              {accountName || 'User'}
-            </span>
             <ArrowDropDown 
               className={`text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
                 isOpen ? 'rotate-180' : ''

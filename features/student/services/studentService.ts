@@ -141,3 +141,24 @@ export const downloadTemplateFile = async (type: 'xlsx' | 'csv') => {
     throw error;
   }
 };
+
+// Add these new functions for streak tracking
+export const updateStudentLoginStreak = async (email: string) => {
+  try {
+    const response = await api.patch(`/students/streak`, { email });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating student login streak:', error);
+    throw error;
+  }
+};
+
+export const getStudentLoginStreak = async (email: string) => {
+  try {
+    const response = await api.get(`/students/streak/${email}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting student login streak:', error);
+    throw error;
+  }
+};

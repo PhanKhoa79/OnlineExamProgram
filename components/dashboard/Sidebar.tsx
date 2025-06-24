@@ -7,7 +7,7 @@ import { SidebarItem } from './SidebarItem';
 import Image from 'next/image';
 import { useTheme } from '../providers/ThemeProvider';
 import { ToggleSwitch } from '../ui/ToggleSwitch';
-import { ManageAccounts, DarkMode, LightMode, Close, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd, Groups, QuestionAnswer, AutoStories, School, SpeakerNotes, Schedule, MeetingRoom, Dashboard } from '@mui/icons-material';
+import { ManageAccounts, DarkMode, LightMode, Close, KeyboardDoubleArrowLeft, KeyboardDoubleArrowRight, PersonAdd, Groups, QuestionAnswer, AutoStories, School, SpeakerNotes, Schedule, MeetingRoom, Dashboard, BarChart } from '@mui/icons-material';
 import { useAuthStore } from '@/features/auth/store';
 import { hasResourcePermission } from '@/lib/permissions';
 
@@ -47,6 +47,11 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
       title: 'Trang chủ',
       icon: <Dashboard sx={{ fontSize: 22 }} />,
       href: `${basePath}`
+    },
+    {
+      title: 'Báo cáo & Thống kê',
+      icon: <BarChart sx={{ fontSize: 22 }} />,
+      href: `${basePath}/statistics`
     },
     hasResourcePermission(permissions, 'account') && {
       title: 'Quản lý tài khoản',

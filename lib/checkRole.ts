@@ -19,6 +19,14 @@ const getRoleFromToken = cache(async () => {
       return null;
     }
 
+    // Kiểm tra token có hết hạn không
+    if (typeof decoded === 'object' && 'exp' in decoded) {
+      const exp = decoded.exp as number;
+      if (Date.now() / 1000 >= exp) {
+        return null; // Token hết hạn
+      }
+    }
+
     const roleObj = (decoded as { role?: { id: number; name: string } }).role;
     return roleObj || null;
   } catch (error) {
@@ -28,10 +36,18 @@ const getRoleFromToken = cache(async () => {
 });
 
 export const checkUserRole = async (options?: { deny?: string[]; allow?: string[] }) => {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get('refreshToken')?.value;
+  
   const roleObj = await getRoleFromToken();
 
+  // Nếu không có role nhưng vẫn có refresh token, redirect về login để middleware xử lý
   if (!roleObj) {
-    redirect('/login');
+    if (refreshToken) {
+      redirect('/login'); // Để middleware xử lý refresh token
+    } else {
+      redirect('/login'); // Không có token nào cả
+    }
     return undefined as never;
   }
 
