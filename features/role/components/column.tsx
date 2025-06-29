@@ -10,6 +10,7 @@ import { getRoleByName } from "../services/roleServices";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import { getPermissionClass, getPermissionIcon } from '@/utils/permissios.util'
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -102,7 +103,10 @@ export const roleColumns = (): ColumnDef<RoleWithPermissionsDto>[] => {
         const u = row.original;
         return (
           <div className="relative flex flex-col gap-1 ml-3">
-            <span>{u.name}</span>
+            <div className="flex items-center">
+              <span>{u.name}</span>
+              <NewDataBadge createdAt={u.createdAt} />
+            </div>
             {u.name === 'moderator' && (
               <div className="text-xs text-red-600 font-medium">
                 Lưu ý*: Đây là quyền cao nhất <br /> trong hệ thống không được phép xóa

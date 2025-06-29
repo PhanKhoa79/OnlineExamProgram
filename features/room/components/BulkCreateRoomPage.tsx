@@ -386,8 +386,8 @@ const BulkCreateRoomPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex gap-2 items-center flex-wrap">
-                <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     type="button"
                     variant="outline"
@@ -408,21 +408,21 @@ const BulkCreateRoomPage: React.FC = () => {
                   </Button>
                 </div>
                 
-                <div className="ml-auto text-sm text-gray-500">
+                <div className="sm:ml-auto text-sm text-gray-500 font-medium">
                   Đã chọn: {selectedExams.length}/{filteredExams.length} đề thi
                 </div>
               </div>
 
-              <div className="border rounded-md">
+              <div className="border rounded-md overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">Chọn</TableHead>
-                      <TableHead>Tên đề thi</TableHead>
-                      <TableHead>Môn học</TableHead>
-                      <TableHead>Loại đề thi</TableHead>
-                      <TableHead>Thời gian</TableHead>
-                      <TableHead>Số câu hỏi</TableHead>
+                      <TableHead className="w-12 min-w-[48px]">Chọn</TableHead>
+                      <TableHead className="min-w-[200px]">Tên đề thi</TableHead>
+                      <TableHead className="min-w-[120px]">Môn học</TableHead>
+                      <TableHead className="min-w-[100px]">Loại đề thi</TableHead>
+                      <TableHead className="min-w-[80px]">Thời gian</TableHead>
+                      <TableHead className="min-w-[80px]">Số câu hỏi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -453,13 +453,19 @@ const BulkCreateRoomPage: React.FC = () => {
                                 onCheckedChange={(checked) => handleExamToggle(exam.id, !!checked)}
                               />
                             </TableCell>
-                            <TableCell className="font-medium max-w-[200px]">
-                              <div className="truncate" title={exam.name}>{exam.name}</div>
+                            <TableCell className="font-medium">
+                              <div className="max-w-[200px] truncate" title={exam.name}>
+                                {exam.name}
+                              </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{exam.subject?.name}</span>
-                                <span className="text-xs text-gray-500">{exam.subject?.code}</span>
+                              <div className="flex flex-col max-w-[120px]">
+                                <span className="font-medium truncate" title={exam.subject?.name}>
+                                  {exam.subject?.name}
+                                </span>
+                                <span className="text-xs text-gray-500 truncate" title={exam.subject?.code}>
+                                  {exam.subject?.code}
+                                </span>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -523,14 +529,14 @@ const BulkCreateRoomPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="border rounded-md">
+              <div className="border rounded-md overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">Chọn</TableHead>
-                      <TableHead>Tên lớp</TableHead>
-                      <TableHead>Mã lớp</TableHead>
-                      <TableHead>Mã phòng thi sẽ tạo</TableHead>
+                      <TableHead className="w-12 min-w-[48px]">Chọn</TableHead>
+                      <TableHead className="min-w-[150px]">Tên lớp</TableHead>
+                      <TableHead className="min-w-[100px]">Mã lớp</TableHead>
+                      <TableHead className="min-w-[150px]">Mã phòng thi sẽ tạo</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -554,8 +560,16 @@ const BulkCreateRoomPage: React.FC = () => {
                                 onCheckedChange={(checked) => handleClassToggle(cls.id, !!checked)}
                               />
                             </TableCell>
-                            <TableCell className="font-medium">{cls.name}</TableCell>
-                            <TableCell>{cls.code}</TableCell>
+                            <TableCell className="font-medium">
+                              <div className="max-w-[150px] truncate" title={cls.name}>
+                                {cls.name}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-[100px] truncate" title={cls.code}>
+                                {cls.code}
+                              </div>
+                            </TableCell>
                             <TableCell className="text-sm text-gray-500">
                               Sẽ được phân phối ngẫu nhiên
                             </TableCell>

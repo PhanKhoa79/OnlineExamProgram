@@ -4,7 +4,6 @@ import { toast } from '@/components/hooks/use-toast';
 import { 
   startExam, 
   saveStudentAnswer, 
-  getStudentAnswers,
   getExamById,
   getQuestionsOfExam 
 } from '../services/examServices';

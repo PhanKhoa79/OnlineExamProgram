@@ -7,8 +7,10 @@ import { useActivityLogs } from '@/features/activity-logs/hooks/useActivityLogs'
 import { RelativeTime } from '@/components/ui/RelativeTime';
 import { ArrowLeft, Clock, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function ActivityLogsPage() {
+  usePageTitle('Nhật ký hoạt động');
   const router = useRouter();
   const { user } = useAuthStore();
   

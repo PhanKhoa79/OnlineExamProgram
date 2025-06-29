@@ -82,3 +82,9 @@ export interface SystemStatusDto {
 export interface RoomStatusChangeDto {
   status: 'waiting' | 'open' | 'closed';
 }
+
+export interface RoomStatusDto {
+  id: number;
+  status: 'waiting' | 'open' | 'closed';
+  message?: string;
+}

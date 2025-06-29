@@ -7,7 +7,8 @@ import {
   getQuestionsOfExam,
   startExam,
   saveStudentAnswer,
-  submitStudentExam
+  submitStudentExam,
+  checkRoomStatus
 } from '@/features/exam/services/examServices';
 import { 
   ExamDto,
@@ -32,6 +33,7 @@ import {
   Save
 } from 'lucide-react';
 import { toast } from '@/components/hooks/use-toast';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface StudentAnswer {
   questionId: number;
@@ -39,9 +41,11 @@ interface StudentAnswer {
   isMarked: boolean;
 }
 
-const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
+const AUTO_SAVE_INTERVAL = 10000;
+const ROOM_STATUS_CHECK_INTERVAL = 10000;
 
 const ExamTakingPage = () => {
+  usePageTitle('Làm bài thi');
   const params = useParams();
   const router = useRouter();
   const examId = parseInt(params?.examId as string);
@@ -66,6 +70,9 @@ const ExamTakingPage = () => {
   const [studentExamId, setStudentExamId] = useState<number | null>(null);
   const [isSavingAnswer, setIsSavingAnswer] = useState(false);
   const [realStudentId, setRealStudentId] = useState<number | null>(null);
+  const [roomClosed, setRoomClosed] = useState(false);
+  const roomStatusIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [assignmentId, setAssignmentId] = useState<number | null>(null);
 
   // Get real student ID from email
   useEffect(() => {
@@ -186,6 +193,7 @@ const ExamTakingPage = () => {
       };
 
       const response = await startExam(startData);
+      setAssignmentId(response.assignmentId);
       
       if (!response) {
         throw new Error('No response from startExam API');
@@ -512,46 +520,63 @@ const ExamTakingPage = () => {
   };
 
   const handleAnswerSelect = async (answerId: number) => {
-    const questionId = questions[currentQuestionIndex].id;
-    
-    // Update local state immediately for better UX
-    setStudentAnswers(prev => {
-      const updated = prev.map(answer => 
-        answer.questionId === questionId
-          ? { ...answer, selectedAnswerId: answerId }
-          : answer
-      );
-      return updated;
-    });
-    
-    hasUnsavedChangesRef.current = true;
-    
-    // Save to database
-    const currentAnswer = studentAnswers.find(a => a.questionId === questionId);
-    console.log('💾 Current answer before save:', currentAnswer);
-    
-    await saveAnswerToDatabase(questionId, answerId, currentAnswer?.isMarked || false);
+    try {
+      const questionId = questions[currentQuestionIndex].id;
+      
+      // Update local state immediately for better UX
+      setStudentAnswers(prev => {
+        const updated = prev.map(answer => 
+          answer.questionId === questionId
+            ? { ...answer, selectedAnswerId: answerId }
+            : answer
+        );
+        return updated;
+      });
+      
+      hasUnsavedChangesRef.current = true;
+      
+      // Save to database
+      const currentAnswer = studentAnswers.find(a => a.questionId === questionId);
+      
+      await saveAnswerToDatabase(questionId, answerId, currentAnswer?.isMarked || false);
+    } catch (error) {
+      console.error('❌ Error in handleAnswerSelect:', error);
+      toast({
+        title: 'Lỗi lưu câu trả lời',
+        description: 'Đã xảy ra lỗi khi lưu câu trả lời. Vui lòng thử lại hoặc nhấn nút "Lưu" để lưu thủ công.',
+        variant: 'error'
+      });
+    }
   };
 
   const handleMarkQuestion = async () => {
-    const questionId = questions[currentQuestionIndex].id;
-    const currentAnswer = studentAnswers.find(a => a.questionId === questionId);
-    const newMarkedState = !currentAnswer?.isMarked;
-    
-    
-    // Update local state immediately
-    setStudentAnswers(prev => 
-      prev.map(answer => 
-        answer.questionId === questionId
-          ? { ...answer, isMarked: newMarkedState }
-          : answer
-      )
-    );
-    
-    hasUnsavedChangesRef.current = true;
-    
-    // Save to database
-    await saveAnswerToDatabase(questionId, currentAnswer?.selectedAnswerId || null, newMarkedState);
+    try {
+      const questionId = questions[currentQuestionIndex].id;
+      const currentAnswer = studentAnswers.find(a => a.questionId === questionId);
+      const newMarkedState = !currentAnswer?.isMarked;
+      
+      
+      // Update local state immediately
+      setStudentAnswers(prev => 
+        prev.map(answer => 
+          answer.questionId === questionId
+            ? { ...answer, isMarked: newMarkedState }
+            : answer
+        )
+      );
+      
+      hasUnsavedChangesRef.current = true;
+      
+      // Save to database
+      await saveAnswerToDatabase(questionId, currentAnswer?.selectedAnswerId || null, newMarkedState);
+    } catch (error) {
+      console.error('❌ Error in handleMarkQuestion:', error);
+      toast({
+        title: 'Lỗi đánh dấu câu hỏi',
+        description: 'Đã xảy ra lỗi khi đánh dấu câu hỏi. Vui lòng thử lại.',
+        variant: 'error'
+      });
+    }
   };
 
   const handleNextQuestion = () => {
@@ -614,39 +639,98 @@ const ExamTakingPage = () => {
     }
   };
 
-  const handleSubmitExam = async () => {
-    if (!studentExamId) {
-      toast({
-        title: 'Lỗi',
-        description: 'Không có thông tin bài thi để nộp.',
-        variant: 'error'
-      });
-      return;
-    }
-
+  // Check if room is still open
+  const checkIfRoomIsOpen = useCallback(async () => {
     try {
-      setIsSubmitting(true);
+      if (!assignmentId) return;
       
-      const submissionResult = await submitStudentExam(studentExamId);
+      const status = await checkRoomStatus(assignmentId);
       
+      // Chỉ xử lý khi status có giá trị và là 'closed'
+      if (status === 'closed') {
+        setRoomClosed(true);
+        
+        // Ngừng đếm ngược thời gian bằng cách đặt timeLeft = 0
+        setTimeLeft(0);
+        
+        toast({
+          title: '⚠️ Phòng thi đã đóng!',
+          description: 'Phòng thi đã được đóng, bài thi sẽ được nộp ngay lập tức.',
+          variant: 'error'
+        });
+        
+        // Auto submit when room is closed
+        if (studentExamId) {
+          try {
+            await submitStudentExam(studentExamId);
+            toast({
+              title: 'Nộp bài thành công!',
+              description: 'Bài thi đã được nộp tự động do phòng thi đã đóng.',
+            });
+            router.push('/exams');
+          } catch (error) {
+            console.error('❌ Auto-submit failed:', error);
+            toast({
+              title: 'Lỗi nộp bài tự động',
+              description: 'Vui lòng nộp bài thủ công.',
+              variant: 'error'
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error checking room status:', error);
+    }
+  }, [examId, studentExamId, router]);
+
+  // Set up periodic room status check
+  useEffect(() => {
+    if (examStarted && studentExamId) {
+      // Check immediately on start
+      checkIfRoomIsOpen();
+      
+      // Set up interval for periodic checks
+      roomStatusIntervalRef.current = setInterval(() => {
+        checkIfRoomIsOpen();
+      }, ROOM_STATUS_CHECK_INTERVAL);
+      
+      return () => {
+        if (roomStatusIntervalRef.current) {
+          clearInterval(roomStatusIntervalRef.current);
+        }
+      };
+    }
+  }, [examStarted, studentExamId, checkIfRoomIsOpen]);
+
+  // Thêm kiểm tra trạng thái phòng khi có thay đổi examId
+  useEffect(() => {
+    if (examId && examStarted && studentExamId) {
+      checkIfRoomIsOpen();
+    }
+  }, [examId, examStarted, studentExamId, checkIfRoomIsOpen]);
+
+  const handleSubmitExam = async () => {
+    if (!studentExamId) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      await submitStudentExam(studentExamId);
       toast({
         title: 'Nộp bài thành công!',
-        description: `Chúc mừng bạn đã hoàn thành bài thi.`,
+        description: roomClosed 
+          ? 'Bài thi đã được nộp do phòng thi đã đóng.'
+          : 'Bài thi của bạn đã được nộp thành công.',
       });
-
-      // Navigate to practice exams page
-      router.push('/exams');
-      
+      router.push('/results/history');
     } catch (error) {
       console.error('❌ Error submitting exam:', error);
       toast({
         title: 'Lỗi nộp bài',
-        description: 'Không thể nộp bài. Vui lòng thử lại.',
+        description: 'Không thể nộp bài thi. Vui lòng thử lại.',
         variant: 'error'
       });
-    } finally {
       setIsSubmitting(false);
-      setShowConfirmSubmit(false);
     }
   };
 
@@ -797,7 +881,6 @@ const ExamTakingPage = () => {
               <div className="text-center pt-4">
                 <Button 
                   onClick={() => {
-                    console.log('🎬 Start button clicked, realStudentId:', realStudentId);
                     handleStartExam();
                   }}
                   size="lg"

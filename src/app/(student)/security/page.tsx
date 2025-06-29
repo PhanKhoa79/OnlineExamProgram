@@ -22,6 +22,7 @@ import {
   MapPin,
   Smartphone
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface LoginHistoryEntry {
   loginTime: string;
@@ -30,6 +31,7 @@ interface LoginHistoryEntry {
 }
 
 export default function SecurityPage() {
+  usePageTitle('Bảo mật tài khoản');
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);

@@ -35,7 +35,6 @@ export function DetailRoleModal({ open, onOpenChange, id }: DetailRoleModalProps
 
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-    // Check if role is moderator (case-insensitive)
     const isModerator = roleName.toLowerCase() === 'moderator';
 
     useEffect(() => {
@@ -138,7 +137,7 @@ export function DetailRoleModal({ open, onOpenChange, id }: DetailRoleModalProps
         )}
 
             <div className="flex justify-between gap-4 mt-6">
-                {hasPermission(permissionsAccountCur, "role:update") && (
+                {hasPermission(permissionsAccountCur, "role:update") && !isModerator && (
                     <button
                         type="button"
                         className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded"

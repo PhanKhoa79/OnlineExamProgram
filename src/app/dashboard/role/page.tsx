@@ -1,5 +1,11 @@
 import dynamic from 'next/dynamic';
 import { PageLoader } from '@/components/ui/PageLoader';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Quản lý quyền - MegaStart Online',
+  description: 'Quản lý phân quyền người dùng trong hệ thống',
+};
 
 // Dynamic import with loading fallback
 const RoleTable = dynamic(

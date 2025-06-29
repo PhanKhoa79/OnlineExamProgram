@@ -4,8 +4,10 @@ import { InputOTPForm } from '@/features/auth/components/InputOtpForm'
 import { Input } from '@/components/ui/input'
 import { forgotPassword } from '@/features/auth/services/authService'
 import { toast } from '@/components/hooks/use-toast'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 export default function ForgotPasswordPage() {
+  usePageTitle('Quên mật khẩu');
   const [step, setStep] = useState<'email' | 'otp'>('email')
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')

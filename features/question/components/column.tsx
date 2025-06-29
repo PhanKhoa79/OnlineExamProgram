@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store";
 import { hasPermission } from "@/lib/permissions";
 import { HighlightText } from "@/components/ui/HighlightText";
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -130,6 +131,7 @@ export const questionColumns = (subjects: SubjectResponseDto[] = [], searchQuery
               text={truncatedText} 
               searchQuery={searchQuery}
             />
+            <NewDataBadge createdAt={question.createdAt} />
           </div>
         );
       },

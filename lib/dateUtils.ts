@@ -40,4 +40,23 @@ export const formatTime = (dateString: string): string => {
     second: '2-digit',
     hour12: false,
   });
+};
+
+/**
+ * Check if a date is within the last 24 hours
+ * @param dateString - The date string to check (ISO format)
+ * @returns boolean - true if the date is within last 24 hours
+ */
+export const isNewData = (dateString: string): boolean => {
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    
+    return diffInHours <= 24;
+  } catch (error) {
+    console.error('Error checking if data is new:', error);
+    return false;
+  }
 }; 

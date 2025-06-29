@@ -372,7 +372,7 @@ const AddRoomPage: React.FC = () => {
                 Lựa chọn lịch thi và bài thi
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="space-y-3">
                   <Label htmlFor="examScheduleId" className="text-sm font-medium text-gray-700 flex items-center gap-2">
                     📅 Lịch thi <span className="text-red-500">*</span>
@@ -382,14 +382,27 @@ const AddRoomPage: React.FC = () => {
                     onValueChange={(value) => setValue("examScheduleId", parseInt(value))}
                   >
                     <SelectTrigger className={`h-11 transition-colors ${errors.examScheduleId ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-500"}`}>
-                      <SelectValue placeholder="Chọn lịch thi" />
+                      <div className="flex items-center gap-2 w-full overflow-hidden">
+                        {selectedScheduleId && schedules.length > 0 ? (
+                          <>
+                            <span className="flex-shrink-0">🗓️</span>
+                            <span className="truncate text-sm">
+                              {schedules.find(s => s.id === parseInt(selectedScheduleId.toString()))?.code || "Chọn lịch thi"}
+                            </span>
+                          </>
+                        ) : (
+                          <SelectValue placeholder="Chọn lịch thi" />
+                        )}
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {schedules.map((schedule) => (
                         <SelectItem key={schedule.id} value={schedule.id.toString()}>
-                          <div className="flex items-center gap-2">
-                            <span>🗓️</span>
-                            {schedule.code} {schedule.subject && `- ${schedule.subject.name}`}
+                          <div className="flex items-center gap-2 w-full overflow-hidden">
+                            <span className="flex-shrink-0">🗓️</span>
+                            <span className="truncate text-sm" title={`${schedule.code} ${schedule.subject ? `- ${schedule.subject.name}` : ''}`}>
+                              {schedule.code} {schedule.subject && `- ${schedule.subject.name}`}
+                            </span>
                           </div>
                         </SelectItem>
                       ))}
@@ -413,18 +426,29 @@ const AddRoomPage: React.FC = () => {
                     disabled={!selectedScheduleId}
                   >
                     <SelectTrigger className={`h-11 transition-colors ${errors.examId ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-500"}`}>
-                      <SelectValue placeholder={selectedScheduleId ? "Chọn bài thi" : "Chọn lịch thi trước"} className="truncate" />
+                      <div className="flex items-center gap-2 w-full overflow-hidden">
+                        {selectedExamId && filteredExams.length > 0 ? (
+                          <>
+                            <span className="flex-shrink-0">🏆</span>
+                            <span className="truncate text-sm">
+                              {filteredExams.find(exam => exam.id === parseInt(selectedExamId.toString()))?.name || "Chọn bài thi"}
+                            </span>
+                          </>
+                        ) : (
+                          <SelectValue placeholder={selectedScheduleId ? "Chọn bài thi" : "Chọn lịch thi trước"} />
+                        )}
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {selectedScheduleSubject ? (
                         filteredExams.length > 0 ? (
                           filteredExams.map((exam) => (
                             <SelectItem key={exam.id} value={exam.id.toString()}>
-                              <div className="flex items-center gap-2 max-w-full">
-                                <span>🏆</span>
-                                <div className="truncate">
-                                  <span className="truncate block" title={exam.name}>{exam.name}</span>
-                                </div>
+                              <div className="flex items-center gap-2 w-full overflow-hidden">
+                                <span className="flex-shrink-0">🏆</span>
+                                <span className="truncate text-sm" title={exam.name}>
+                                  {exam.name}
+                                </span>
                               </div>
                             </SelectItem>
                           ))
@@ -458,16 +482,29 @@ const AddRoomPage: React.FC = () => {
                     disabled={!selectedScheduleId}
                   >
                     <SelectTrigger className={`h-11 transition-colors ${errors.classId ? "border-red-500 focus:border-red-500" : "border-gray-300 focus:border-blue-500"}`}>
-                      <SelectValue placeholder={selectedScheduleId ? "Chọn lớp học" : "Chọn lịch thi trước"} />
+                      <div className="flex items-center gap-2 w-full overflow-hidden">
+                        {selectedClassId && availableClasses.length > 0 ? (
+                          <>
+                            <span className="flex-shrink-0">🎓</span>
+                            <span className="truncate text-sm">
+                              {availableClasses.find(cls => cls.id === parseInt(selectedClassId.toString()))?.name || "Chọn lớp học"}
+                            </span>
+                          </>
+                        ) : (
+                          <SelectValue placeholder={selectedScheduleId ? "Chọn lớp học" : "Chọn lịch thi trước"} />
+                        )}
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {selectedScheduleId ? (
                         availableClasses.length > 0 ? (
                           availableClasses.map((cls) => (
                             <SelectItem key={cls.id} value={cls.id.toString()}>
-                              <div className="flex items-center gap-2">
-                                <span>🎓</span>
-                                {cls.name} ({cls.code})
+                              <div className="flex items-center gap-2 w-full overflow-hidden">
+                                <span className="flex-shrink-0">🎓</span>
+                                <span className="truncate text-sm" title={`${cls.name} (${cls.code})`}>
+                                  {cls.name} ({cls.code})
+                                </span>
                               </div>
                             </SelectItem>
                           ))

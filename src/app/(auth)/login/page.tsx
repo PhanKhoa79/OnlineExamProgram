@@ -1,5 +1,11 @@
 import AuthForm from "@/features/auth/components/AuthForm";
 import Link from "next/link";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Đăng nhập - MegaStart Online',
+  description: 'Đăng nhập vào hệ thống thi trắc nghiệm trực tuyến',
+};
 
 export default function LoginPage() {
     return (

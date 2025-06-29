@@ -72,7 +72,6 @@ function AccountTableComponent() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roles, setRoles] = useState<RoleWithPermissionsDto[]>([]);
 
-  // URL-based pagination - but don't auto-sync to prevent loops
   const initialPage = Math.max(0, (Number(searchParams.get('page')) || 1) - 1);
   const pageSize = 7;
   const [pagination, setPagination] = useState({ pageIndex: initialPage, pageSize });
@@ -520,7 +519,7 @@ function AccountTableComponent() {
                   <DropdownMenuItem onClick={handleDeleteAllClick}>
                     <div className="flex items-center gap-2 text-red-600 cursor-pointer">
                       <Delete sx={{ fontSize: 16 }} />
-                      Xóa đã chọn
+                      Xóa các tài khoản đã chọn
                     </div>
                   </DropdownMenuItem>
                 )}

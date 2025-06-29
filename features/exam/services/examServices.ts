@@ -1,5 +1,7 @@
 import api from "@/lib/axios";
-import { CreateExamDto, UpdateExamDto, ExamDto, StudentPracticeProgressResponseDto, StartExamDto, StartExamResponseDto, SaveStudentAnswerDto, StudentAnswerResponseDto, InProgressExamDto, CompletedPracticeExamsResponseDto, ExamResultDto, AllCompletedExamsResponseDto } from "../types/exam.type";
+import { CreateExamDto, UpdateExamDto, ExamDto, StudentPracticeProgressResponseDto, StartExamDto, StartExamResponseDto, SaveStudentAnswerDto, StudentAnswerResponseDto, InProgressExamDto, CompletedPracticeExamsResponseDto, ExamResultDto, AllCompletedExamsResponseDto, ExamResult, ExamResultFilters } from "../types/exam.type";
+import { UniversalAnalyticsQuery, UniversalAnalyticsResponse, ExamVolumeQuery, ExamVolumeResponse, ScoreStatisticsQuery, ScoreStatisticsResponse, TopStudentsQuery, TopStudentsResponseDto, FailingStudentsQuery, FailingStudentsResponse } from "../types/report.type";
+import { getRoomStatus } from "@/features/room/services/roomServices";
 
 export const getAllExams = async () : Promise<ExamDto[]>  => {
   const response = await api.get("/exam");
@@ -190,4 +192,378 @@ export const getOpenExamsByClassId = async (classId: number) => {
     throw error;
   }
 }
+
+/**
+ * Kiểm tra trạng thái của phòng thi
+ * @param roomId ID của phòng thi
+ * @returns Trạng thái của phòng thi ('waiting', 'open', hoặc 'closed') hoặc null nếu có lỗi
+ */
+export const checkRoomStatus = async (roomId: number): Promise<'waiting' | 'open' | 'closed' | null> => {
+  try {
+    const response = await getRoomStatus(roomId);
+    return response.status;
+  } catch (error) {
+    console.error('Error checking room status:', error);
+    return null;
+  }
+}
+
+export const getStudentExamResults = async (
+  filters?: ExamResultFilters,
+  page: number = 1,
+  limit: number = 10
+): Promise<{
+  results: ExamResult[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  statistics: {
+    totalExams: number;
+    averageScore: string;
+    passedExams: number;
+    passRate: string;
+  };
+}> => {
+  try {
+    // Prepare request body with all filter parameters including new date filters
+    const requestBody: {
+      classId?: number;
+      subjectId?: number;
+      examType?: string;
+      specificDate?: string;
+      startDate?: string;
+      endDate?: string;
+    } = {};
+
+    if (filters?.classId) {
+      requestBody.classId = filters.classId;
+    }
+    if (filters?.subjectId) {
+      requestBody.subjectId = filters.subjectId;
+    }
+    if (filters?.examType) {
+      requestBody.examType = filters.examType;
+    }
+    if (filters?.specificDate) {
+      requestBody.specificDate = filters.specificDate;
+    }
+    if (filters?.startDate) {
+      requestBody.startDate = filters.startDate;
+    }
+    if (filters?.endDate) {
+      requestBody.endDate = filters.endDate;
+    }
+
+    // Call API với filters bao gồm cả date filters
+    const response = await api.post('/exam/student-results', Object.keys(requestBody).length > 0 ? requestBody : {});
+    const allResults: ExamResult[] = response.data;
+
+    // Tính toán thống kê từ toàn bộ dữ liệu
+    const totalExams = allResults.length;
+    const averageScore = totalExams > 0 
+      ? (allResults.reduce((sum, result) => sum + result.score, 0) / totalExams).toFixed(1)
+      : '0';
+    const passedExams = allResults.filter(result => result.score >= 50).length;
+    const passRate = totalExams > 0 ? ((passedExams / totalExams) * 100).toFixed(1) : '0';
+
+    const total = allResults.length;
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      results: allResults,
+      total,
+      page,
+      limit,
+      totalPages,
+      statistics: {
+        totalExams,
+        averageScore,
+        passedExams,
+        passRate
+      }
+    };
+  } catch (error: unknown) {
+    console.error('Error fetching student exam results:', error);
+    throw error;
+  }
+};
+
+export const getAnalyticsSummary = async () => {
+  try {
+    const response = await api.get('/analytics/summary');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getScoreTrends = async (params?: {
+  period?: 'daily' | 'weekly' | 'monthly';
+  range?: number;
+  classIds?: number[];
+  subjectIds?: number[];
+  examType?: 'practice' | 'official' | 'all';
+}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.period) {
+      queryParams.append('period', params.period);
+    }
+    if (params?.range) {
+      queryParams.append('range', params.range.toString());
+    }
+    if (params?.classIds && params.classIds.length > 0) {
+      params.classIds.forEach(id => queryParams.append('classIds', id.toString()));
+    }
+    if (params?.subjectIds && params.subjectIds.length > 0) {
+      params.subjectIds.forEach(id => queryParams.append('subjectIds', id.toString()));
+    }
+    if (params?.examType && params.examType !== 'all') {
+      queryParams.append('examType', params.examType);
+    }
+
+    const response = await api.get(`/analytics/score-trends?${queryParams.toString()}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSubjectPerformance = async (params?: {
+  classIds?: number[];
+  subjectIds?: number[];
+  examType?: 'practice' | 'official' | 'all';
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.classIds && params.classIds.length > 0) {
+      queryParams.append('classIds', params.classIds.join(','));
+    }
+    if (params?.subjectIds && params.subjectIds.length > 0) {
+      queryParams.append('subjectIds', params.subjectIds.join(','));
+    }
+    if (params?.examType && params.examType !== 'all') {
+      queryParams.append('examType', params.examType);
+    }
+    if (params?.startDate) {
+      queryParams.append('startDate', params.startDate);
+    }
+    if (params?.endDate) {
+      queryParams.append('endDate', params.endDate);
+    }
+    if (params?.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
+
+    const response = await api.get(`/analytics/subject-performance?${queryParams.toString()}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 🆕 Universal Analytics API
+export const getUniversalAnalytics = async (params?: UniversalAnalyticsQuery): Promise<UniversalAnalyticsResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.timePreset) {
+      queryParams.append('timePreset', params.timePreset);
+    }
+    if (params?.startDate) {
+      queryParams.append('startDate', params.startDate);
+    }
+    if (params?.endDate) {
+      queryParams.append('endDate', params.endDate);
+    }
+    if (params?.classIds?.length) {
+      params.classIds.forEach(id => queryParams.append('classIds', id.toString()));
+    }
+    if (params?.subjectIds?.length) {
+      params.subjectIds.forEach(id => queryParams.append('subjectIds', id.toString()));
+    }
+    if (params?.studentIds?.length) {
+      params.studentIds.forEach(id => queryParams.append('studentIds', id.toString()));
+    }
+
+    const response = await api.get(`/analytics/universal-analytics?${queryParams.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching universal analytics:', error);
+    throw error;
+  }
+};
+
+// 🆕 Exam Volume API
+export const getExamVolume = async (params?: ExamVolumeQuery): Promise<ExamVolumeResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.specificDate) {
+      queryParams.append('specificDate', params.specificDate);
+    }
+    if (params?.startDate) {
+      queryParams.append('startDate', params.startDate);
+    }
+    if (params?.endDate) {
+      queryParams.append('endDate', params.endDate);
+    }
+    if (params?.examType && params.examType !== 'all') {
+      queryParams.append('examType', params.examType);
+    }
+    if (params?.classIds?.length) {
+      params.classIds.forEach(id => queryParams.append('classIds', id.toString()));
+    }
+    if (params?.subjectIds?.length) {
+      params.subjectIds.forEach(id => queryParams.append('subjectIds', id.toString()));
+    }
+    if (params?.studentIds?.length) {
+      params.studentIds.forEach(id => queryParams.append('studentIds', id.toString()));
+    }
+    if (params?.groupBy) {
+      queryParams.append('groupBy', params.groupBy);
+    }
+
+    // Build URL with or without query parameters
+    const queryString = queryParams.toString();
+    const url = queryString ? `/analytics/exam-volume?${queryString}` : '/analytics/exam-volume';
+    
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching exam volume:', error);
+    throw error;
+  }
+};
+
+export const getScoreStatistics = async (params?: ScoreStatisticsQuery): Promise<ScoreStatisticsResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.specificDate) {
+      queryParams.append('specificDate', params.specificDate);
+    }
+    if (params?.startDate) {
+      queryParams.append('startDate', params.startDate);
+    }
+    if (params?.endDate) {
+      queryParams.append('endDate', params.endDate);
+    }
+    if (params?.examType && params.examType !== 'all') {
+      queryParams.append('examType', params.examType);
+    }
+    if (params?.classIds?.length) {
+      params.classIds.forEach(id => queryParams.append('classIds', id.toString()));
+    }
+    if (params?.subjectIds?.length) {
+      params.subjectIds.forEach(id => queryParams.append('subjectIds', id.toString()));
+    }
+    if (params?.studentIds?.length) {
+      params.studentIds.forEach(id => queryParams.append('studentIds', id.toString()));
+    }
+    if (params?.groupBy) {
+      queryParams.append('groupBy', params.groupBy);
+    }
+
+    // Build URL with or without query parameters
+    const queryString = queryParams.toString();
+    const url = queryString ? `/analytics/score-statistics?${queryString}` : '/analytics/score-statistics';
+    
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching score statistics:', error);
+    throw error;
+  }
+};
+
+export const getTopStudents = async (params: TopStudentsQuery): Promise<TopStudentsResponseDto> => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (params.classIds && params.classIds.length > 0) {
+      params.classIds.forEach(id => queryParams.append('classIds', id.toString()));
+    }
+    
+    if (params.subjectIds && params.subjectIds.length > 0) {
+      params.subjectIds.forEach(id => queryParams.append('subjectIds', id.toString()));
+    }
+    
+    if (params.limit) {
+      queryParams.append('limit', params.limit.toString());
+    }
+    
+    if (params.startDate) {
+      queryParams.append('startDate', params.startDate);
+    }
+    
+    if (params.endDate) {
+      queryParams.append('endDate', params.endDate);
+    }
+
+    const response = await api.get(`/analytics/top-students?${queryParams.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching top students:', error);
+    throw error;
+  }
+};
+
+// Get failing students
+export const getFailingStudents = async (query: FailingStudentsQuery): Promise<FailingStudentsResponse> => {
+  try {
+    const params = new URLSearchParams();
+    
+    if (query.classIds && query.classIds.length > 0) {
+      query.classIds.forEach(id => params.append('classIds', id.toString()));
+    }
+    
+    if (query.subjectIds && query.subjectIds.length > 0) {
+      query.subjectIds.forEach(id => params.append('subjectIds', id.toString()));
+    }
+    
+    if (query.specificDate) {
+      params.append('specificDate', query.specificDate);
+    }
+    
+    if (query.startDate) {
+      params.append('startDate', query.startDate);
+    }
+    
+    if (query.endDate) {
+      params.append('endDate', query.endDate);
+    }
+    
+    if (query.failureLevel) {
+      params.append('failureLevel', query.failureLevel);
+    }
+    
+    if (query.limit) {
+      params.append('limit', query.limit.toString());
+    }
+    
+    if (query.page) {
+      params.append('page', query.page.toString());
+    }
+    
+    if (query.sortByScore) {
+      params.append('sortByScore', query.sortByScore);
+    }
+    
+    const queryString = params.toString();
+    const url = queryString ? `/analytics/failing-students?${queryString}` : '/analytics/failing-students';
+    
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching failing students:', error);
+    throw error;
+  }
+};
 

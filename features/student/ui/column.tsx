@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store";
 import { hasPermission } from "@/lib/permissions";
 import { HighlightText } from "@/components/ui/HighlightText";
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -149,6 +150,7 @@ export const studentColumns = (searchQuery: string = ""): ColumnDef<StudentDto>[
               searchQuery={searchQuery}
               className="font-medium"
             />
+            <NewDataBadge createdAt={s.createdAt} />
           </div>
         );
       },

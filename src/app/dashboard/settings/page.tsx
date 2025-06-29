@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useColorTheme } from '@/components/providers/ColorThemeProvider';
 import { useDashboardTemplate } from '@/components/providers/DashboardTemplateProvider';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface BackupSchedule {
   id: string;
@@ -20,11 +21,8 @@ interface BackupSchedule {
   frequency: string;
 }
 
-
-
-
-
 export default function SettingsPage() {
+  usePageTitle('Cài đặt hệ thống');
   const [selectedBackup, setSelectedBackup] = useState<string | null>('daily');
   const [isClient, setIsClient] = useState(false);
   const { currentTheme, setTheme, availableThemes } = useColorTheme();
@@ -86,24 +84,20 @@ export default function SettingsPage() {
   };
 
   const handleTemplateChange = (templateId: string) => {
-    // If clicking the same template, reset to default template
     if (currentTemplate.id === templateId) {
       if (templateId !== 'default') {
-        setTemplate('default'); // Reset to default template
+        setTemplate('default');
       }
-      // If already on 'default' template, do nothing (can't deselect default)
     } else {
       setTemplate(templateId);
     }
   };
 
   const handleThemeChange = (themeId: string) => {
-    // If clicking the same theme, reset to default theme (but only if it's not already 'current')
     if (currentTheme.id === themeId) {
       if (themeId !== 'current') {
-        setTheme('current'); // Reset to default theme
+        setTheme('current'); 
       }
-      // If already on 'current' theme, do nothing (can't deselect default)
     } else {
       setTheme(themeId);
     }

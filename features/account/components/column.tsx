@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
 import { HighlightText } from "@/components/ui/HighlightText";
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import { toast } from "@/components/hooks/use-toast";
 import { useState } from "react";
 import { resendActivationLink } from "@/features/auth/services/authService";
@@ -169,10 +170,13 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>, searchQ
         return (
           <div className="relative flex items-center gap-2">
             <Image src={u.urlAvatar || "/avatar.png"} alt="avatar" width={72} height={72} className="rounded-full object-cover" />
-            <HighlightText 
-              text={u.accountname} 
-              searchQuery={searchQuery}
-            />
+            <div className="flex items-center">
+              <HighlightText 
+                text={u.accountname} 
+                searchQuery={searchQuery}
+              />
+              <NewDataBadge createdAt={u.createdAt} />
+            </div>
           </div>
         );
       },

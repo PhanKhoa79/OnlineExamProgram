@@ -1,4 +1,10 @@
 import ResetPasswordForm from '../../../../features/auth/components/ResetPasswordForm';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Đặt lại mật khẩu - MegaStart Online',
+  description: 'Đặt lại mật khẩu cho tài khoản của bạn',
+};
 
 export default function ResetPasswordPage() {
     return (
