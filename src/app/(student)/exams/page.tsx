@@ -18,8 +18,10 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 const ExamsOverviewPage = () => {
+  usePageTitle('Bài thi');
   const [practiceExams, setPracticeExams] = useState<ExamDto[]>([]);
   const [officialExams, setOfficialExams] = useState<ExamDto[]>([]);
   const [loading, setLoading] = useState(true);

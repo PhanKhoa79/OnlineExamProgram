@@ -8,7 +8,8 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { hasPermission } from '@/lib/permissions';
@@ -65,9 +66,17 @@ export const QuickActionsSidebar = () => {
       id: 'view-stats',
       label: 'Thống kê',
       icon: ChartBarIcon,
-      href: '/dashboard/analytics',
+      href: '/dashboard/statistics',
       color: 'from-orange-500 to-red-500',
       description: 'Xem báo cáo thống kê'
+    },
+    {
+      id: 'exam-results',
+      label: 'Kết quả thi',
+      icon: ClipboardDocumentCheckIcon,
+      href: '/dashboard/exam-results',
+      color: 'from-indigo-500 to-blue-500',
+      description: 'Xem kết quả thi sinh viên'
     },
     {
       id: 'settings',

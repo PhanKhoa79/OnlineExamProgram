@@ -24,8 +24,10 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { getClassById } from '@/features/classes/services/classServices';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 const SchedulesPage = () => {
+  usePageTitle('Lịch thi');
   const [schedules, setSchedules] = useState<ExamScheduleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

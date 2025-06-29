@@ -10,6 +10,8 @@ import { getListStudentWithoutAccount } from "@/features/student/services/studen
 import { StudentDto } from "@/features/student/types/student";
 import { setStudents } from "@/store/studentSlice";
 import { useSearchFilter } from "@/hooks/useSearchFilter";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 export function StudentTable() {
   const [isLoading, setIsLoading] = useState(true);
@@ -20,31 +22,33 @@ export function StudentTable() {
   const students = useSelector((state: RootState) => state.student.students);
   const dispatch = useDispatch<AppDispatch>();
 
-  // Fetch data only once on mount - no dependencies at all
+  // Function to fetch students data
+  const fetchStudents = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getListStudentWithoutAccount();
+      dispatch(setStudents(data));
+      hasFetchedData.current = true;
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách sinh viên", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (hasFetchedData.current) return;
-    
-    const fetchStudents = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getListStudentWithoutAccount();
-        dispatch(setStudents(data));
-        hasFetchedData.current = true;
-      } catch (error) {
-        console.error("Lỗi khi lấy danh sách sinh viên", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchStudents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Explicitly ignore dispatch dependency to prevent loops
+  }, []); 
 
-  // Memoize students to prevent unnecessary re-calculations
+  // Handle refresh button click
+  const handleRefresh = () => {
+    hasFetchedData.current = false; 
+    fetchStudents();
+  };
+
   const memoizedStudents = useMemo(() => students || [], [students]);
 
-  // Memoize search keys to prevent recreation  
   const searchKeys = useMemo(() => ["email", "studentCode", "fullName"] as (keyof StudentDto)[], []);
   
   const {
@@ -60,11 +64,24 @@ export function StudentTable() {
 
   return (
     <div className="flex flex-col gap-4 container mx-auto py-6">
-      <SearchBar
-        placeholder="Tìm kiếm sinh viên..."
-        value={inputValue}
-        onChange={handleSearchChange}
-      />
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <SearchBar
+            placeholder="Tìm kiếm sinh viên..."
+            value={inputValue}
+            onChange={handleSearchChange}
+          />
+        </div>
+        <Button 
+          onClick={handleRefresh}
+          variant="outline"
+          size="icon"
+          className="h-10 w-10"
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
 
       <DataTable<StudentDto, unknown>
         columns={studentColumns(dispatch)}

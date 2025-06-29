@@ -61,6 +61,7 @@ export interface StudentPracticeProgressResponseDto {
 export interface StartExamDto {
   examId: number;
   studentId: number;
+  assignmentId?: number;
 }
 
 export interface SaveStudentAnswerDto {
@@ -82,6 +83,7 @@ export interface StartExamResponseDto {
   studentExamId: number;
   examId: number;
   studentId: number;
+  assignmentId: number;
   startedAt: Date | null;
   questions: QuestionDto[];
   existingAnswers: StudentAnswerResponseDto[];
@@ -188,4 +190,41 @@ export interface ExamResultDto {
     isCorrect: boolean;
     isMarked: boolean;
   }[];
+}
+
+export interface ExamResult {
+  studentName: string;
+  studentId: string;
+  examName: string;
+  score: number;
+  maxScore: string;
+  duration: string;
+  actualDuration: string;
+  startTime: string;
+  submitTime: string;
+  class: string;
+  subject: string;
+  type: 'practice' | 'official';
+  studentExamId: number;
+  examId: number;
+  studentDbId: number;
+  classId: number;
+  subjectId: number;
+}
+
+export interface ExamResultFilters {
+  classId?: number;
+  subjectId?: number;
+  examType?: 'practice' | 'official';
+  specificDate?: string; // Format: YYYY-MM-DD
+  startDate?: string; // Format: YYYY-MM-DD
+  endDate?: string; // Format: YYYY-MM-DD
+}
+
+export interface ExamResultsResponse {
+  results: ExamResult[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }

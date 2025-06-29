@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store";
 import { hasPermission } from "@/lib/permissions";
 import { HighlightText } from "@/components/ui/HighlightText";
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import { exportExamWithQuestions } from "../services/examServices";
 import { toast } from "@/components/hooks/use-toast";
 import {
@@ -139,6 +140,7 @@ export const examColumns = (searchQuery: string = ""): ColumnDef<ExamDto>[] => {
               text={exam.name} 
               searchQuery={searchQuery}
             />
+            <NewDataBadge createdAt={exam.createdAt} />
           </div>
         );
       },

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { MagnifyingGlassIcon, Bars3Icon } from '@heroicons/react/24/outline';
-import { Dashboard, PersonAdd, ManageAccounts, Groups, QuestionAnswer, SpeakerNotes, Schedule, MeetingRoom, AutoStories, School, Settings, BarChart } from '@mui/icons-material';
+import { Dashboard, PersonAdd, ManageAccounts, Groups, QuestionAnswer, SpeakerNotes, Schedule, MeetingRoom, AutoStories, School, Settings, BarChart, Assessment } from '@mui/icons-material';
 import { useAuthStore } from '@/features/auth/store';
 import { hasResourcePermission } from '@/lib/permissions';
 
@@ -26,7 +26,7 @@ export const CommandPalette = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [position, setPosition] = useState<Position>({ x: 24, y: 24 }); // Default bottom-right (24px from edges)
+  const [position, setPosition] = useState<Position>({ x: 24, y: 24 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
   const [isClient, setIsClient] = useState(false);
@@ -34,24 +34,96 @@ export const CommandPalette = () => {
   const router = useRouter();
   const permissions = useAuthStore((state) => state.permissions);
 
+  // Get responsive position based on screen size
+  const getResponsivePosition = (): Position => {
+    if (typeof window === 'undefined') return { x: 24, y: 24 };
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    // For mobile devices (< 768px)
+    if (viewportWidth < 768) {
+      return {
+        x: 16, // 16px from left
+        y: viewportHeight - 80 // 80px from bottom
+      };
+    }
+    
+    // For tablet devices (768px - 1024px)
+    if (viewportWidth < 1024) {
+      return {
+        x: 20,
+        y: viewportHeight - 90
+      };
+    }
+    
+    // For desktop (>= 1024px)
+    return {
+      x: 24,
+      y: viewportHeight - 100
+    };
+  };
+
+  // Validate and constrain position to viewport
+  const constrainPosition = (pos: Position): Position => {
+    if (typeof window === 'undefined') return pos;
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const triggerWidth = triggerRef.current?.offsetWidth || (window.innerWidth < 768 ? 180 : 220);
+    const triggerHeight = triggerRef.current?.offsetHeight || 50;
+    
+    const constrainedX = Math.max(16, Math.min(pos.x, viewportWidth - triggerWidth - 16));
+    const constrainedY = Math.max(16, Math.min(pos.y, viewportHeight - triggerHeight - 16));
+    
+    return { x: constrainedX, y: constrainedY };
+  };
+
   // Client-side mounting
   useEffect(() => {
     setIsClient(true);
-    // Load saved position from localStorage
+    
+    // Set responsive position on mount
+    const responsivePosition = getResponsivePosition();
+    setPosition(responsivePosition);
+    
+    // Load saved position from localStorage if exists and is valid
     const savedPosition = localStorage.getItem('commandPalettePosition');
     if (savedPosition) {
       try {
         const parsed = JSON.parse(savedPosition);
-        setPosition(parsed);
+        // Check if saved position is still valid for current screen size
+        const constrainedPos = constrainPosition(parsed);
+        // If position had to be significantly adjusted, use responsive default
+        const xDiff = Math.abs(constrainedPos.x - parsed.x);
+        const yDiff = Math.abs(constrainedPos.y - parsed.y);
+        if (xDiff > 50 || yDiff > 50) {
+          setPosition(responsivePosition);
+        } else {
+          setPosition(constrainedPos);
+        }
       } catch {
-        console.warn('Failed to parse saved position');
+        console.warn('Failed to parse saved position, using responsive default');
+        setPosition(responsivePosition);
       }
     }
   }, []);
 
+  // Handle window resize to reposition trigger
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prevPosition => constrainPosition(prevPosition));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Save position to localStorage
   const savePosition = (newPosition: Position) => {
-    localStorage.setItem('commandPalettePosition', JSON.stringify(newPosition));
+    const constrainedPos = constrainPosition(newPosition);
+    localStorage.setItem('commandPalettePosition', JSON.stringify(constrainedPos));
+    setPosition(constrainedPos);
   };
 
   // Handle mouse down for dragging
@@ -77,17 +149,8 @@ export const CommandPalette = () => {
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
       
-      // Get viewport dimensions
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const triggerWidth = triggerRef.current?.offsetWidth || 200;
-      const triggerHeight = triggerRef.current?.offsetHeight || 50;
-      
-      // Constrain to viewport bounds
-      const constrainedX = Math.max(0, Math.min(newX, viewportWidth - triggerWidth));
-      const constrainedY = Math.max(0, Math.min(newY, viewportHeight - triggerHeight));
-      
-      setPosition({ x: constrainedX, y: constrainedY });
+      const constrainedPos = constrainPosition({ x: newX, y: newY });
+      setPosition(constrainedPos);
     };
 
     const handleMouseUp = () => {
@@ -130,6 +193,15 @@ export const CommandPalette = () => {
       icon: <BarChart className="w-5 h-5" />,
       href: '/dashboard/statistics',
       keywords: ['statistics', 'thống kê', 'báo cáo', 'reports', 'analytics', 'phân tích', 'kết quả', 'biểu đồ', 'chart'],
+      category: 'Phân tích'
+    },
+    {
+      id: 'exam-results',
+      title: 'Kết quả thi',
+      description: 'Xem chi tiết kết quả thi của sinh viên',
+      icon: <Assessment className="w-5 h-5" />,
+      href: '/dashboard/exam-results',
+      keywords: ['exam-results', 'kết quả thi', 'điểm số', 'grade', 'score', 'results', 'sinh viên', 'student'],
       category: 'Phân tích'
     },
     ...(hasResourcePermission(permissions, 'account') ? [{
@@ -327,49 +399,52 @@ export const CommandPalette = () => {
         <div
           onMouseDown={handleMouseDown}
           onClick={handleTriggerClick}
-          className={`flex items-center space-x-3 px-4 py-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl border border-white/20 dark:border-gray-700/30 shadow-lg hover:shadow-xl transition-all duration-300 group ${
+          className={`flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-xl border border-white/20 dark:border-gray-700/30 shadow-lg hover:shadow-xl transition-all duration-300 group ${
             isDragging ? 'scale-105 shadow-2xl' : 'hover:scale-105'
           }`}
         >
-          <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Bars3Icon className="w-4 h-4 text-white" />
+          <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Bars3Icon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
           </div>
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+          <span className="hidden sm:inline-block text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
             Nhấn ⌘K để mở menu
           </span>
-          <div className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900 transition-colors">
+          <span className="sm:hidden text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+            Menu
+          </span>
+          <div className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900 transition-colors">
             ⌘K
           </div>
         </div>
         
         {/* Drag indicator */}
         {isDragging && (
-          <div className="absolute -top-2 -right-2 w-4 h-4 bg-indigo-500 rounded-full animate-pulse shadow-lg"></div>
+          <div className="absolute -top-2 -right-2 w-3 h-3 sm:w-4 sm:h-4 bg-indigo-500 rounded-full animate-pulse shadow-lg"></div>
         )}
       </div>
 
       {/* Command Palette Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
           <div 
             className="absolute inset-0 bg-black/30 backdrop-blur-sm" 
             onClick={() => setIsOpen(false)}
           ></div>
-          <div className="relative w-full max-w-4xl max-h-[85vh] flex flex-col">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col max-h-full">
+          <div className="relative w-full max-w-4xl max-h-[90vh] sm:max-h-[85vh] flex flex-col">
+            <div className="bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col max-h-full">
               {/* Search Input */}
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="relative">
-                  <MagnifyingGlassIcon className="w-6 h-6 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <MagnifyingGlassIcon className="w-5 h-5 sm:w-6 sm:h-6 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Tìm kiếm chức năng, trang, hoặc hành động..."
+                    placeholder="Tìm kiếm chức năng, trang..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 text-lg bg-gray-50 dark:bg-gray-800 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
+                    className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 text-base sm:text-lg bg-gray-50 dark:bg-gray-800 rounded-xl border-0 focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
                     autoFocus
                   />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                  <div className="hidden sm:block absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
                     ESC để đóng
                   </div>
                 </div>
@@ -378,15 +453,15 @@ export const CommandPalette = () => {
               {/* Results */}
               <div className="flex-1 overflow-y-auto min-h-0">
                 {Object.keys(groupedItems).length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                    <MagnifyingGlassIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>Không tìm thấy kết quả cho &quot;{searchQuery}&quot;</p>
-                    <p className="text-sm mt-1">Thử tìm kiếm với từ khóa khác</p>
+                  <div className="p-6 sm:p-8 text-center text-gray-500 dark:text-gray-400">
+                    <MagnifyingGlassIcon className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm sm:text-base">Không tìm thấy kết quả cho &quot;{searchQuery}&quot;</p>
+                    <p className="text-xs sm:text-sm mt-1">Thử tìm kiếm với từ khóa khác</p>
                   </div>
                 ) : (
                   Object.entries(groupedItems).map(([category, items]) => (
-                    <div key={category} className="px-6 py-4">
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                    <div key={category} className="px-4 sm:px-6 py-3 sm:py-4">
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 sm:mb-3">
                         {category}
                       </h3>
                       <div className="space-y-1">
@@ -397,30 +472,30 @@ export const CommandPalette = () => {
                             <button
                               key={item.id}
                               onClick={() => handleItemClick(item.href)}
-                              className={`w-full flex items-center space-x-4 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer text-left ${
+                              className={`w-full flex items-center space-x-3 sm:space-x-4 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl transition-all duration-200 cursor-pointer text-left ${
                                 isSelected
                                   ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
                                   : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                               }`}
                             >
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                                 isSelected 
                                   ? 'bg-white/20' 
                                   : 'bg-gradient-to-br from-indigo-500 to-purple-600'
                               }`}>
-                                <div className="text-white">
+                                <div className="text-white scale-75 sm:scale-100">
                                   {item.icon}
                                 </div>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h3 className={`font-medium ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                <h3 className={`font-medium text-sm sm:text-base ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
                                   {item.title}
                                 </h3>
-                                <p className={`text-sm ${isSelected ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <p className={`text-xs sm:text-sm hidden sm:block ${isSelected ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
                                   {item.description}
                                 </p>
                               </div>
-                              <div className={`text-xs px-2 py-1 rounded ${
+                              <div className={`hidden sm:block text-xs px-2 py-1 rounded ${
                                 isSelected 
                                   ? 'bg-white/20 text-white' 
                                   : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
@@ -437,9 +512,9 @@ export const CommandPalette = () => {
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <div className="flex items-center space-x-4">
+                  <div className="hidden sm:flex items-center space-x-4">
                     <span className="flex items-center space-x-1">
                       <kbd className="bg-white dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs">↑↓</kbd>
                       <span>điều hướng</span>
@@ -453,7 +528,10 @@ export const CommandPalette = () => {
                       <span>đóng</span>
                     </span>
                   </div>
-                  <span>{filteredItems.length} kết quả</span>
+                  <div className="sm:hidden flex items-center space-x-2 text-xs">
+                    <span>Nhấn để chọn</span>
+                  </div>
+                  <span className="text-xs">{filteredItems.length} kết quả</span>
                 </div>
               </div>
             </div>

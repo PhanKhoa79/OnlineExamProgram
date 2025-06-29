@@ -4,7 +4,8 @@ import {
   UpdateRoomDto, 
   RoomDto, 
   BulkCreateRoomDto, 
-  SystemStatusDto
+  SystemStatusDto,
+  RoomStatusDto
 } from "../types/room";
 
 export const getAllRooms = async (params?: {
@@ -64,6 +65,16 @@ export const changeRoomStatus = async (
   status: 'waiting' | 'open' | 'closed'
 ): Promise<RoomDto> => {
   const response = await api.patch(`/exam-schedule-assignments/${id}/status`, { status });
+  return response.data;
+};
+
+/**
+ * Get room status by ID
+ * @param id Room ID
+ * @returns Room status object
+ */
+export const getRoomStatus = async (id: number): Promise<RoomStatusDto> => {
+  const response = await api.get(`/exam-schedule-assignments/${id}/status`);
   return response.data;
 };
 

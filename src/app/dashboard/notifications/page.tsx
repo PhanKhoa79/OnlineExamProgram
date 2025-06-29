@@ -7,8 +7,10 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Check, Bell, MoreHorizontal, Trash2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function NotificationsPage() {
+  usePageTitle('Thông báo');
   const { notifications, isLoading, error, markNotificationAsRead, markAllNotificationsAsRead, deleteNotificationById } = useNotifications();
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const router = useRouter();

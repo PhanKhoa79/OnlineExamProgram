@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store";
 import { hasPermission } from "@/lib/permissions";
 import { HighlightText } from "@/components/ui/HighlightText";
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import { changeRoomStatus } from "../services/roomServices";
 import { toast } from "@/components/hooks/use-toast";
 import { ROOM_STATUS_COLORS } from "../data/roomConstants";
@@ -140,6 +141,7 @@ export const roomColumns = (
               text={room.code} 
               searchQuery={searchQuery}
             />
+            <NewDataBadge createdAt={room.createdAt} />
           </div>
         );
       },

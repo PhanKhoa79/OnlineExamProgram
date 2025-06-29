@@ -8,6 +8,7 @@ import { ClassResponseDto } from "../types/class.type";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -98,6 +99,7 @@ export const classColumns = (): ColumnDef<ClassResponseDto>[] => {
         return (
           <div className="relative flex items-center gap-2 ml-3">
             <span>{u.code}</span>
+            <NewDataBadge createdAt={u.createdAt} />
           </div>
         );
       },

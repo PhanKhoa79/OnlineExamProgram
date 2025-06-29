@@ -29,8 +29,11 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { getScheduleByClassId } from '@/features/schedule/services/scheduleServices';
 import { ExamScheduleDto } from '@/features/schedule/types/schedule';
+import { StudentDto } from '@/features/student/types/student';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function StudentHomePage() {
+  usePageTitle('Trang chủ');
   const router = useRouter();
   const [currentTime, setCurrentTime] = useState(new Date());
   const user = useAuthStore((state) => state.user);

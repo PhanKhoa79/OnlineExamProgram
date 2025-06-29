@@ -8,6 +8,7 @@ import { SubjectResponseDto } from "../types/subject";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store"; 
 import { hasPermission } from "@/lib/permissions"; 
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -93,6 +94,7 @@ export const subjectColumns = (): ColumnDef<SubjectResponseDto>[] => {
         return (
           <div className="relative flex items-center gap-2 ml-3">
             <span>{s.code}</span>
+            <NewDataBadge createdAt={s.createdAt} />
           </div>
         );
       },

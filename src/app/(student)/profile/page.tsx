@@ -22,6 +22,7 @@ import {
   School,
   IdCard
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 interface InfoItemProps {
   icon: React.ReactNode;
@@ -43,6 +44,7 @@ const InfoItem = ({ icon, label, value, className = '' }: InfoItemProps) => (
 );
 
 export default function StudentProfilePage() {
+  usePageTitle('Hồ sơ cá nhân');
   const [student, setStudent] = useState<StudentDto | null>(null);
   const [classInfo, setClassInfo] = useState<ClassResponseDto | null>(null);
   const [loading, setLoading] = useState(true);

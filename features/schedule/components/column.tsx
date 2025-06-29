@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/features/auth/store";
 import { hasPermission } from "@/lib/permissions";
 import { HighlightText } from "@/components/ui/HighlightText";
+import { NewDataBadge } from "@/components/ui/NewDataBadge";
 import { cancelSchedule, getAllSchedules } from "../services/scheduleServices";
 import { toast } from "@/components/hooks/use-toast";
 import { useDispatch } from "react-redux";
@@ -170,6 +171,7 @@ export const scheduleColumns = (searchQuery: string = ""): ColumnDef<ExamSchedul
               text={schedule.code} 
               searchQuery={searchQuery}
             />
+            <NewDataBadge createdAt={schedule.createdAt} />
           </div>
         );
       },

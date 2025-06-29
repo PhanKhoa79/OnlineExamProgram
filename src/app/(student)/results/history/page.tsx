@@ -27,8 +27,10 @@ import {
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 const ExamHistoryPage = () => {
+  usePageTitle('Lịch sử thi');
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const userEmail = user?.email;

@@ -1,4 +1,11 @@
 import ActiveAccountForm from "@/features/auth/components/ActiveAccountForm";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Kích hoạt tài khoản - MegaStart Online',
+  description: 'Kích hoạt tài khoản để sử dụng hệ thống',
+};
+
 export default function ActivePage() {
     return (
       <div>
