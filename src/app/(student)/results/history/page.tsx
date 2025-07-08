@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { 
   Clock, 
   FileText, 
@@ -24,8 +24,7 @@ import {
   GraduationCap,
   Target
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
+
 import { cn } from '@/lib/utils';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -95,19 +94,20 @@ const ExamHistoryPage = () => {
 
   const formatDate = (dateString: string) => {
     try {
-      return format(parseISO(dateString), 'dd/MM/yyyy', { locale: vi });
-    } catch (error) {
+      const date = new Date(dateString);
+      
+      // Sử dụng UTC để tránh vấn đề timezone
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      
+      return `${day}/${month}/${year}`;
+    } catch {
       return 'Ngày không hợp lệ';
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    try {
-      return format(parseISO(dateString), 'dd/MM/yyyy HH:mm', { locale: vi });
-    } catch (error) {
-      return 'Thời gian không hợp lệ';
-    }
-  };
+
 
   const getExamTypeLabel = (type: string) => {
     return type === 'practice' ? 'Bài thi thử' : 'Bài thi chính thức';

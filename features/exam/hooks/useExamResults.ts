@@ -4,6 +4,8 @@ import { ExamResult, ExamResultFilters } from '../types/exam.type';
 import { getStudentExamResults } from '../services/examServices';
 import { toast } from '@/components/hooks/use-toast';
 
+type SortOrder = 'asc' | 'desc' | null;
+
 interface UseExamResultsReturn {
   results: ExamResult[];
   loading: boolean;
@@ -25,6 +27,8 @@ interface UseExamResultsReturn {
   clearFilters: () => void;
   goToPage: (page: number) => void;
   refetch: () => void;
+  sortOrder: SortOrder;
+  setSortOrder: (order: SortOrder) => void;
 }
 
 export const useExamResults = (): UseExamResultsReturn => {
@@ -35,6 +39,7 @@ export const useExamResults = (): UseExamResultsReturn => {
   const [results, setResults] = useState<ExamResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [statistics, setStatistics] = useState({
     totalExams: 0,
     averageScore: '0',
@@ -106,6 +111,7 @@ export const useExamResults = (): UseExamResultsReturn => {
       endDate: undefined
     });
     setPagination(prev => ({ ...prev, currentPage: 1 }));
+    setSortOrder(null); // Reset sorting when clearing filters
   }, []);
 
   const goToPage = useCallback((page: number) => {
@@ -153,11 +159,22 @@ export const useExamResults = (): UseExamResultsReturn => {
       filtered = filtered.filter(result => result.type === filters.examType);
     }
     
+    // Apply sorting
+    if (sortOrder) {
+      filtered = [...filtered].sort((a, b) => {
+        if (sortOrder === 'asc') {
+          return a.score - b.score;
+        } else {
+          return b.score - a.score;
+        }
+      });
+    }
+    
     // Note: Date filtering is now handled on the server-side, so we don't need client-side date filtering
     
     setFilteredResults(filtered);
     
-    // Calculate statistics from filtered results
+    // Calculate statistics from filtered results (before sorting, for consistency)
     const totalExams = filtered.length;
     const averageScore = totalExams > 0 
       ? (filtered.reduce((sum, result) => sum + result.score, 0) / totalExams).toFixed(1)
@@ -174,7 +191,7 @@ export const useExamResults = (): UseExamResultsReturn => {
     
     // Reset to first page when filter changes
     setPagination(prev => ({ ...prev, currentPage: 1 }));
-  }, [allResults, filters.searchTerm, filters.classId, filters.subjectId, filters.examType]);
+  }, [allResults, filters.searchTerm, filters.classId, filters.subjectId, filters.examType, sortOrder]);
 
   // Apply pagination whenever filteredResults or currentPage changes  
   useEffect(() => {
@@ -207,6 +224,8 @@ export const useExamResults = (): UseExamResultsReturn => {
     setFilters,
     clearFilters,
     goToPage,
-    refetch
+    refetch,
+    sortOrder,
+    setSortOrder
   };
 }; 

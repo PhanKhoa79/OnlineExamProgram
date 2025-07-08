@@ -18,7 +18,6 @@ import { Line, Bar, Pie } from 'react-chartjs-2';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -628,12 +627,12 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
       {/* Filter Panel */}
       <Card className="mb-6">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-green-600" />
-              <CardTitle>Phân tích điểm số chi tiết</CardTitle>
+              <Filter className="h-5 w-5 text-blue-600" />
+              <CardTitle>Bộ lọc tương tác</CardTitle>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleClearFilters}>
                 <Filter className="h-4 w-4 mr-2" />
                 Xóa bộ lọc
@@ -718,7 +717,7 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
           <Separator />
 
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Exam Type Filter */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Loại đề thi</Label>
@@ -790,7 +789,7 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
           </div>
 
           {/* Multi-select filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <GraduationCap className="h-4 w-4" />

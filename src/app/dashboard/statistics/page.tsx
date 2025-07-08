@@ -17,7 +17,7 @@ import {
 import { Doughnut, Line, Bar } from 'react-chartjs-2';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, RefreshCw, TrendingUp, TrendingDown, Users, BookOpen, Target, CheckCircle } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, Users, BookOpen, Target, CheckCircle } from 'lucide-react';
 import { getAnalyticsSummary, getScoreTrends, getSubjectPerformance } from '@/features/exam/services/examServices';
 import { toast } from 'sonner';
 import { AnalyticsSummary, ScoreTrendsResponse, SubjectPerformanceResponse, ScoreTrendsQuery } from '@/features/exam/types/report.type';

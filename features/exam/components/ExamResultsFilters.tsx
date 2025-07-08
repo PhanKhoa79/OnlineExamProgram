@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { SearchIcon, Filter, X, RotateCcw, Calendar, Download, RefreshCw, Loader2 } from 'lucide-react';
+import { SearchIcon, Filter, X, RotateCcw, Calendar, RefreshCw, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClassResponseDto } from '@/features/classes/types/class.type';
 import { SubjectResponseDto } from '@/features/subject/types/subject';
@@ -303,16 +303,6 @@ const ExamResultsFilters: React.FC<ExamResultsFiltersProps> = ({
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center pt-4 border-t border-gray-200">
             <div className="text-sm text-gray-600">
               Tìm thấy <span className="font-semibold text-blue-600">{totalResults}</span> kết quả
-            </div>
-            <div className="flex gap-2 sm:ml-auto">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Xuất danh sách
-              </Button>
             </div>
             <div className="flex gap-3">
               <Button 

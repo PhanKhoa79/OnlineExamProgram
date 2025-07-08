@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  # Frontend Next.js Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nextjs-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      # API Configuration - Connect to external backend
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5000/api}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+
+      # Application Environment
+      - NODE_ENV=${NODE_ENV:-production}
+      - NEXT_TELEMETRY_DISABLED=1
+    volumes:
+      # Uploads directory (if needed for file sharing with backend)
+      - uploads_data:/app/uploads
+    networks:
+      - frontend-network
+      - backend-network # Connect to backend's external network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000",
+          "||",
+          "exit",
+          "1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  # Internal network for frontend
+  frontend-network:
+    driver: bridge
+
+  # External network to connect with backend
+  backend-network:
+    external: true
+    name: shared-network
+
+volumes:
+  uploads_data:
+    driver: local

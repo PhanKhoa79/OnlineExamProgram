@@ -13,7 +13,8 @@ import {
 import { 
   ExamDto,
   StartExamDto,
-  SaveStudentAnswerDto
+  SaveStudentAnswerDto,
+  StartExamResponseDto
 } from '@/features/exam/types/exam.type';
 import { QuestionDto } from '@/features/question/types/question.type';
 import { getStudentByEmail } from '@/features/student/services/studentService';
@@ -73,6 +74,9 @@ const ExamTakingPage = () => {
   const [roomClosed, setRoomClosed] = useState(false);
   const roomStatusIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [assignmentId, setAssignmentId] = useState<number | null>(null);
+  const [examDurationSeconds, setExamDurationSeconds] = useState<number>(0);
+  const [examType, setExamType] = useState<"practice" | "official">("official");
+
 
   // Get real student ID from email
   useEffect(() => {
@@ -181,7 +185,7 @@ const ExamTakingPage = () => {
   }, [studentExamId, studentAnswers]);
 
   // Start exam and get studentExamId
-  const startExamSession = useCallback(async () => {
+  const startExamSession = useCallback(async (): Promise<StartExamResponseDto> => {
     try {
       if (!realStudentId) {
         throw new Error('Student ID not available. Please wait for authentication.');
@@ -193,7 +197,13 @@ const ExamTakingPage = () => {
       };
 
       const response = await startExam(startData);
+      console.log(response);
       setAssignmentId(response.assignmentId);
+      
+      // Set exam type from response
+      if (response.examType) {
+        setExamType(response.examType);
+      }
       
       if (!response) {
         throw new Error('No response from startExam API');
@@ -208,29 +218,30 @@ const ExamTakingPage = () => {
       
       setStudentExamId(studentExamIdFromResponse);
 
-      // Calculate remaining time based on startedAt
+      // Calculate remaining time based on backend response
       if (response.startedAt && exam) {
-        const startedAtDate = new Date(response.startedAt);
-        const currentTime = new Date();
-        const elapsedTimeInSeconds = Math.floor((currentTime.getTime() - startedAtDate.getTime()) / 1000);
-        const totalTimeInSeconds = exam.duration * 60;
-        const remainingTime = Math.max(0, totalTimeInSeconds - elapsedTimeInSeconds);
+        // Sử dụng thời gian còn lại từ backend (đã tính chính xác bằng giây)
+        const remainingTimeInSeconds = response.timeRemainingSeconds;
         
-        setTimeLeft(remainingTime);
+        setTimeLeft(remainingTimeInSeconds);
+        setExamDurationSeconds(response.examDurationSeconds); // Lưu thời gian tổng để dùng cho progress bar
         
         // Show resume message if this is a resumed exam
-        if (elapsedTimeInSeconds > 60) { // If more than 1 minute has passed
-          const elapsedMinutes = Math.floor(elapsedTimeInSeconds / 60);
-          const remainingMinutes = Math.floor(remainingTime / 60);
+        if (response.isResumed) {
+          const elapsedMinutes = response.timeElapsed;
+          const remainingMinutes = response.timeRemaining;
+          const examTypeText = response.examType === 'practice' ? 'luyện tập' : 'chính thức';
           
           toast({
-            title: '🔄 Tiếp tục bài thi',
-            description: `Đã làm bài ${elapsedMinutes} phút. Còn lại ${remainingMinutes} phút.`,
+            title: `🔄 Tiếp tục bài thi ${examTypeText}`,
+            description: response.examType === 'practice' 
+              ? `Đã làm bài ${elapsedMinutes} phút thực tế. Còn lại ${remainingMinutes} phút.`
+              : `Đã làm bài ${elapsedMinutes} phút. Còn lại ${remainingMinutes} phút.`,
           });
         }
         
         // Auto-submit if time has run out
-        if (remainingTime <= 0) {
+        if (remainingTimeInSeconds <= 0) {
           toast({
             title: '⏰ Hết thời gian!',
             description: 'Bài thi đã hết thời gian và sẽ được nộp tự động.',
@@ -256,10 +267,13 @@ const ExamTakingPage = () => {
             }
           }, 2000);
           
-          return studentExamIdFromResponse;
+          return response;
         }
       } else {
-        setTimeLeft(exam?.duration ? exam.duration * 60 : 0);
+        // Fallback: sử dụng thời gian từ exam data nếu không có response từ backend
+        const fallbackDuration = exam?.duration ? exam.duration * 60 : 0;
+        setTimeLeft(fallbackDuration);
+        setExamDurationSeconds(fallbackDuration);
       }
 
       // Load existing answers if any
@@ -280,7 +294,7 @@ const ExamTakingPage = () => {
         console.log('📝 No existing answers found, using initial empty answers');
       }
 
-      return studentExamIdFromResponse;
+      return response;
     } catch (error) {
       toast({
         title: 'Lỗi bắt đầu bài thi',
@@ -489,18 +503,17 @@ const ExamTakingPage = () => {
       setIsLoading(true);
       
       // Start exam session and get studentExamId
-      const newStudentExamId = await startExamSession();
+      const examResponse = await startExamSession();
       
-      if (!newStudentExamId) {
-        throw new Error('Failed to get studentExamId from API');
+      if (!examResponse) {
+        throw new Error('Failed to get response from startExamSession');
       }
       
       setExamStarted(true);
       hasUnsavedChangesRef.current = true;
       
-      // Don't show start message if this is a resumed exam (time calculation handles this)
-      const isResumedExam = timeLeft < (exam?.duration || 0) * 60;
-      if (!isResumedExam) {
+      // Don't show start message if this is a resumed exam (use backend flag)
+      if (!examResponse.isResumed) {
         toast({
           title: 'Bài thi đã bắt đầu!',
           description: `Bạn có ${exam?.duration} phút để hoàn thành bài thi.`,
@@ -606,7 +619,7 @@ const ExamTakingPage = () => {
     try {
       setIsAutoSaving(true);
       
-      // Save all current answers to database
+      // Lưu tất cả câu trả lời hiện tại vào database
       const savePromises = studentAnswers.map(async (answer) => {
         if (answer.selectedAnswerId !== null || answer.isMarked) {
           return saveStudentAnswer({
@@ -621,9 +634,13 @@ const ExamTakingPage = () => {
 
       await Promise.all(savePromises);
       
+      // Cập nhật thời gian lưu cuối cùng
+      setLastSaved(Date.now());
+      hasUnsavedChangesRef.current = false;
+      
       toast({
         title: "✅ Đã lưu thành công",
-        description: `Đã lưu ${studentAnswers.filter(a => a.selectedAnswerId !== null).length} câu trả lời vào hệ thống.`,
+        description: `Đã lưu ${studentAnswers.filter(a => a.selectedAnswerId !== null).length} câu trả lời vào hệ thống. Thời gian hiện tại được giữ nguyên.`,
       });
       
     } catch (error) {
@@ -774,6 +791,30 @@ const ExamTakingPage = () => {
     setShowConfirmSubmit(false);
   };
 
+  // Page Visibility warning để nhắc nhở user
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && examStarted) {
+        // Hiển thị cảnh báo khác biệt cho practice và official exam
+        const warningMessage = examType === 'practice' 
+          ? 'Bạn đã rời khỏi trang làm bài thi luyện tập. Thời gian sẽ tạm dừng.'
+          : 'Bạn đã rời khỏi trang làm bài thi chính thức. Thời gian vẫn tiếp tục trôi.';
+        
+        toast({
+          title: '⚠️ Cảnh báo',
+          description: warningMessage,
+          variant: 'error'
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [examStarted, examType]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 flex items-center justify-center">
@@ -819,6 +860,15 @@ const ExamTakingPage = () => {
               <BookOpen className="w-6 h-6" />
               {exam.name}
             </CardTitle>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                exam.examType === 'practice' 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-yellow-100 text-yellow-700'
+              }`}>
+                {exam.examType === 'practice' ? '🏃‍♂️ Bài thi luyện tập' : '⏰ Bài thi chính thức'}
+              </span>
+            </div>
           </CardHeader>
           
           <CardContent className="p-8">
@@ -968,7 +1018,7 @@ const ExamTakingPage = () => {
                         ${getTimerStyle().progressBar}
                       `}
                       style={{ 
-                        height: `${Math.max(0, (timeLeft / (exam.duration * 60)) * 100)}%`,
+                        height: `${Math.max(0, examDurationSeconds > 0 ? (timeLeft / examDurationSeconds) * 100 : 0)}%`,
                         transformOrigin: 'bottom'
                       }}
                     />
@@ -1027,6 +1077,17 @@ const ExamTakingPage = () => {
                 
                 <CardContent className="p-4 space-y-4">
                   <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Loại đề:</span>
+                      <span className={`text-sm font-medium px-2 py-1 rounded text-xs ${
+                        examType === 'practice' 
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      }`}>
+                        {examType === 'practice' ? '🏃‍♂️ Luyện tập' : '⏰ Chính thức'}
+                      </span>
+                    </div>
+                    
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Môn học:</span>
                       <span className="text-sm font-medium">{exam.subject.name}</span>
@@ -1100,24 +1161,36 @@ const ExamTakingPage = () => {
                 </CardHeader>
                 
                 <CardContent className="p-4">
-                  <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-                    <div className="flex items-start gap-2">
-                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span>Đọc kỹ câu hỏi trước khi chọn đáp án</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span>Có thể đánh dấu câu hỏi để xem lại sau</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span>Bài thi sẽ tự động nộp khi hết thời gian</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span>Câu trả lời được lưu tự động vào hệ thống</span>
-                    </div>
+                                <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-start gap-2">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Đọc kỹ câu hỏi trước khi chọn đáp án</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Có thể đánh dấu câu hỏi để xem lại sau</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Bài thi sẽ tự động nộp khi hết thời gian</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                  <span>Câu trả lời được lưu tự động vào hệ thống</span>
+                </div>
+                {examType === 'practice' && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-1 h-1 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-green-600 dark:text-green-400 font-medium">🏃‍♂️ Bài thi luyện tập: Thời gian tạm dừng khi thoát</span>
                   </div>
+                )}
+                {examType === 'official' && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-1 h-1 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-orange-600 dark:text-orange-400 font-medium">⏰ Bài thi chính thức: Thời gian chạy liên tục</span>
+                  </div>
+                )}
+              </div>
                 </CardContent>
               </Card>
             </div>

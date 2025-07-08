@@ -126,6 +126,135 @@ bun install
 
 ---
 
+## 🐳 Triển khai với Docker
+
+### 📋 **Yêu cầu Docker**
+- **Docker** >= 24.0.0
+- **Docker Compose** >= 2.20.0
+
+### 🏗️ **Cách 1: Chạy Frontend độc lập (Khuyến nghị)**
+
+Phù hợp khi backend đã chạy riêng biệt:
+
+```bash
+# 1️⃣ Đảm bảo backend đã chạy và tạo shared network
+docker network create shared-network
+
+# 2️⃣ Build và chạy frontend
+docker-compose up -d
+
+# 3️⃣ Truy cập ứng dụng
+# Frontend: http://localhost:3000
+# API calls sẽ đi tới: http://localhost:5000/api
+```
+
+### 🌐 **Cấu hình Network**
+
+Docker-compose được cấu hình để:
+- 📡 **Frontend network**: `frontend-network` (internal)
+- 🔗 **Backend network**: `shared-network` (external)
+- 🤝 **Container communication**: Frontend có thể gọi backend qua internal network
+
+### 🔧 **Biến môi trường**
+
+Tạo file `.env` để cấu hình:
+
+```env
+# Frontend Configuration
+FRONTEND_PORT=3000
+NODE_ENV=production
+
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Network Configuration
+BACKEND_NETWORK_NAME=shared-network
+```
+
+### 📝 **Docker Commands**
+
+```bash
+# 🚀 Khởi động services
+docker-compose up -d
+
+# 📋 Xem logs
+docker-compose logs -f frontend
+
+# 🔄 Restart services
+docker-compose restart
+
+# 🛑 Dừng services
+docker-compose down
+
+# 🗑️ Xóa containers và volumes
+docker-compose down -v
+
+# 🔨 Rebuild và khởi động
+docker-compose up -d --build
+```
+
+### 🐛 **Debug & Troubleshooting**
+
+```bash
+# 🔍 Kiểm tra container status
+docker ps
+
+# 📊 Kiểm tra network
+docker network ls
+docker network inspect shared-network
+
+# 🔗 Test kết nối giữa containers
+docker exec nextjs-frontend ping nestjs-api
+
+# 📋 Xem logs chi tiết
+docker-compose logs -f --tail=100 frontend
+
+# 🔧 Vào container để debug
+docker exec -it nextjs-frontend sh
+```
+
+### ⚡ **Performance Tips**
+
+```bash
+# 🧹 Dọn dẹp Docker để tăng tốc build
+docker system prune -af
+
+# 📦 Sử dụng Docker BuildKit cho build nhanh hơn
+DOCKER_BUILDKIT=1 docker-compose build
+
+# 🔄 Sử dụng cache layers hiệu quả
+docker-compose build --parallel
+```
+
+### 🔒 **Production Deployment**
+
+```bash
+# 1️⃣ Set production environment
+export NODE_ENV=production
+
+# 2️⃣ Build optimized images
+docker-compose -f docker-compose.yml build --no-cache
+
+# 3️⃣ Deploy with restart policies
+docker-compose up -d --restart=unless-stopped
+
+# 4️⃣ Monitor logs
+docker-compose logs -f --tail=50
+```
+
+### 📁 **Docker Files Structure**
+
+```
+📁 OnlineExamProgram/
+├── 🐳 Dockerfile              # Multi-stage build cho frontend
+├── 🐳 docker-compose.yml      # Frontend service definition  
+├── 🚫 .dockerignore           # Loại trừ files không cần thiết
+└── 📝 .env                    # Environment variables
+```
+
+---
+
 ## ✨ Tính năng chính
 
 ### 👨‍🎓 **Dành cho Học sinh**

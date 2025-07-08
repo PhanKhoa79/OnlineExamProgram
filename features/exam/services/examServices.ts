@@ -94,6 +94,15 @@ export const saveStudentAnswer = async (data: SaveStudentAnswerDto): Promise<Stu
   return response.data;
 };
 
+// 🔥 API để lưu thời gian tạm dừng của bài thi
+export const saveExamProgress = async (studentExamId: number, timeRemainingSeconds: number) => {
+  const response = await api.post('/exam/save-progress', {
+    studentExamId,
+    timeRemainingSeconds
+  });
+  return response.data;
+};
+
 // 🔥 API để lấy tất cả câu trả lời của một bài thi
 export const getStudentAnswers = async (studentExamId: number): Promise<StudentAnswerResponseDto[]> => {
   const response = await api.get(`/exam/student-exam/${studentExamId}/answers`);

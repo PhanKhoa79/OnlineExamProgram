@@ -113,13 +113,6 @@ const FailingStudents: React.FC<FailingStudentsProps> = ({ selectedClassId, sele
     });
   };
 
-  const handleExportList = () => {
-    toast({
-      title: 'Xuất danh sách',
-      description: 'Đang xuất danh sách học sinh không đạt...',
-    });
-  };
-
   return (
     <div className="space-y-6">
       {/* Statistics Cards */}
@@ -433,16 +426,6 @@ const FailingStudents: React.FC<FailingStudentsProps> = ({ selectedClassId, sele
                 )}
               </div>
               <div className="flex gap-2 sm:ml-auto">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleExportList}
-                  className="flex items-center gap-2"
-                  disabled={loadingFailingStudents}
-                >
-                  <Download className="h-4 w-4" />
-                  Xuất danh sách
-                </Button>
                 <Button 
                   variant="outline" 
                   size="sm"

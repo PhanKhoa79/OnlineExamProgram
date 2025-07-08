@@ -60,11 +60,28 @@ export const getTypeBadge = (type: string) => {
 
 export const formatDateTime = (dateTimeString: string) => {
   const date = new Date(dateTimeString);
+  
+  // Hiển thị theo timezone Việt Nam (UTC+7)
   return date.toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
   });
+};
+
+// Hàm hiển thị theo UTC (nếu cần)
+export const formatDateTimeUTC = (dateTimeString: string) => {
+  const date = new Date(dateTimeString);
+  
+  // Sử dụng UTC để tránh vấn đề timezone
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 }; 
