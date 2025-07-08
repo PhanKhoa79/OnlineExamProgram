@@ -85,6 +85,15 @@ export interface StartExamResponseDto {
   studentId: number;
   assignmentId: number;
   startedAt: Date | null;
+  examDuration: number;
+  examDurationSeconds: number;
+  timeElapsed: number;
+  timeElapsedSeconds: number;
+  timeRemaining: number;
+  timeRemainingSeconds: number;
+  timeRemainingFormatted: string;
+  isResumed: boolean;
+  examType: "practice" | "official";
   questions: QuestionDto[];
   existingAnswers: StudentAnswerResponseDto[];
 }

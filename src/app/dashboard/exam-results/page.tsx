@@ -42,7 +42,9 @@ const ExamResultsPage = () => {
     setFilters,
     clearFilters,
     goToPage,
-    refetch
+    refetch,
+    sortOrder,
+    setSortOrder
   } = useExamResults();
 
   // Fetch classes and subjects for filters
@@ -102,7 +104,7 @@ const ExamResultsPage = () => {
       toast({
         title: 'Lỗi',
         description: 'Không thể làm mới dữ liệu. Vui lòng thử lại.',
-        variant: 'destructive'
+        variant: 'error'
       });
     }
   };
@@ -177,6 +179,8 @@ const ExamResultsPage = () => {
                   hasActiveFilters={hasActiveFilters}
                   onViewDetail={handleViewDetail}
                   onClearFilters={handleClearFilters}
+                  sortOrder={sortOrder}
+                  onSortChange={setSortOrder}
                 />
 
                 {/* Pagination */}
