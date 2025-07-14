@@ -153,7 +153,7 @@ docker-compose up -d
 Docker-compose được cấu hình để:
 - 📡 **Frontend network**: `frontend-network` (internal)
 - 🔗 **Backend network**: `shared-network` (external)
-- 🤝 **Container communication**: Frontend có thể gọi backend qua internal network
+- 🤝 **Container communication**: Frontend có thể gọi backend qua external network
 
 ### 🔧 **Biến môi trường**
 
