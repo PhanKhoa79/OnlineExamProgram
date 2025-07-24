@@ -73,12 +73,23 @@ export default function DeleteScheduleModalPage() {
       
       let errorMessage = "Có lỗi xảy ra khi xóa lịch thi. Vui lòng thử lại.";
       
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error?.message) {
-        errorMessage = error.message;
+      if (error && typeof error === 'object') {
+        const errorObj = error as {
+          response?: {
+            data?: {
+              message?: string;
+              error?: string;
+            };
+          };
+          message?: string;
+        };
+        if (errorObj?.response?.data?.message) {
+          errorMessage = errorObj.response.data.message;
+        } else if (errorObj?.response?.data?.error) {
+          errorMessage = errorObj.response.data.error;
+        } else if (errorObj?.message) {
+          errorMessage = errorObj.message;
+        }
       }
       
       toast({

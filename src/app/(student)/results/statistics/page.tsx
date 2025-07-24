@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAllCompletedExams } from '@/features/exam/services/examServices';
-import { getAllSubjects } from '@/features/subject/services/subjectServices';
 import { getStudentByEmail } from '@/features/student/services/studentService';
 import { useAuthStore } from '@/features/auth/store';
 import { CompletedExamDto } from '@/features/exam/types/exam.type';
-import { SubjectResponseDto } from '@/features/subject/types/subject';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -36,7 +34,6 @@ const ExamStatisticsPage = () => {
   const userEmail = user?.email;
   
   const [completedExams, setCompletedExams] = useState<CompletedExamDto[]>([]);
-  const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
   const [studentId, setStudentId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +55,7 @@ const ExamStatisticsPage = () => {
     fetchStudentId();
   }, [userEmail]);
 
-  const fetchCompletedExams = async () => {
+  const fetchCompletedExams = useCallback(async () => {
     if (!studentId) return;
     
     try {
@@ -73,27 +70,16 @@ const ExamStatisticsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchSubjects = async () => {
-    try {
-      const subjectData = await getAllSubjects();
-      setSubjects(subjectData);
-    } catch (error) {
-      console.error('Error fetching subjects:', error);
-    }
-  };
+  }, [studentId]);
 
   useEffect(() => {
     if (studentId) {
       fetchCompletedExams();
-      fetchSubjects();
     }
-  }, [studentId]);
+  }, [studentId, fetchCompletedExams]);
 
   const handleRefresh = () => {
     fetchCompletedExams();
-    fetchSubjects();
   };
 
   // Calculate statistics

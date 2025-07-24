@@ -98,7 +98,7 @@ export default function ActiveAccountForm() {
         
         if (error?.response?.data?.message) {
           errorMessage = error.response.data.message;
-        } else if (error?.response?.status === 401) {
+        } else if (error?.response?.data?.statusCode === 401) {
           errorMessage = 'Missing access token';
         } else if (error?.message) {
           errorMessage = error.message;
@@ -132,6 +132,7 @@ export default function ActiveAccountForm() {
           }
           
           await requestActivation(emailResponse.data.email);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           toast({
             title: "Lỗi",
@@ -205,6 +206,7 @@ export default function ActiveAccountForm() {
         setTokenError('Token đã hết hạn hoặc không hợp lệ');
         return;
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setIsTokenValid(false);
       setTokenError('Không thể xác minh token. Vui lòng thử lại hoặc yêu cầu token mới.');

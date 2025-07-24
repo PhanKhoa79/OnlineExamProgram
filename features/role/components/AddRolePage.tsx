@@ -64,10 +64,10 @@ export default function AddRolePage() {
     }
 
     try {
-        const response = await createRoleWithPermissions({
-          name: roleName.trim(),
-          permissions: selectedPermissions,
-        });
+          const response = await createRoleWithPermissions({
+            name: roleName.trim(),
+            permissions: selectedPermissions,
+          });
 
         dispatch(addRole(response.data));
         toast({ title: "Tạo quyền thành công" });

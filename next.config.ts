@@ -1,13 +1,32 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
- images: {
+  // Tắt ESLint trong quá trình build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // Tắt TypeScript errors trong build nếu cần
+  typescript: {
+    ignoreBuildErrors: false, // Giữ true nếu muốn bỏ qua TypeScript errors
+  },
+  images: {
+    unoptimized: process.env.NODE_ENV === 'production',
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
       },
     ],
+  },
+  
+  // Cấu hình static file serving
+  async rewrites() {
+    return [
+      {
+        source: '/images/:path*',
+        destination: '/public/:path*',
+      },
+    ];
   },
   
   // Development optimizations

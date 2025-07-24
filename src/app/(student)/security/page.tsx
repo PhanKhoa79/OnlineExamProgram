@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store';
 import { changePassword, getLoginHistoryByAccountId } from '@/features/auth/services/authService';
 import { changePasswordSchema } from '@/lib/chagePasswordSchema';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Shield, 
   Lock, 
@@ -20,7 +22,11 @@ import {
   Monitor,
   Clock,
   MapPin,
-  Smartphone
+  Smartphone,
+  Calendar,
+  Filter,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -32,6 +38,8 @@ interface LoginHistoryEntry {
 
 export default function SecurityPage() {
   usePageTitle('Bảo mật tài khoản');
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -47,9 +55,27 @@ export default function SecurityPage() {
 
   const [loginHistory, setLoginHistory] = useState<LoginHistoryEntry[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const itemsPerPage = 10;
 
   const user = useAuthStore((state) => state.user);
   const idAccountCur = user?.id;
+
+  // Initialize from URL params
+  useEffect(() => {
+    const page = searchParams.get('page');
+    const filter = searchParams.get('filter');
+    const start = searchParams.get('startDate');
+    const end = searchParams.get('endDate');
+    
+    if (page) setCurrentPage(parseInt(page) || 1);
+    if (filter) setDateFilter(filter as 'all' | 'today' | 'week' | 'month' | 'custom');
+    if (start) setStartDate(start);
+    if (end) setEndDate(end);
+  }, [searchParams]);
 
   // Fetch login history
   useEffect(() => {
@@ -111,14 +137,93 @@ export default function SecurityPage() {
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error: any) {
-      const msg = error?.response?.data?.message ?? 'Đổi mật khẩu thất bại, vui lòng thử lại';
+    } catch (error: unknown) {
+      const errorResponse = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response &&
+        'data' in error.response && 
+        typeof error.response.data === 'object' && error.response.data &&
+        'message' in error.response.data
+        ? error.response.data.message
+        : null;
+      
+      const msg = errorResponse ?? 'Đổi mật khẩu thất bại, vui lòng thử lại';
       if (Array.isArray(msg)) {
         msg.forEach((m: string) => toast({ title: m, variant: 'error' }));
       } else {
-        toast({ title: msg, variant: 'error' });
+        toast({ title: msg as string, variant: 'error' });
       }
     }
+  };
+
+  // Update URL when filters change
+  const updateURL = (page: number, filter: string, start: string, end: string) => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', page.toString());
+    if (filter !== 'all') params.set('filter', filter);
+    if (start) params.set('startDate', start);
+    if (end) params.set('endDate', end);
+    
+    const queryString = params.toString();
+    const newURL = queryString ? `?${queryString}` : '/security';
+    router.replace(newURL);
+  };
+
+  // Filter login history by date
+  const getFilteredHistory = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    return loginHistory.filter(entry => {
+      const entryDate = new Date(entry.loginTime);
+      
+      switch (dateFilter) {
+        case 'today':
+          return entryDate >= today;
+        case 'week':
+          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+          return entryDate >= weekAgo;
+        case 'month':
+          const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+          return entryDate >= monthAgo;
+        case 'custom':
+          if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate + 'T23:59:59');
+            return entryDate >= start && entryDate <= end;
+          }
+          return true;
+        default:
+          return true;
+      }
+    });
+  };
+
+  // Handle filter change
+  const handleFilterChange = (filter: 'all' | 'today' | 'week' | 'month' | 'custom') => {
+    setDateFilter(filter);
+    setCurrentPage(1);
+    updateURL(1, filter, startDate, endDate);
+  };
+
+  // Handle date range change
+  const handleDateRangeChange = (start: string, end: string) => {
+    setStartDate(start);
+    setEndDate(end);
+    setCurrentPage(1);
+    updateURL(1, dateFilter, start, end);
+  };
+
+  // Pagination logic
+  const filteredHistory = getFilteredHistory();
+  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedHistory = filteredHistory.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL(page, dateFilter, startDate, endDate);
   };
 
   const formatUserAgent = (userAgent: string) => {
@@ -342,14 +447,72 @@ export default function SecurityPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Date Filter */}
+          <div className="mb-6 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Lọc theo thời gian:
+                </span>
+              </div>
+              <Select value={dateFilter} onValueChange={handleFilterChange}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Chọn khoảng thời gian" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="today">Hôm nay</SelectItem>
+                  <SelectItem value="week">7 ngày qua</SelectItem>
+                  <SelectItem value="month">30 ngày qua</SelectItem>
+                  <SelectItem value="custom">Tùy chọn</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Custom Date Range */}
+            {dateFilter === 'custom' && (
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Từ ngày</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => handleDateRangeChange(e.target.value, endDate)}
+                    className="w-full sm:w-40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">Đến ngày</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => handleDateRangeChange(startDate, e.target.value)}
+                    className="w-full sm:w-40"
+                    min={startDate}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Filter Stats */}
+            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <span>Tổng: {loginHistory.length} lần đăng nhập</span>
+              <span>Đã lọc: {filteredHistory.length} kết quả</span>
+            </div>
+          </div>
+
           {isLoadingHistory ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
               <span className="ml-2 text-gray-600">Đang tải lịch sử...</span>
             </div>
-          ) : loginHistory.length > 0 ? (
-            <div className="space-y-4">
-              {loginHistory.map((entry, idx) => {
+          ) : filteredHistory.length > 0 ? (
+            <>
+              <div className="space-y-4">
+                {paginatedHistory.map((entry, idx) => {
                 const deviceInfo = formatUserAgent(entry.userAgent);
                 return (
                   <div key={idx} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
@@ -382,16 +545,64 @@ export default function SecurityPage() {
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Trước
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, index) => {
+                      const page = index + 1;
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(page)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Sau
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Pagination Info */}
+              <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+                Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredHistory.length)} trong tổng số {filteredHistory.length} lịch sử
+              </div>
+            </>
           ) : (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-gray-400" />
+                <Calendar className="w-8 h-8 text-gray-400" />
               </div>
               <p className="text-gray-500 dark:text-gray-400">
-                Chưa có lịch sử đăng nhập
+                {dateFilter === 'all' ? 'Chưa có lịch sử đăng nhập' : 'Không có lịch sử đăng nhập trong khoảng thời gian đã chọn'}
               </p>
             </div>
           )}

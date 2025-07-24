@@ -113,13 +113,11 @@ export const useNotifications = () => {
     });
 
     callbacksSetRef.current = true;
-  }, [user, dispatch, loadNotifications, handleNewNotification]);
+  }, [user, loadNotifications, handleNewNotification]);
 
   // Effect để setup WebSocket khi user thay đổi
   useEffect(() => {
     if (user) {
-      console.log('👤 [Hook] User changed, setting up WebSocket for:', user.accountname);
-      
       // Setup callbacks trước
       setupWebSocketCallbacks();
       
@@ -136,26 +134,24 @@ export const useNotifications = () => {
         loadNotifications();
       }
     } else {
-      console.log('👤 [Hook] No user, resetting notification state');
       resetNotificationState();
     }
 
     // Cleanup khi component unmount
     return () => {
       if (!user) {
-        console.log('🧹 [Hook] Cleaning up WebSocket connection');
         websocketService.disconnect();
         callbacksSetRef.current = false;
       }
     };
-  }, [user?.accountname, user?.id]); // Thêm user.id vào dependencies
+  }, [loadNotifications, resetNotificationState, setupWebSocketCallbacks, user]);
 
   // Effect riêng để setup callbacks khi dispatch thay đổi
   useEffect(() => {
     if (user && !callbacksSetRef.current) {
       setupWebSocketCallbacks();
     }
-  }, [setupWebSocketCallbacks]);
+  }, [setupWebSocketCallbacks, user]);
 
   // Định kỳ kiểm tra kết nối WebSocket và làm mới nếu cần
   useEffect(() => {
@@ -185,7 +181,6 @@ export const useNotifications = () => {
 
     // Làm mới danh sách thông báo mỗi 2 phút
     const refreshInterval = setInterval(() => {
-      console.log('🔄 [Hook] Refreshing notifications...');
       loadNotifications();
     }, 120000);
 

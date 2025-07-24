@@ -127,7 +127,12 @@ const EditRoomPage: React.FC = () => {
         
         // Set available classes
         if (selectedSchedule.classes && selectedSchedule.classes.length > 0) {
-          setAvailableClasses(selectedSchedule.classes);
+          const mappedClasses = selectedSchedule.classes.map(cls => ({
+            ...cls,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }));
+          setAvailableClasses(mappedClasses);
         } else {
           const fetchClassesForSchedule = async () => {
             try {

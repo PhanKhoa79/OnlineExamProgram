@@ -16,6 +16,7 @@ import {
 } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 
+type ButtonProps = React.ComponentPropsWithoutRef<typeof Button>;
 type DropzoneResult<TUploadRes, TUploadError> =
   | {
       status: "pending";
@@ -422,7 +423,10 @@ const Dropzone = <TUploadRes, TUploadError>(
 };
 Dropzone.displayName = "Dropzone";
 
-interface DropZoneAreaProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface DropZoneAreaProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  children?: React.ReactNode;
+}
 const DropZoneArea = forwardRef<HTMLDivElement, DropZoneAreaProps>(
   ({ className, children, ...props }, forwardedRef) => {
     const context = useDropzoneContext();
@@ -436,7 +440,6 @@ const DropZoneArea = forwardRef<HTMLDivElement, DropZoneAreaProps>(
 
     return (
       // A11y behavior is handled through Trigger. All of these are only relevant to drag and drop which means this should be fine?
-      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
       <div
         ref={(instance) => {
           // TODO: test if this actually works?
@@ -468,8 +471,10 @@ const DropZoneArea = forwardRef<HTMLDivElement, DropZoneAreaProps>(
 );
 DropZoneArea.displayName = "DropZoneArea";
 
-export interface DropzoneDescriptionProps
-  extends React.HTMLAttributes<HTMLParagraphElement> {}
+interface DropzoneDescriptionProps
+  extends React.HTMLAttributes<HTMLParagraphElement> {
+  className?: string;
+}
 
 const DropzoneDescription = forwardRef<
   HTMLParagraphElement,
@@ -516,8 +521,7 @@ const useDropzoneFileListContext = () => {
   return useContext(DropzoneFileListContext);
 };
 
-interface DropZoneFileListProps
-  extends React.OlHTMLAttributes<HTMLOListElement> {}
+type DropZoneFileListProps = React.OlHTMLAttributes<HTMLOListElement>
 
 const DropzoneFileList = forwardRef<HTMLOListElement, DropZoneFileListProps>(
   (props, ref) => {
@@ -593,7 +597,9 @@ const DropzoneFileListItem = forwardRef<
 DropzoneFileListItem.displayName = "DropzoneFileListItem";
 
 interface DropzoneFileMessageProps
-  extends React.HTMLAttributes<HTMLParagraphElement> {}
+  extends React.HTMLAttributes<HTMLParagraphElement> {
+  children?: React.ReactNode;
+}
 
 const DropzoneFileMessage = forwardRef<
   HTMLParagraphElement,
@@ -626,8 +632,11 @@ const DropzoneFileMessage = forwardRef<
   );
 });
 DropzoneFileMessage.displayName = "DropzoneFileMessage";
+
 interface DropzoneMessageProps
-  extends React.HTMLAttributes<HTMLParagraphElement> {}
+  extends React.HTMLAttributes<HTMLParagraphElement> {
+  children?: React.ReactNode;
+}
 
 const DropzoneMessage = forwardRef<HTMLParagraphElement, DropzoneMessageProps>(
   (props, ref) => {
@@ -655,7 +664,9 @@ const DropzoneMessage = forwardRef<HTMLParagraphElement, DropzoneMessageProps>(
 );
 DropzoneMessage.displayName = "DropzoneMessage";
 
-interface DropzoneRemoveFileProps extends ButtonProps {}
+interface DropzoneRemoveFileProps extends ButtonProps {
+  children?: React.ReactNode;
+}
 
 const DropzoneRemoveFile = forwardRef<
   HTMLButtonElement,
@@ -686,7 +697,9 @@ const DropzoneRemoveFile = forwardRef<
 });
 DropzoneRemoveFile.displayName = "DropzoneRemoveFile";
 
-interface DropzoneRetryFileProps extends ButtonProps {}
+interface DropzoneRetryFileProps extends ButtonProps {
+  children?: React.ReactNode;
+}
 
 const DropzoneRetryFile = forwardRef<HTMLButtonElement, DropzoneRetryFileProps>(
   ({ className, ...props }, ref) => {
@@ -723,7 +736,10 @@ const DropzoneRetryFile = forwardRef<HTMLButtonElement, DropzoneRetryFileProps>(
 DropzoneRetryFile.displayName = "DropzoneRetryFile";
 
 interface DropzoneTriggerProps
-  extends React.LabelHTMLAttributes<HTMLLabelElement> {}
+  extends React.LabelHTMLAttributes<HTMLLabelElement> {
+  className?: string;
+  children?: React.ReactNode;
+}
 
 const DropzoneTrigger = forwardRef<HTMLLabelElement, DropzoneTriggerProps>(
   ({ className, children, ...props }, ref) => {

@@ -11,8 +11,17 @@ const DetailClassModal = dynamic(
   }
 );
 
-export default function DetailClassModalPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+function DetailClassModalClient({ id }: { id: number }) {
   const router = useRouter();
-  const id = Number(params.id);
   return <DetailClassModal id={id} open={true} onOpenChange={() => router.back()} />;
+}
+
+export default async function DetailClassModalPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
+  return <DetailClassModalClient id={id} />;
 } 

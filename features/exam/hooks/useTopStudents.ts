@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TopStudentItem, TopStudentsQuery } from '../types/report.type';
 import { getTopStudents } from '../services/examServices';
 
@@ -14,11 +15,21 @@ export const useTopStudents = (query: TopStudentsQuery): UseTopStudentsReturn =>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTopStudents = async () => {
+  // Memoize query để tránh tạo object mới liên tục
+  const stableQuery = useMemo(() => query, [
+    query.classIds?.join(','),
+    query.subjectIds?.join(','),
+    query.limit,
+    query.startDate,
+    query.endDate,
+    query
+  ]);
+
+  const fetchTopStudents = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getTopStudents(query);
+      const response = await getTopStudents(stableQuery);
       if (response.success) {
         setStudents(response.data);
       } else {
@@ -32,11 +43,11 @@ export const useTopStudents = (query: TopStudentsQuery): UseTopStudentsReturn =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [stableQuery]);
 
   useEffect(() => {
     fetchTopStudents();
-  }, [JSON.stringify(query)]);
+  }, [fetchTopStudents]);
 
   const refetch = async () => {
     await fetchTopStudents();

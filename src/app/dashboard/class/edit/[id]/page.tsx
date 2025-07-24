@@ -10,7 +10,12 @@ const EditClassPage = dynamic(
   }
 );
 
-export default function DashBoardEditClassPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function DashBoardEditClassPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   return <EditClassPage id={id} />;
 }

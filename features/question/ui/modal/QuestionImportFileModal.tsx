@@ -31,7 +31,7 @@ export const QuestionImportFileModal = ({
     }
   };
 
-  const validateAndSetFile = (selectedFile: File) => {
+  const validateAndSetFile = useCallback((selectedFile: File) => {
     const allowedTypes = fileType === 'xlsx' 
       ? ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
       : ['text/csv'];
@@ -48,7 +48,7 @@ export const QuestionImportFileModal = ({
     }
 
     setFile(selectedFile);
-  };
+  }, [fileType]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -58,7 +58,7 @@ export const QuestionImportFileModal = ({
     if (droppedFiles.length > 0) {
       validateAndSetFile(droppedFiles[0]);
     }
-  }, [fileType]);
+  }, [validateAndSetFile]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();

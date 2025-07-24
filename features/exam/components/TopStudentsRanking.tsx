@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,11 +15,11 @@ interface TopStudentsRankingProps {
 const TopStudentsRanking: React.FC<TopStudentsRankingProps> = ({ selectedClassId, classes }) => {
   const [rankingClassFilter, setRankingClassFilter] = useState<number | undefined>(selectedClassId);
   
-  // Prepare query for top students API
-  const topStudentsQuery = {
+  // Memoize query để tránh tạo object mới mỗi lần render
+  const topStudentsQuery = useMemo(() => ({
     classIds: rankingClassFilter ? [rankingClassFilter] : undefined,
     limit: 10
-  };
+  }), [rankingClassFilter]);
   
   // Fetch top students data using the custom hook
   const { students: topStudents, loading: loadingTopStudents, error: topStudentsError, refetch: refetchTopStudents } = useTopStudents(topStudentsQuery);

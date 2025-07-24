@@ -95,9 +95,8 @@ const notificationSlice = createSlice({
         ...newNotification,
         id: newNotification.id,
         message: newNotification.message,
-        isRead: newNotification.isRead,
+        isRead: newNotification.read,
         createdAt: newNotification.createdAt,
-        metadata: newNotification.metadata ? { ...newNotification.metadata } : undefined
       };
       
       // Thêm vào đầu danh sách
@@ -144,7 +143,7 @@ const notificationSlice = createSlice({
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         state.isLoading = false;
         state.notifications = action.payload;
-        state.unreadCount = action.payload.filter((n: Notification) => !n.isRead).length;
+        state.unreadCount = action.payload.filter((n: Notification) => !n.read).length;
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.isLoading = false;
@@ -156,8 +155,8 @@ const notificationSlice = createSlice({
       .addCase(markAsRead.fulfilled, (state, action) => {
         const notificationId = action.payload;
         const notification = state.notifications.find(n => n.id === notificationId);
-        if (notification && !notification.isRead) {
-          notification.isRead = true;
+        if (notification && !notification.read) {
+          notification.read = true;
           state.unreadCount = Math.max(0, state.unreadCount - 1);
         }
       })
@@ -169,7 +168,7 @@ const notificationSlice = createSlice({
     builder
       .addCase(markAllAsRead.fulfilled, (state) => {
         state.notifications.forEach(notification => {
-          notification.isRead = true;
+          notification.read = true;
         });
         state.unreadCount = 0;
       })
@@ -186,7 +185,7 @@ const notificationSlice = createSlice({
         state.notifications = state.notifications.filter(n => n.id !== notificationId);
         
         // Giảm unreadCount nếu thông báo bị xóa chưa được đọc
-        if (deletedNotification && !deletedNotification.isRead) {
+        if (deletedNotification && !deletedNotification.read) {
           state.unreadCount = Math.max(0, state.unreadCount - 1);
         }
       })

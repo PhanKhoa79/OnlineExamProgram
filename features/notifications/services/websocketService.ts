@@ -52,17 +52,13 @@ class WebSocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('✅ Connected to notification socket');
-      console.log('🆔 Socket ID:', this.socket?.id);
       this.isConnecting = false;
       
       // Test connection
-      console.log('🧪 Testing socket connection...');
       this.socket?.emit('test', { message: 'Hello from client' });
       
       // Đăng ký người dùng với socket server
       if (this.currentUser && this.currentUser.id && this.socket) {
-        console.log('📝 Registering user with socket server:', this.currentUser.id);
         this.socket.emit('register', { userId: this.currentUser.id });
       } else {
         console.warn('⚠️ Cannot register user: Missing user ID or socket not connected');
@@ -72,13 +68,11 @@ class WebSocketService {
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ Disconnected from notification socket:', reason);
       this.isConnecting = false;
       this.callbacks.onDisconnect?.(reason);
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('❌ Socket connection error:', error);
       this.isConnecting = false;
       this.callbacks.onError?.(error as Error);
     });

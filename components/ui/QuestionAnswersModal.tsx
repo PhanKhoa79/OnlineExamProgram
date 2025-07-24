@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle } from "lucide-react";
 import { QuestionDto } from "@/features/question/types/question.type";
+import Image from "next/image";
 
 interface QuestionAnswersModalProps {
   isOpen: boolean;
@@ -85,10 +86,12 @@ export const QuestionAnswersModal: React.FC<QuestionAnswersModalProps> = ({
           {question.imageUrl && (
             <div className="space-y-2">
               <h4 className="font-medium text-gray-900">Hình ảnh:</h4>
-              <img 
-                src={question.imageUrl} 
-                alt="Question image" 
+              <Image
+                src={question.imageUrl}
+                alt="Question image"
                 className="max-w-full h-auto rounded-lg border"
+                width={500} // Thay bằng chiều rộng phù hợp
+                height={300} // Thay bằng chiều cao phù hợp
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';

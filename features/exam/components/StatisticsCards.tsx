@@ -5,9 +5,9 @@ import { BookOpen, TrendingUp, Users } from 'lucide-react';
 interface StatisticsCardsProps {
   statistics: {
     totalExams: number;
-    averageScore: number;
+    averageScore: string;
     passedExams: number;
-    passRate: number;
+    passRate: string;
   };
 }
 

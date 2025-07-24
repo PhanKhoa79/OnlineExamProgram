@@ -166,7 +166,7 @@ export default function DashboardPage() {
         labels: {
           boxWidth: 10,
           usePointStyle: true,
-          pointStyle: 'circle',
+          pointStyle: 'circle' as const,
           font: {
             size: 12,
           },
@@ -183,7 +183,7 @@ export default function DashboardPage() {
         usePointStyle: true,
         callbacks: {
           labelPointStyle: () => ({
-            pointStyle: 'circle',
+            pointStyle: 'circle' as const,
             rotation: 0
           }),
         },

@@ -107,7 +107,6 @@ const AccountActionsCell = ({ usr }: { usr: AccountResponse }) => {
             <div 
               className="flex items-center justify-start py-1 gap-1 cursor-pointer"
               onClick={() => handleResendActivation(usr.email)}
-              disabled={isResending}
             >
               <MailOutline sx={{ fontSize: 18 }} />
               {isResending ? "Đang gửi..." : "Gửi lại email kích hoạt"}
@@ -126,8 +125,11 @@ export const accountColumns = (dispatch: ReturnType<typeof useDispatch>, searchQ
       header: ({ table }) => (
         <Checkbox
           checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+              ? "indeterminate"
+              : false
           }
           onCheckedChange={(v) => {
               table.toggleAllPageRowsSelected(!!v);

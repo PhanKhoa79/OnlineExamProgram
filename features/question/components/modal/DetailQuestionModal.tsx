@@ -13,6 +13,7 @@ import { useDispatch } from 'react-redux';
 import { setQuestions } from "@/store/questionSlice";
 import { QuestionDto } from "../../types/question.type";
 import { getSubjectById } from "@/features/subject/services/subjectServices";
+import Image from "next/image";
 
 type DetailQuestionModalProps = {
   open: boolean;
@@ -191,7 +192,7 @@ export function DetailQuestionModal({ open, onOpenChange, id }: DetailQuestionMo
               {questionData.imageUrl && (
                 <div>
                   <span className="font-medium text-gray-600 dark:text-gray-400 block mb-2">Hình ảnh:</span>
-                  <img 
+                  <Image 
                     src={questionData.imageUrl} 
                     alt="Question image" 
                     className="max-w-full h-auto rounded border"

@@ -11,8 +11,17 @@ const DetailAccountModal = dynamic(
   }
 );
 
-export default function DetailAccountModalPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: Promise<{ id: string }>; // Khớp với kiểu của Next.js
+}
+
+function DetailAccountModalClient({ id }: { id: number }) {
   const router = useRouter();
-  const id = Number(params.id);
   return <DetailAccountModal id={id} open={true} onOpenChange={() => router.back()} />;
+}
+
+export default async function DetailAccountModalPage({ params }: PageProps) {
+  const { id: idParam } = await params; // Await Promise để lấy object
+  const id = Number(idParam);
+  return <DetailAccountModalClient id={id} />;
 }

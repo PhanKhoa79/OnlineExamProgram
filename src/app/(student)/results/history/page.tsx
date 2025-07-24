@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAllCompletedExams } from '@/features/exam/services/examServices';
 import { getStudentByEmail } from '@/features/student/services/studentService';
@@ -59,7 +59,7 @@ const ExamHistoryPage = () => {
     fetchStudentId();
   }, [userEmail]);
 
-  const fetchCompletedExams = async () => {
+  const fetchCompletedExams = useCallback(async () => {
     if (!studentId) return;
     
     try {
@@ -76,13 +76,13 @@ const ExamHistoryPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [studentId]);
 
   useEffect(() => {
     if (studentId) {
       fetchCompletedExams();
     }
-  }, [studentId]);
+  }, [studentId, fetchCompletedExams]);
 
   const handleRefresh = () => {
     fetchCompletedExams();

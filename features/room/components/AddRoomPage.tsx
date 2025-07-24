@@ -136,7 +136,7 @@ const AddRoomPage: React.FC = () => {
       setFilteredExams([]);
       setSelectedScheduleSubject(null);
     }
-  }, [selectedScheduleId, schedules, exams, setValue]);
+  }, [selectedScheduleId, schedules, exams, setValue, selectedClassId]);
 
   // Auto-generate room code when exam, schedule, and class are selected
   useEffect(() => {

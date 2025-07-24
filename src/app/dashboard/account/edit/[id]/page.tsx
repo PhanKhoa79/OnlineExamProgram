@@ -10,7 +10,12 @@ const EditAccountPage = dynamic(
   }
 );
 
-export default function AccountEditPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+interface PageProps {
+  params: Promise<{ id: string }>; // Khớp với kiểu của Next.js
+}
+
+export default async function AccountEditPage({ params }: PageProps) {
+  const { id: idParam } = await params; // Await Promise để lấy object
+  const id = Number(idParam);
   return <EditAccountPage id={id} />;
 }

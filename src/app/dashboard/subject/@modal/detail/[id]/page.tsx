@@ -11,8 +11,17 @@ const DetailSubjectModal = dynamic(
   }
 );
 
-export default function DetailSubjectModalPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+function DetailSubjectModalClient({ id }: { id: number }) {
   const router = useRouter();
-  const id = Number(params.id);
   return <DetailSubjectModal id={id} open={true} onOpenChange={() => router.back()} />;
+}
+
+export default async function DetailSubjectModalPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
+  return <DetailSubjectModalClient id={id} />;
 } 

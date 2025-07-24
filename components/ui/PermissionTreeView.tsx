@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Tree } from 'primereact/tree';
+import { Tree, TreeCheckboxSelectionKeyType, TreeSelectionEvent } from 'primereact/tree';
 import { TreeNode } from 'primereact/treenode';
 import { getAllPermissions } from '@/features/role/services/roleServices';
 import { 
@@ -98,7 +98,7 @@ type PermissionTreeViewProps = {
 };
 
 export default function PermissionTreeView({ onChangeSelectedKeys, defaultSelectedKeys = [] }: PermissionTreeViewProps) {
-  const [selectedKeys, setSelectedKeys] = useState<Record<string, any>>({});
+  const [selectedKeys, setSelectedKeys] = useState<Record<string, { checked: boolean; partialChecked?: boolean }>>({});
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const checkboxRef = useRef<HTMLInputElement>(null);
 
@@ -107,9 +107,11 @@ export default function PermissionTreeView({ onChangeSelectedKeys, defaultSelect
     const result: string[] = [];
     const traverse = (nodeList: TreeNode[]) => {
       for (const node of nodeList) {
-        result.push(node.key);
-        if (node.children) {
-          traverse(node.children);
+        if (node.key) {
+          result.push(node.key as string);
+          if (node.children) {
+            traverse(node.children);
+          }
         }
       }
     };
@@ -120,8 +122,7 @@ export default function PermissionTreeView({ onChangeSelectedKeys, defaultSelect
   // Cập nhật selectedKeys khi nhận defaultSelectedKeys
   useEffect(() => {
     if (defaultSelectedKeys.length && nodes.length) {
-      const selected: Record<string, any> = {};
-
+      const selected: Record<string, { checked: boolean; partialChecked?: boolean }> = {};
       // Đánh dấu quyền con
       defaultSelectedKeys.forEach((key) => {
         selected[key] = { checked: true };
@@ -130,15 +131,15 @@ export default function PermissionTreeView({ onChangeSelectedKeys, defaultSelect
       // Hàm đệ quy set trạng thái cha
       const updateParentCheckStatus = (nodes: TreeNode[]) => {
         for (const node of nodes) {
-          if (node.children && node.children.length > 0) {
-            const childKeys = node.children.map((child) => child.key);
+          if (node.children && node.children.length > 0 && node.key) {
+            const childKeys = node.children.map((child) => child.key).filter((key): key is string => !!key);
             const allChecked = childKeys.every((key) => selected[key]?.checked);
             const someChecked = childKeys.some((key) => selected[key]?.checked);
 
             if (allChecked) {
               selected[node.key] = { checked: true };
             } else if (someChecked) {
-              selected[node.key] = { partialChecked: true };
+              selected[node.key] = { checked: false, partialChecked: true };
             }
 
             // Đệ quy xuống con
@@ -155,7 +156,7 @@ export default function PermissionTreeView({ onChangeSelectedKeys, defaultSelect
         onChangeSelectedKeys(defaultSelectedKeys);
       }
     }
-  }, [defaultSelectedKeys, nodes]);
+  }, [defaultSelectedKeys, nodes, onChangeSelectedKeys]);
   
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -199,7 +200,7 @@ export default function PermissionTreeView({ onChangeSelectedKeys, defaultSelect
         onChangeSelectedKeys([]); 
       }
     } else {
-      const all: Record<string, any> = {};
+      const all: Record<string, { checked: boolean }> = {};
       allKeysFlat.forEach((key) => {
         all[key] = { checked: true };
       });
@@ -212,15 +213,29 @@ export default function PermissionTreeView({ onChangeSelectedKeys, defaultSelect
     }
   };
 
-  const onSelectionChange = (e: any) => {
-    setSelectedKeys(e.value);
+  const onSelectionChange = (e: TreeSelectionEvent) => {
+    const value = e.value as TreeCheckboxSelectionKeyType | null;
+    const normalizedSelectedKeys: Record<string, { checked: boolean; partialChecked?: boolean }> = {};
+
+    if (value) {
+      Object.entries(value).forEach(([key, val]) => {
+        if (val && typeof val === 'object' && 'checked' in val) {
+          normalizedSelectedKeys[key] = {
+            checked: !!val.checked,
+            partialChecked: val.partialChecked ?? false,
+          };
+        }
+      });
+    }
+
+    setSelectedKeys(normalizedSelectedKeys);
 
     if (onChangeSelectedKeys) {
-        const selectedPermissions = Object.entries(e.value)
-        .filter(([key, val]) => key.includes(':') && (val as any)?.checked)
+      const selectedPermissions = Object.entries(normalizedSelectedKeys)
+        .filter(([key, val]) => key.includes(':') && val.checked)
         .map(([key]) => key);
 
-        onChangeSelectedKeys(selectedPermissions);
+      onChangeSelectedKeys(selectedPermissions);
     }
   };
 

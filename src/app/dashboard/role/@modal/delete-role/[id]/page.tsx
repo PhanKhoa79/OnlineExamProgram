@@ -20,10 +20,18 @@ export default function DeleteRoleModalPage() {
       dispatch(setRoles(data));
       toast({ title: 'Xóa quyền thành công!' });
       router.replace('/dashboard/role')
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err && 
+        typeof err.response === 'object' && err.response &&
+        'data' in err.response && 
+        typeof err.response.data === 'object' && err.response.data &&
+        'message' in err.response.data
+        ? (err.response.data as { message: string }).message
+        : 'Không thể xóa quyền';
+      
       toast({
         title: 'Lỗi khi xóa quyền',
-        description: err?.response?.data?.message || 'Không thể xóa quyền',
+        description: errorMessage,
         variant: 'error',
       });
     }

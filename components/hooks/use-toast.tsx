@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { toast as sonnerToast } from "sonner";
 import { CheckCircle, AlertCircle, XCircle, X } from "lucide-react";
@@ -51,9 +51,9 @@ export function toast({
           {action && <div className="mt-2">{action}</div>}
         </div>
 
-         {/* Close button */}
+        {/* Close button */}
         <button
-          onClick={() => sonnerToast.dismiss(t.id)}
+          onClick={() => sonnerToast.dismiss(t)} 
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition"
         >
           <X className="w-4 h-4" />

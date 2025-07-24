@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store';
 import { getStudentByEmail } from '@/features/student/services/studentService';
 import { getScheduleByClassId } from '@/features/schedule/services/scheduleServices';
@@ -20,7 +21,9 @@ import {
   CalendarDays,
   CalendarCheck,
   CalendarX,
-  Search
+  Search,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { getClassById } from '@/features/classes/services/classServices';
@@ -28,15 +31,30 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 
 const SchedulesPage = () => {
   usePageTitle('Lịch thi');
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [schedules, setSchedules] = useState<ExamScheduleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [classCode, setClassCode] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   const user = useAuthStore((state) => state.user);
 
-  const fetchSchedules = async () => {
+  // Initialize from URL params
+  useEffect(() => {
+    const page = searchParams.get('page');
+    const filter = searchParams.get('filter');
+    const search = searchParams.get('search');
+    
+    if (page) setCurrentPage(parseInt(page) || 1);
+    if (filter) setActiveFilter(filter as 'all' | 'active' | 'completed' | 'cancelled');
+    if (search) setSearchTerm(search);
+  }, [searchParams]);
+
+  const fetchSchedules = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -78,11 +96,11 @@ const SchedulesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.email]);
 
   useEffect(() => {
     fetchSchedules();
-  }, [user?.email]);
+  }, [user?.email, fetchSchedules]);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -111,6 +129,18 @@ const SchedulesPage = () => {
     }
   };
 
+  // Update URL when filters change
+  const updateURL = useCallback((page: number, filter: string, search: string) => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', page.toString());
+    if (filter !== 'all') params.set('filter', filter);
+    if (search) params.set('search', search);
+    
+    const queryString = params.toString();
+    const newURL = queryString ? `?${queryString}` : '/schedules';
+    router.replace(newURL);
+  }, [router]);
+
   // Filter schedules based on status and search term
   const filteredSchedules = schedules.filter(schedule => {
     const matchesSearch = 
@@ -125,6 +155,32 @@ const SchedulesPage = () => {
     
     return matchesSearch && matchesFilter;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredSchedules.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedSchedules = filteredSchedules.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL(page, activeFilter, searchTerm);
+  };
+
+  // Handle filter change
+  const handleFilterChange = (filter: 'all' | 'active' | 'completed' | 'cancelled') => {
+    setActiveFilter(filter);
+    setCurrentPage(1);
+    updateURL(1, filter, searchTerm);
+  };
+
+  // Handle search change
+  const handleSearchChange = (search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+    updateURL(1, activeFilter, search);
+  };
 
   // Get status badge
   const getStatusBadge = (status: string, startTime: string, endTime: string) => {
@@ -245,10 +301,10 @@ const SchedulesPage = () => {
             placeholder="Tìm kiếm lịch thi..." 
             className="pl-10"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
-        <Tabs defaultValue="all" className="w-full md:w-auto" onValueChange={(value) => setActiveFilter(value as any)}>
+        <Tabs value={activeFilter} className="w-full md:w-auto" onValueChange={(value) => handleFilterChange(value as 'all' | 'active' | 'completed' | 'cancelled')}>
           <TabsList className="grid grid-cols-4 w-full md:w-[400px]">
             <TabsTrigger value="all">Tất cả</TabsTrigger>
             <TabsTrigger value="active">Sắp tới</TabsTrigger>
@@ -267,8 +323,9 @@ const SchedulesPage = () => {
           </p>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {filteredSchedules.map((schedule) => (
+        <>
+          <div className="space-y-4">
+            {paginatedSchedules.map((schedule) => (
             <Card 
               key={schedule.id} 
               className="overflow-hidden hover:shadow-md transition-all duration-200"
@@ -348,7 +405,55 @@ const SchedulesPage = () => {
               </div>
             </Card>
           ))}
-        </div>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Trước
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, index) => {
+                  const page = index + 1;
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Sau
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          )}
+
+          {/* Pagination Info */}
+          <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+            Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredSchedules.length)} trong tổng số {filteredSchedules.length} lịch thi
+          </div>
+        </>
       )}
     </div>
   );

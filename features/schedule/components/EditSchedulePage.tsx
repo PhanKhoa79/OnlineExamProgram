@@ -127,7 +127,7 @@ const EditSchedulePage: React.FC = () => {
     if (scheduleId) {
       fetchData();
     }
-  }, [scheduleId, reset, setValue]);
+  }, [scheduleId, reset, setValue, watch]);
 
   const toggleClass = (classId: number) => {
     setSelectedClasses(prev => {

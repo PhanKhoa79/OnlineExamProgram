@@ -1,63 +1,65 @@
-# Use the official Bun image as base
+# Sử dụng image Bun chính thức làm base
 FROM oven/bun:1.1.38-alpine AS base
 
-# Install dependencies only when needed
+# Cài đặt phụ thuộc chỉ khi cần
 FROM base AS deps
 WORKDIR /app
 
-# Copy package.json and bun.lockb for dependency installation
+# Sao chép package.json và bun.lockb để cài đặt phụ thuộc
 COPY package.json bun.lock ./
 
-# Install dependencies using Bun
-RUN bun install --frozen-lockfile --production=false
+# Cài đặt phụ thuộc bằng Bun, bao gồm cả devDependencies
+RUN bun install --frozen-lockfile
 
-# Builder stage
+# Giai đoạn build
 FROM base AS builder
 WORKDIR /app
 
-# Copy dependencies from deps stage
+# Sao chép phụ thuộc từ giai đoạn deps
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set environment for build
+# Thiết lập môi trường cho build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Build the application
+# Build ứng dụng
 RUN bun run build
 
-# Production image
+# Image sản xuất
 FROM base AS runner
 WORKDIR /app
 
-# Set environment
+# Thiết lập môi trường
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create a non-root user
+# Tạo user không phải root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
+# Sao chép public directory trước khi chuyển ownership
 COPY --from=builder /app/public ./public
 
-# Set the correct permission for prerender cache
+# Thiết lập quyền cho thư mục cache prerender
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy standalone build output
+# Sao chép output build độc lập
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Switch to non-root user
+# Đảm bảo quyền truy cập cho public directory
+RUN chown -R nextjs:nodejs ./public
+
+# Chuyển sang user không phải root
 USER nextjs
 
-# Expose port
+# Mở cổng
 EXPOSE 3000
 
-# Set port environment
+# Thiết lập biến môi trường cho cổng
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
-# Start the application
-CMD ["bun", "run", "server.js"] 
+# Khởi động ứng dụng
+CMD ["bun", "run", "server.js"]

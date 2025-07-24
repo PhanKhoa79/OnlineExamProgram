@@ -10,7 +10,12 @@ const EditRolePage = dynamic(
   }
 );
 
-export default function EditRoleModalPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function EditRoleModalPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   return <EditRolePage id={id} />;
 }

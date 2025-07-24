@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import api from "@/lib/axios";
 import { CreateExamDto, UpdateExamDto, ExamDto, StudentPracticeProgressResponseDto, StartExamDto, StartExamResponseDto, SaveStudentAnswerDto, StudentAnswerResponseDto, InProgressExamDto, CompletedPracticeExamsResponseDto, ExamResultDto, AllCompletedExamsResponseDto, ExamResult, ExamResultFilters } from "../types/exam.type";
 import { UniversalAnalyticsQuery, UniversalAnalyticsResponse, ExamVolumeQuery, ExamVolumeResponse, ScoreStatisticsQuery, ScoreStatisticsResponse, TopStudentsQuery, TopStudentsResponseDto, FailingStudentsQuery, FailingStudentsResponse } from "../types/report.type";

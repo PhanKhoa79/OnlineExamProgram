@@ -98,9 +98,7 @@ export default function StudentHomePage() {
             setResultsLoading(false);
           }
         }
-        
-        console.log('Student data:', res);
-      } catch (err) {
+              } catch (err) {
         console.error('Error fetching student:', err);
       } finally {
         setLoading(false);
