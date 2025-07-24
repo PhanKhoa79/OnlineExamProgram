@@ -109,13 +109,17 @@ export default function StudentProfilePage() {
 
     try {
       setUploading(true);
-      await uploadAvatar(file);
+      const newAvatarUrl = await uploadAvatar(file);
+      
+      // Cập nhật user state trong AuthStore
+      const updatedUser = { ...user, urlAvatar: newAvatarUrl };
+      useAuthStore.getState().setAuthInfo(updatedUser);
+      
       toast({
         title: "Thành công",
         description: "Cập nhật ảnh đại diện thành công",
       });
-      // Reload page to show new avatar
-      window.location.reload();
+      
     } catch (error) {
       console.error('Upload failed:', error);
       toast({
@@ -173,7 +177,7 @@ export default function StudentProfilePage() {
               <div className="relative group">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
                   <Image
-                    src={urlAvatar || '/avatar.png'}
+                    src={urlAvatar ? `${urlAvatar}?t=${Date.now()}` : '/avatar.png'}
                     alt="Avatar"
                     width={128}
                     height={128}

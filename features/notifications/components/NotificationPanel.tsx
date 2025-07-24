@@ -31,7 +31,7 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
   };
 
   const handleMarkAsRead = async (notification: Notification) => {
-    if (!notification.isRead) {
+    if (!notification.read) {
       await markNotificationAsRead(notification.id);
     }
   };
@@ -66,12 +66,12 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
     return (
       <div 
         key={notification.id}
-        className={`relative p-4 border-b border-gray-200/50 dark:border-gray-700/50 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200 cursor-pointer group ${!notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
+        className={`relative p-4 border-b border-gray-200/50 dark:border-gray-700/50 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200 cursor-pointer group ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
         onClick={() => handleMarkAsRead(notification)}
       >
         <div className="flex items-start">
           <div className="flex-shrink-0 mr-3">
-            {!notification.isRead ? (
+            {!notification.read ? (
               <div className="w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
             ) : (
               <div className="w-2 h-2 mt-2 bg-transparent"></div>
@@ -96,7 +96,7 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
               <div className={`absolute right-0 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[60]
               `}>
                 <div className="py-1">
-                  {!notification.isRead && (
+                  {!notification.read && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

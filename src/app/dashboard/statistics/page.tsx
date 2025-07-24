@@ -53,7 +53,7 @@ export default function StatisticsPage() {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
 
   // Fetch analytics data
-  const fetchAnalyticsData = async (showLoading = true) => {
+  const fetchAnalyticsData = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) {
         setIsLoading(true);
@@ -85,12 +85,12 @@ export default function StatisticsPage() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [period]);
 
   // Initial data fetch
   useEffect(() => {
     fetchAnalyticsData(true);
-  }, []);
+  }, [fetchAnalyticsData]);
 
   // Separate effect for period changes with debounce
   useEffect(() => {
@@ -101,11 +101,11 @@ export default function StatisticsPage() {
     }, 300); // Debounce 300ms
 
     return () => clearTimeout(timeoutId);
-  }, [period]);
+  }, [period, fetchAnalyticsData, isLoading]);
 
   const handleDataRefresh = useCallback(() => {
     fetchAnalyticsData(false);
-  }, []);
+  }, [fetchAnalyticsData]);
 
   // Format number for display
   const formatNumber = useCallback((num: number) => {

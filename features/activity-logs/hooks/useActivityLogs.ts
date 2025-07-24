@@ -121,7 +121,7 @@ export const useActivityLogs = (limit?: number) => {
     return () => {
       cleanupActivityLogCallbacks();
     };
-  }, [user?.accountname, limit, fetchRecentActivities, fetchAllActivities, setupActivityLogCallbacks, cleanupActivityLogCallbacks]);
+  }, [user.accountname, limit, fetchRecentActivities, fetchAllActivities, setupActivityLogCallbacks, cleanupActivityLogCallbacks, user]);
 
   // Cleanup on unmount
   useEffect(() => {

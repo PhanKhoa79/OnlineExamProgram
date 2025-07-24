@@ -119,7 +119,7 @@ export default function ProfileAvatar() {
         <div className="relative">
           <Avatar 
             alt="Avatar" 
-            src={urlAvatar || "/avatar.png"} 
+            src={urlAvatar} 
             sx={{ width: 40, height: 40 }}
             className="ring-2 ring-white/20 dark:ring-gray-700/30"
           />

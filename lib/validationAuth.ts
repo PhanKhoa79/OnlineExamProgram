@@ -9,7 +9,11 @@ export const schema = z.object({
   codeClass: z.string().nonempty("Vui lòng nhập mã lớp học"),
 });
 
-export const getErrorMessage = (schema: z.ZodSchema<unknown>, values: unknown) => {
+// 👇 Đặt type chính xác từ schema
+type FormData = z.infer<typeof schema>;
+
+// 👇 Cập nhật hàm để nhận đúng schema và giá trị
+export const getErrorMessage = (schema: z.ZodType<FormData>, values: FormData) => {
   const result = schema.safeParse(values);
 
   if (result.success) {
@@ -34,3 +38,4 @@ export const getErrorMessage = (schema: z.ZodSchema<unknown>, values: unknown) =
     codeClassError: errors.codeClass?._errors[0] || null,
   };
 };
+

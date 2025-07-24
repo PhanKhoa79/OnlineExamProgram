@@ -57,6 +57,7 @@ export default function ResetPasswordForm() {
         description: "Bạn có thể đăng nhập với mật khẩu mới."
       })
       router.push('/login');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
         setServerError(err.response?.data?.message);
     }

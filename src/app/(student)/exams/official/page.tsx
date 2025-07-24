@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getOpenExamsByClassId, getAllCompletedExams } from '@/features/exam/services/examServices';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,7 +54,7 @@ const OfficialExamsPage = () => {
   const [classId, setClassId] = useState<number | null>(null);
   const [isAutoRefresh, setIsAutoRefresh] = useState(false);
   const [studentId, setStudentId] = useState<number | null>(null);
-  const [completedExams, setCompletedExams] = useState<AllCompletedExamsResponseDto | null>(null);
+  const [, setCompletedExams] = useState<AllCompletedExamsResponseDto | null>(null);
   const email = user?.email;
 
   useEffect(() => {
@@ -78,77 +78,64 @@ const OfficialExamsPage = () => {
   }, [email]);
 
   // Lấy danh sách các đề thi đã hoàn thành
-  const fetchCompletedExams = async () => {
+  const fetchCompletedExams = useCallback(async () => {
     try {
-      if (!studentId) return;
-      
+      if (!studentId) return null;
+
       const completedData = await getAllCompletedExams(studentId);
       setCompletedExams(completedData);
-      
+
       return completedData;
     } catch (err) {
       console.error('Error fetching completed exams:', err);
+      return null;
     }
-  };
-
-  // Kiểm tra xem một đề thi đã được hoàn thành chưa
-  const checkIfExamCompleted = (examId: number) => {
-    if (!completedExams) return false;
-    
-    // Kiểm tra trong danh sách bài thi chính thức đã hoàn thành
-    return completedExams.officialExams.some(item => item.exam.id === examId);
-  };
+  }, [studentId]);
 
   // Lấy danh sách phòng thi đang mở
-  const fetchOpenExams = async (isAuto = false) => {
-    try {
-      // Chỉ hiển thị trạng thái loading khi không phải là auto refresh
-      if (!isAuto) {
-        setLoading(true);
-        setError(null);
+  const fetchOpenExams = useCallback(
+    async (isAuto = false) => {
+      try {
+        if (!isAuto) {
+          setLoading(true);
+          setError(null);
+        }
+
+        if (!classId) {
+          if (!isAuto) setLoading(false);
+          return;
+        }
+
+        const openExamsData = await getOpenExamsByClassId(classId);
+        const completedData = await fetchCompletedExams();
+
+        const markedExams = openExamsData.map((exam: OpenExam) => {
+          const isCompleted = completedData
+            ? completedData.officialExams.some((item) => item.exam.id === exam.exam?.id)
+            : false;
+
+          return {
+            ...exam,
+            isCompleted,
+          };
+        });
+
+        setOpenExams(markedExams);
+
+        if (error) setError(null);
+      } catch (err) {
+        if (!isAuto) {
+          setError('Không thể tải danh sách phòng thi đang mở. Vui lòng thử lại.');
+        }
+        console.error('Error fetching open exams:', err);
+      } finally {
+        if (!isAuto) {
+          setLoading(false);
+        }
       }
-      
-      if (!classId) {
-        if (!isAuto) setLoading(false);
-        return;
-      }
-      
-      // Lấy danh sách phòng thi đang mở
-      const openExamsData = await getOpenExamsByClassId(classId);
-      
-      // Lấy danh sách đề thi đã hoàn thành
-      const completedData = await fetchCompletedExams();
-      
-      // Đánh dấu các phòng thi đã hoàn thành
-      const markedExams = openExamsData.map((exam: OpenExam) => {
-        // Kiểm tra xem đề thi này đã hoàn thành chưa
-        const isCompleted = completedData ? 
-          completedData.officialExams.some(item => item.exam.id === exam.exam?.id) : 
-          false;
-        
-        return {
-          ...exam,
-          isCompleted
-        };
-      });
-      
-      setOpenExams(markedExams);
-      
-      // Nếu trước đó có lỗi và refresh thành công, xóa lỗi
-      if (error) setError(null);
-    } catch (err) {
-      // Chỉ hiển thị lỗi khi không phải là auto refresh
-      if (!isAuto) {
-        setError('Không thể tải danh sách phòng thi đang mở. Vui lòng thử lại.');
-      }
-      console.error('Error fetching open exams:', err);
-    } finally {
-      // Chỉ cập nhật trạng thái loading khi không phải là auto refresh
-      if (!isAuto) {
-        setLoading(false);
-      }
-    }
-  };
+    },
+    [classId, error, fetchCompletedExams],
+  );
 
   const handleRefresh = () => {
     fetchOpenExams(false);
@@ -169,7 +156,7 @@ const OfficialExamsPage = () => {
     }, 30000);
 
     return () => clearInterval(intervalId);
-  }, [classId, studentId]);
+  }, [classId, studentId, fetchOpenExams]);
 
   // Xử lý khi bắt đầu làm bài thi từ phòng thi
   const handleStartOpenExam = (roomId: number) => {

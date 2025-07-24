@@ -11,8 +11,17 @@ const DetailRoleModal = dynamic(
   }
 );
 
-export default function DetailRoleModalPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+function DetailRoleModalClient({ id }: { id: number }) {
   const router = useRouter();
-  const id = Number(params.id);
   return <DetailRoleModal id={id} open={true} onOpenChange={() => router.back()} />;
+}
+
+export default async function DetailRoleModalPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
+  return <DetailRoleModalClient id={id} />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { Edit, Delete } from "@mui/icons-material";
@@ -51,6 +51,15 @@ export const DetailScheduleModal: React.FC<DetailScheduleModalProps> = ({
 
   const permissions = useAuthStore((state) => state.permissions);
 
+  const handleClose = useCallback(() => {
+    setSchedule(null);
+    setSubject(null);
+    setShowConfirmDelete(false);
+    setIsLoading(false);
+
+    onOpenChange(false);
+  }, [onOpenChange]);
+
   useEffect(() => {
     const fetchScheduleDetails = async () => {
       if (!id || !open) {
@@ -94,17 +103,7 @@ export const DetailScheduleModal: React.FC<DetailScheduleModalProps> = ({
       setSubject(null);
       setIsLoading(false);
     }
-  }, [id, open]);
-
-  const handleClose = () => {
-    setSchedule(null);
-    setSubject(null);
-    setShowConfirmDelete(false);
-    setIsLoading(false);
-
-    onOpenChange(false);
-  };
-
+  }, [id, open, handleClose]);
 
   const handleDelete = async () => {
     if (!schedule) return;

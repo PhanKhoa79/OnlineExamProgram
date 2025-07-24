@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getExamsByType, getExamsBySubject, getInProgressPracticeExams, getCompletedPracticeExams } from '@/features/exam/services/examServices';
 import { getAllSubjects } from '@/features/subject/services/subjectServices';
 import { getStudentByEmail } from '@/features/student/services/studentService';
@@ -25,7 +25,9 @@ import {
   Play,
   RotateCcw,
   AlertCircle,
-  Search
+  Search,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -62,6 +64,7 @@ const HighlightText = ({ text, highlight }: HighlightTextProps) => {
 
 const PracticeExamsPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useAuthStore((state) => state.user);
   const userEmail = user?.email;
   
@@ -75,7 +78,20 @@ const PracticeExamsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [highlightedExams, setHighlightedExams] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
   const firstResultRef = useRef<HTMLDivElement>(null);
+
+  // Initialize from URL params
+  useEffect(() => {
+    const page = searchParams.get('page');
+    const subject = searchParams.get('subject');
+    const search = searchParams.get('search');
+    
+    if (page) setCurrentPage(parseInt(page) || 1);
+    if (subject) setSelectedSubjectId(subject);
+    if (search) setSearchTerm(search);
+  }, [searchParams]);
 
   // Get student ID from email
   useEffect(() => {
@@ -100,7 +116,7 @@ const PracticeExamsPage = () => {
     }
   }, [userEmail]);
 
-  const fetchInProgressExams = async () => {
+  const fetchInProgressExams = useCallback(async () => {
     if (!studentId) return;
     
     try {
@@ -110,9 +126,9 @@ const PracticeExamsPage = () => {
       console.error('Error fetching in-progress exams:', error);
       // Don't show error for this, it's optional
     }
-  };
+  }, [studentId]);
 
-  const fetchCompletedExams = async () => {
+  const fetchCompletedExams = useCallback(async () => {
     if (!studentId) return;
     
     try {
@@ -122,7 +138,7 @@ const PracticeExamsPage = () => {
       console.error('Error fetching completed exams:', error);
       // Don't show error for this, it's optional
     }
-  };
+  }, [studentId]);
 
   const fetchSubjects = async () => {
     try {
@@ -157,9 +173,23 @@ const PracticeExamsPage = () => {
     }
   };
 
+  // Update URL when filters change
+  const updateURL = useCallback((page: number, subject: string, search: string) => {
+    const params = new URLSearchParams();
+    if (page > 1) params.set('page', page.toString());
+    if (subject !== 'all') params.set('subject', subject);
+    if (search) params.set('search', search);
+    
+    const queryString = params.toString();
+    const newURL = queryString ? `?${queryString}` : '/exams/practice';
+    router.replace(newURL);
+  }, [router]);
+
   // Filter items based on search query
   const handleSubjectChange = (value: string) => {
     setSelectedSubjectId(value);
+    setCurrentPage(1);
+    updateURL(1, value, searchTerm);
     if (value === 'all') {
       fetchExams();
     } else {
@@ -170,6 +200,8 @@ const PracticeExamsPage = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
+    setCurrentPage(1);
+    updateURL(1, selectedSubjectId, value);
     
     if (value.trim() === '') {
       setHighlightedExams([]);
@@ -194,6 +226,24 @@ const PracticeExamsPage = () => {
         }
       }, 100);
     }
+  };
+
+  // Pagination logic
+  const filteredExams = exams.filter(exam => {
+    const matchesSearch = !searchTerm || exam.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedExams = filteredExams.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateURL(page, selectedSubjectId, searchTerm);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleRefresh = () => {
@@ -221,7 +271,7 @@ const PracticeExamsPage = () => {
       fetchInProgressExams();
       fetchCompletedExams();
     }
-  }, [studentId]);
+  }, [studentId, fetchInProgressExams, fetchCompletedExams]);
 
   // Check for search parameter in URL
   useEffect(() => {
@@ -459,7 +509,7 @@ const PracticeExamsPage = () => {
       </div>
 
       {/* Exam Cards */}
-      {exams.length === 0 ? (
+      {filteredExams.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
           <div className="text-center">
             <Target className="w-16 h-16 mx-auto mb-4 text-gray-400" />
@@ -478,8 +528,9 @@ const PracticeExamsPage = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {exams.map((exam) => {
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedExams.map((exam) => {
             const inProgress = getInProgressExamData(exam.id);
             const isInProgress = isExamInProgress(exam.id);
             const completed = getCompletedExamData(exam.id);
@@ -696,7 +747,55 @@ const PracticeExamsPage = () => {
               </Card>
             );
           })}
-        </div>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Trước
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, index) => {
+                  const page = index + 1;
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Sau
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          )}
+
+          {/* Pagination Info */}
+          <div className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+            Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredExams.length)} trong tổng số {filteredExams.length} bài thi
+          </div>
+        </>
       )}
     </div>
   );

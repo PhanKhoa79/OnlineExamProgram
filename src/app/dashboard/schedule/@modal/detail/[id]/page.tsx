@@ -11,8 +11,17 @@ const DetailScheduleModal = dynamic(
   }
 );
 
-export default function ScheduleDetailModalPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+function ScheduleDetailModalClient({ id }: { id: number }) {
   const router = useRouter();
-  const id = Number(params.id);
   return <DetailScheduleModal id={id} open={true} onOpenChange={() => router.back()} />;
+}
+
+export default async function ScheduleDetailModalPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
+  return <ScheduleDetailModalClient id={id} />;
 } 

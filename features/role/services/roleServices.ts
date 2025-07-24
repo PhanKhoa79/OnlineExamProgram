@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { RoleWithPermissionsDto } from '@/features/role/types/role'; 
+import { RoleWithPermissionsDto, CreateRoleDto } from '@/features/role/types/role'; 
 
 export const getAllRolesWithPermissions = async (): Promise<RoleWithPermissionsDto[]> => {
   const response = await api.get<RoleWithPermissionsDto[]>('/role');
@@ -8,11 +8,11 @@ export const getAllRolesWithPermissions = async (): Promise<RoleWithPermissionsD
 
 export const getAllPermissions = async (): Promise<string[]> => {
   const response = await api.get<string[]>('/role/permissions/all');
-  return response.data.permissions;
+  return response.data.map(permission => permission.trim());
 };
 
-export const createRoleWithPermissions = async (data: RoleWithPermissionsDto) => {
-  const response = await api.post<RoleWithPermissionsDto>('/role', data);
+export const createRoleWithPermissions = async (role: CreateRoleDto) => {
+  const response = await api.post<RoleWithPermissionsDto>('/role', role);
   return response;
 };
 

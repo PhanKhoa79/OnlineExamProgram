@@ -51,7 +51,7 @@ const ExamResultPage = () => {
       try {
         const studentData = await getStudentByEmail(userEmail);
         setStudentId(studentData.id);
-      } catch (error) {
+      } catch {
         setError('Không thể lấy thông tin sinh viên. Vui lòng thử lại.');
       }
     };

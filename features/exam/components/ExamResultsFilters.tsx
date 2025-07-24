@@ -78,12 +78,12 @@ const ExamResultsFilters: React.FC<ExamResultsFiltersProps> = ({
         </div>
         {hasActiveFilters && (
           <div className="flex flex-wrap gap-2 mt-3">
-            {filters.searchTerm && (
+            {filters && (
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                Tìm kiếm: &quot;{filters.searchTerm}&quot;
+                Tìm kiếm: &quot;{filters.examType}&quot;
                 <X 
                   className="h-3 w-3 ml-1 cursor-pointer hover:text-blue-900" 
-                  onClick={() => setFilters({ searchTerm: '' })}
+                  onClick={() => setFilters({})}
                 />
               </Badge>
             )}
@@ -294,8 +294,8 @@ const ExamResultsFilters: React.FC<ExamResultsFiltersProps> = ({
               <Input 
                 placeholder="Tìm học sinh..." 
                 className="pl-10 h-10 border-2 border-gray-200 focus:border-red-500 transition-colors"
-                value={filters.searchTerm}
-                onChange={(e) => setFilters({ searchTerm: e.target.value })}
+                value={filters.examType}
+                onChange={() => setFilters({})}
               />
             </div>
           </div>

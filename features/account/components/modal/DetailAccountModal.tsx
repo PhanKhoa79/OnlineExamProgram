@@ -71,7 +71,7 @@ export const DetailAccountModal = ({ open, onOpenChange, id }: DetailAccountModa
             }
         };
             if (open) fetchAccountAndPermissions();
-    }, [id, open]);
+    }, [id, idAccountCur, open]);
 
     useEffect(() => {
         const fetchAccountAndPermissions = async () => {
@@ -83,7 +83,7 @@ export const DetailAccountModal = ({ open, onOpenChange, id }: DetailAccountModa
             }
         };
         if (open) fetchAccountAndPermissions();
-    }, [id]);
+    }, [id, open]);
 
   return (
     <CustomModal open={open} setOpen={onOpenChange} title="Chi tiết tài khoản" isSubmit={false}>

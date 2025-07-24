@@ -56,7 +56,7 @@ export function DetailRoleModal({ open, onOpenChange, id }: DetailRoleModalProps
                 setPermissionsAccountCur(resPermissionsAccounCur.permissions);
             }
         })();
-    }, [id]);
+    }, [id, idAccountCur]);
 
     return (
         <CustomModal

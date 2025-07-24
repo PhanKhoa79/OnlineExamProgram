@@ -9,6 +9,7 @@ import { addAccountsForStudents } from '@/features/account/services/accountServi
 import { toast } from '@/components/hooks/use-toast';
 import { addAccount as addAccountAction } from '@/store/accountSlice';
 import { useDispatch } from 'react-redux';
+import { AccountResponse } from '@/features/account/types/account';
 
 type ListStudentModalProps = {
   open: boolean;
@@ -40,7 +41,7 @@ export const ListStudentModal = ({ open, onOpenChange }: ListStudentModalProps) 
         const response = await addAccountsForStudents(accountData);
         const successAccounts = response.data.data.success;
 
-        const newAccounts = successAccounts.map(account => ({
+        const newAccounts = successAccounts.map((account: AccountResponse) => ({
             id: account.id,
             accountname: account.accountname,
             email: account.email,
@@ -48,16 +49,20 @@ export const ListStudentModal = ({ open, onOpenChange }: ListStudentModalProps) 
             isActive: account.isActive,
             urlAvatar: account.urlAvatar,
         }));
-        newAccounts.forEach(account => {
+        newAccounts.forEach((account: AccountResponse) => {
             dispatch(addAccountAction(account));
         });
         toast({ title: 'Tạo danh sách tài khoản thành công!' })
         onOpenChange(false);
         } catch (err) {
+            let errorMessage = 'Lỗi khi tạo danh sách tài khoản';
+            if (err && typeof err === 'object' && 'response' in err && err.response && err.response.data && err.response.data.message) {
+                errorMessage = err.response.data.message;
+            }
             toast({
-                title: err.response?.data?.message || 'Lỗi khi tạo danh sách tài khoản',
+                title: errorMessage,
                 variant: 'error',
-              })
+            });
         } finally {
         setLoading(false);
         }

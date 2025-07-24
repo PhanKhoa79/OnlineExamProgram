@@ -10,7 +10,12 @@ const EditQuestionPage = dynamic(
   }
 );
 
-export default function DashBoardEditQuestionPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function DashBoardEditQuestionPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   return <EditQuestionPage id={id} />;
 } 

@@ -18,9 +18,17 @@ export default function ForgotPasswordPage() {
     try {
       await forgotPassword(email)
       setStep('otp')
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response &&
+        'data' in error.response && 
+        typeof error.response.data === 'object' && error.response.data &&
+        'message' in error.response.data
+        ? (error.response.data as { message: string }).message
+        : 'Có lỗi xảy ra';
+      
       toast({
-        title: error?.response?.data?.message || 'Có lỗi xảy ra',
+        title: errorMessage,
         description: 'Email chưa đăng ký',
         variant: "error"
       })

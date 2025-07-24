@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -30,7 +30,6 @@ import {
   LineChart, 
   AreaChart,
   Filter,
-  Users,
   BookOpen,
   GraduationCap,
   Target
@@ -77,7 +76,7 @@ export default function ExamVolumeAnalytics({ className }: ExamVolumeAnalyticsPr
   // State for filter options
   const [classes, setClasses] = useState<ClassResponseDto[]>([]);
   const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
-  const [students, setStudents] = useState<StudentDto[]>([]);
+  const [, setStudents] = useState<StudentDto[]>([]);
 
   // State for filters
   const [timeRangeType, setTimeRangeType] = useState<TimeRangeType>('range');
@@ -113,7 +112,7 @@ export default function ExamVolumeAnalytics({ className }: ExamVolumeAnalyticsPr
   }, []);
 
   // Fetch exam volume data
-  const fetchExamVolumeData = async () => {
+  const fetchExamVolumeData = useCallback(async () => {
     setIsLoading(true);
     try {
       let params: ExamVolumeQuery | undefined;
@@ -162,7 +161,7 @@ export default function ExamVolumeAnalytics({ className }: ExamVolumeAnalyticsPr
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [timeRangeType, specificDate, startDate, endDate, examType, selectedClassIds, selectedSubjectIds, selectedStudentIds, groupBy]);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -171,17 +170,7 @@ export default function ExamVolumeAnalytics({ className }: ExamVolumeAnalyticsPr
     }, 500); // Debounce 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [
-    timeRangeType,
-    specificDate,
-    startDate,
-    endDate,
-    examType,
-    selectedClassIds,
-    selectedSubjectIds,
-    selectedStudentIds,
-    groupBy
-  ]);
+  }, [timeRangeType, specificDate, startDate, endDate, examType, selectedClassIds, selectedSubjectIds, selectedStudentIds, groupBy, fetchExamVolumeData]);
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -298,7 +287,7 @@ export default function ExamVolumeAnalytics({ className }: ExamVolumeAnalyticsPr
         }
       ]
     };
-  }, [examVolumeData, examType, chartType]);
+  }, [timeRangeType, examVolumeData?.summary, examVolumeData?.data, examType, chartType]);
 
   // Chart options
   const chartOptions = {

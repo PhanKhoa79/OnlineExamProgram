@@ -157,7 +157,7 @@ function RoomTableComponent() {
     };
 
     loadData();
-  }, []); // Empty dependency array - only run once on mount
+  }, [fetchData]);
 
   // Listen for room deletion events
   useEffect(() => {

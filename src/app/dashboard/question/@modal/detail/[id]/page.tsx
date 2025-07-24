@@ -11,8 +11,17 @@ const DetailQuestionModal = dynamic(
   }
 );
 
-export default function DetailQuestionModalPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+function DetailQuestionModalClient({ id }: { id: number }) {
   const router = useRouter();
-  const id = Number(params.id);
   return <DetailQuestionModal id={id} open={true} onOpenChange={() => router.back()} />;
+}
+
+export default async function DetailQuestionModalPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
+  return <DetailQuestionModalClient id={id} />;
 } 

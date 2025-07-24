@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -78,7 +79,7 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
   // State for filter options
   const [classes, setClasses] = useState<ClassResponseDto[]>([]);
   const [subjects, setSubjects] = useState<SubjectResponseDto[]>([]);
-  const [students, setStudents] = useState<StudentDto[]>([]);
+  const [, setStudents] = useState<StudentDto[]>([]);
 
   // State for filters
   const [timeRangeType, setTimeRangeType] = useState<TimeRangeType>('range');
@@ -114,7 +115,7 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
   }, []);
 
   // Fetch score statistics data
-  const fetchScoreData = async () => {
+  const fetchScoreData = useCallback(async () => {
     setIsLoading(true);
     try {
       const params: ScoreStatisticsQuery = {
@@ -157,7 +158,7 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [timeRangeType, specificDate, startDate, endDate, examType, selectedClassIds, selectedSubjectIds, selectedStudentIds, groupBy]);
 
   // Fetch data when filters change
   useEffect(() => {
@@ -166,17 +167,7 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [
-    timeRangeType,
-    specificDate,
-    startDate,
-    endDate,
-    examType,
-    selectedClassIds,
-    selectedSubjectIds,
-    selectedStudentIds,
-    groupBy
-  ]);
+  }, [timeRangeType, specificDate, startDate, endDate, examType, selectedClassIds, selectedSubjectIds, selectedStudentIds, groupBy, fetchScoreData]);
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -285,11 +276,11 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
             labels: ['Xuất sắc (90-100)', 'Giỏi (80-89)', 'Khá (70-79)', 'Trung bình (60-69)', 'Yếu (<60)'],
             datasets: [{
               data: [
-                scoreData.summary.practiceExams.scoreDistribution.excellent + scoreData.summary.officialExams.scoreDistribution.excellent,
-                scoreData.summary.practiceExams.scoreDistribution.good + scoreData.summary.officialExams.scoreDistribution.good,
-                scoreData.summary.practiceExams.scoreDistribution.average + scoreData.summary.officialExams.scoreDistribution.average,
-                scoreData.summary.practiceExams.scoreDistribution.belowAverage + scoreData.summary.officialExams.scoreDistribution.belowAverage,
-                scoreData.summary.practiceExams.scoreDistribution.poor + scoreData.summary.officialExams.scoreDistribution.poor,
+                (scoreData.summary?.practiceExams?.scoreDistribution?.excellent || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.excellent || 0),
+                (scoreData.summary?.practiceExams?.scoreDistribution?.good || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.good || 0),
+                (scoreData.summary?.practiceExams?.scoreDistribution?.average || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.average || 0),
+                (scoreData.summary?.practiceExams?.scoreDistribution?.belowAverage || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.belowAverage || 0),
+                (scoreData.summary?.practiceExams?.scoreDistribution?.poor || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.poor || 0),
               ],
               backgroundColor: [
                 'rgba(34, 197, 94, 0.8)',   // Green for excellent
@@ -310,7 +301,7 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
           if (examType === 'all' || examType === 'practice') {
             datasets.push({
               label: 'Điểm TB Luyện tập',
-              data: [scoreData.summary.practiceExams.averageScore],
+              data: [scoreData.summary?.practiceExams?.averageScore || 0],
               borderColor: 'rgb(59, 130, 246)',
               backgroundColor: 'rgba(59, 130, 246, 0.2)',
               tension: 0.1,
@@ -321,7 +312,7 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
           if (examType === 'all' || examType === 'official') {
             datasets.push({
               label: 'Điểm TB Chính thức',
-              data: [scoreData.summary.officialExams.averageScore],
+              data: [scoreData.summary?.officialExams?.averageScore || 0],
               borderColor: 'rgb(239, 68, 68)',
               backgroundColor: 'rgba(239, 68, 68, 0.2)',
               tension: 0.1,
@@ -331,12 +322,12 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
 
           // Add min/max reference lines for summary data
           const minScore = Math.min(
-            scoreData.summary.practiceExams.minScore,
-            scoreData.summary.officialExams.minScore
+            scoreData.summary?.practiceExams?.minScore || 0,
+            scoreData.summary?.officialExams?.minScore || 0
           );
           const maxScore = Math.max(
-            scoreData.summary.practiceExams.maxScore,
-            scoreData.summary.officialExams.maxScore
+            scoreData.summary?.practiceExams?.maxScore || 0,
+            scoreData.summary?.officialExams?.maxScore || 0
           );
 
           datasets.push({
@@ -380,11 +371,11 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
         labels: ['Xuất sắc (90-100)', 'Giỏi (80-89)', 'Khá (70-79)', 'Trung bình (60-69)', 'Yếu (<60)'],
         datasets: [{
           data: [
-            scoreData.summary.practiceExams.scoreDistribution.excellent + scoreData.summary.officialExams.scoreDistribution.excellent,
-            scoreData.summary.practiceExams.scoreDistribution.good + scoreData.summary.officialExams.scoreDistribution.good,
-            scoreData.summary.practiceExams.scoreDistribution.average + scoreData.summary.officialExams.scoreDistribution.average,
-            scoreData.summary.practiceExams.scoreDistribution.belowAverage + scoreData.summary.officialExams.scoreDistribution.belowAverage,
-            scoreData.summary.practiceExams.scoreDistribution.poor + scoreData.summary.officialExams.scoreDistribution.poor,
+            (scoreData.summary?.practiceExams?.scoreDistribution?.excellent || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.excellent || 0),
+            (scoreData.summary?.practiceExams?.scoreDistribution?.good || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.good || 0),
+            (scoreData.summary?.practiceExams?.scoreDistribution?.average || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.average || 0),
+            (scoreData.summary?.practiceExams?.scoreDistribution?.belowAverage || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.belowAverage || 0),
+            (scoreData.summary?.practiceExams?.scoreDistribution?.poor || 0) + (scoreData.summary?.officialExams?.scoreDistribution?.poor || 0),
           ],
           backgroundColor: [
             'rgba(34, 197, 94, 0.8)',   // Green for excellent
@@ -444,12 +435,12 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
     // Add reference lines for min/max scores if we have data
     if (filteredData.length > 1 && scoreData.summary) {
       const minScore = Math.min(
-        scoreData.summary.practiceExams.minScore,
-        scoreData.summary.officialExams.minScore
+        scoreData.summary?.practiceExams?.minScore || 0,
+        scoreData.summary?.officialExams?.minScore || 0
       );
       const maxScore = Math.max(
-        scoreData.summary.practiceExams.maxScore,
-        scoreData.summary.officialExams.maxScore
+        scoreData.summary?.practiceExams?.maxScore || 0,
+        scoreData.summary?.officialExams?.maxScore || 0
       );
 
       // Add max score reference line
@@ -522,13 +513,13 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
 
     // Get min/max scores for reference lines
     const minScore = scoreData ? Math.min(
-      scoreData.summary.practiceExams.minScore,
-      scoreData.summary.officialExams.minScore
+      scoreData.summary?.practiceExams?.minScore || 0,
+      scoreData.summary?.officialExams?.minScore || 0
     ) : 0;
     
     const maxScore = scoreData ? Math.max(
-      scoreData.summary.practiceExams.maxScore,
-      scoreData.summary.officialExams.maxScore
+      scoreData.summary?.practiceExams?.maxScore || 0,
+      scoreData.summary?.officialExams?.maxScore || 0
     ) : 100;
 
     return {
@@ -558,15 +549,15 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
               const value = context.parsed.y || 0;
               return `${label}: ${value.toFixed(1)} điểm`;
             },
-            afterBody: (context: any) => {
+            afterBody: () => {
               if (scoreData?.summary) {
                 return [
                   '',
                   `📊 Thống kê tổng quan:`,
                   `🔴 Điểm cao nhất: ${maxScore} điểm`,
                   `🔴 Điểm thấp nhất: ${minScore} điểm`,
-                  `📈 Điểm TB Luyện tập: ${scoreData.summary.practiceExams.averageScore.toFixed(1)}`,
-                  `📋 Điểm TB Chính thức: ${scoreData.summary.officialExams.averageScore.toFixed(1)}`
+                  `📈 Điểm TB Luyện tập: ${scoreData.summary?.practiceExams?.averageScore?.toFixed(1) || 0}`,
+                  `📋 Điểm TB Chính thức: ${scoreData.summary?.officialExams?.averageScore?.toFixed(1) || 0}`
                 ];
               }
               return [];
@@ -859,10 +850,10 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Điểm TB Luyện tập</p>
                     <p className="text-2xl font-bold text-blue-600">
-                      {scoreData.summary.practiceExams.averageScore.toFixed(1)}
+                      {scoreData.summary?.practiceExams?.averageScore?.toFixed(1) || 0}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {scoreData.summary.practiceExams.totalCount} bài thi
+                      {scoreData.summary?.practiceExams?.totalCount} bài thi
                     </p>
                   </div>
                   <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -878,10 +869,10 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Điểm TB Chính thức</p>
                     <p className="text-2xl font-bold text-red-600">
-                      {scoreData.summary.officialExams.averageScore.toFixed(1)}
+                      {scoreData.summary?.officialExams?.averageScore?.toFixed(1) || 0}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {scoreData.summary.officialExams.totalCount} bài thi
+                      {scoreData.summary?.officialExams?.totalCount} bài thi
                     </p>
                   </div>
                   <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
@@ -896,8 +887,8 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Chênh lệch điểm</p>
-                    <p className={`text-2xl font-bold ${scoreData.summary.comparison.averageScoreDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {scoreData.summary.comparison.averageScoreDifference > 0 ? '+' : ''}{scoreData.summary.comparison.averageScoreDifference.toFixed(1)}
+                    <p className={`text-2xl font-bold ${scoreData.summary?.comparison?.averageScoreDifference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {scoreData.summary?.comparison?.averageScoreDifference > 0 ? '+' : ''}{scoreData.summary?.comparison?.averageScoreDifference?.toFixed(1) || 0}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Practice vs Official
@@ -916,8 +907,8 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Xu hướng</p>
                     <p className="text-lg font-medium text-purple-600">
-                      {scoreData.summary.comparison.performanceTrend === 'practice_better' ? 'LT tốt hơn' :
-                       scoreData.summary.comparison.performanceTrend === 'official_better' ? 'CT tốt hơn' : 'Tương đương'}
+                      {scoreData.summary?.comparison?.performanceTrend === 'practice_better' ? 'LT tốt hơn' :
+                       scoreData.summary?.comparison?.performanceTrend === 'official_better' ? 'CT tốt hơn' : 'Tương đương'}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Performance trend
@@ -995,30 +986,30 @@ export default function ScoreStatisticsAnalytics({ className }: ScoreStatisticsA
                     <tr className="border-b">
                       <td className="p-2 font-medium">Tất cả thời gian</td>
                       <td className="p-2 text-right text-blue-600 font-medium">
-                        {scoreData.summary.practiceExams.averageScore.toFixed(1)}
+                        {scoreData.summary?.practiceExams?.averageScore?.toFixed(1) || 0}
                       </td>
                       <td className="p-2 text-right text-red-600 font-medium">
-                        {scoreData.summary.officialExams.averageScore.toFixed(1)}
+                        {scoreData.summary?.officialExams?.averageScore?.toFixed(1) || 0}
                       </td>
                       <td className="p-2 text-right text-green-600 font-medium">
-                        {((scoreData.summary.practiceExams.averageScore + scoreData.summary.officialExams.averageScore) / 2).toFixed(1)}
+                                                 {(((scoreData.summary?.practiceExams?.averageScore || 0) + (scoreData.summary?.officialExams?.averageScore || 0)) / 2).toFixed(1)}
                       </td>
                       <td className="p-2 text-right text-blue-500">
-                        {scoreData.summary.practiceExams.totalCount}
+                        {scoreData.summary?.practiceExams?.totalCount}
                       </td>
                       <td className="p-2 text-right text-red-500">
-                        {scoreData.summary.officialExams.totalCount}
+                        {scoreData.summary?.officialExams?.totalCount}
                       </td>
                       <td className="p-2 text-right text-green-600 font-medium">
                         {Math.max(
-                          scoreData.summary.practiceExams.maxScore,
-                          scoreData.summary.officialExams.maxScore
+                          scoreData.summary?.practiceExams?.maxScore || 0,
+                          scoreData.summary?.officialExams?.maxScore || 0
                         )}
                       </td>
                       <td className="p-2 text-right text-red-600 font-medium">
                         {Math.min(
-                          scoreData.summary.practiceExams.minScore,
-                          scoreData.summary.officialExams.minScore
+                          scoreData.summary?.practiceExams?.minScore || 0,
+                          scoreData.summary?.officialExams?.minScore || 0
                         )}
                       </td>
                     </tr>

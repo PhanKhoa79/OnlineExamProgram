@@ -45,6 +45,7 @@ export default function useLogin() {
       } else {
         router.push("/dashboard");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setLoginError(err.response?.data?.message || "Đăng nhập thất bại");
     }

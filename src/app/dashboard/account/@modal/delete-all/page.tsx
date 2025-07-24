@@ -23,10 +23,18 @@ export default function DeleteAllAccountsModalPage() {
       dispatch(deleteAccounts(selectedIds));
       toast({ title: 'Đã xóa tất cả tài khoản thành công!' });
       router.replace('/dashboard/account');
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error && 'response' in err && 
+        typeof err.response === 'object' && err.response &&
+        'data' in err.response && 
+        typeof err.response.data === 'object' && err.response.data &&
+        'message' in err.response.data
+        ? (err.response.data as { message: string }).message
+        : 'Không thể xóa các tài khoản';
+      
       toast({
         title: 'Lỗi khi xóa tất cả tài khoản',
-        description: err?.response?.data?.message || 'Không thể xóa các tài khoản',
+        description: errorMessage,
         variant: 'error',
       });
     }

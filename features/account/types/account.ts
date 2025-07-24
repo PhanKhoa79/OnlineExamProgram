@@ -17,3 +17,4 @@ export type AccountResponse = {
   createdAt: string;
   updatedAt: string;
 };
+

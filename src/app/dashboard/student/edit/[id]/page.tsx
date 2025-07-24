@@ -10,7 +10,12 @@ const DynamicEditStudentPage = dynamic(
   }
 );
 
-export default function EditStudentPageWrapper({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function EditStudentPageWrapper({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   return <DynamicEditStudentPage id={id} />;
 } 

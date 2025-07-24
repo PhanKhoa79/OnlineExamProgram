@@ -25,7 +25,7 @@ export default function NotificationsPage() {
   };
 
   const handleMarkAsRead = async (notification: Notification) => {
-    if (!notification.isRead) {
+    if (!notification.read) {
       await markNotificationAsRead(notification.id);
     }
   };
@@ -51,12 +51,12 @@ export default function NotificationsPage() {
     return (
       <div 
         key={notification.id}
-        className={`relative p-6 border-b border-gray-200/50 dark:border-gray-700/50 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200 cursor-pointer group ${!notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
+        className={`relative p-6 border-b border-gray-200/50 dark:border-gray-700/50 hover:bg-white/60 dark:hover:bg-gray-800/60 transition-all duration-200 cursor-pointer group ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
         onClick={() => handleMarkAsRead(notification)}
       >
         <div className="flex items-start">
           <div className="flex-shrink-0 mr-4">
-            {!notification.isRead ? (
+            {!notification.read ? (
               <div className="w-3 h-3 mt-2 bg-blue-500 rounded-full"></div>
             ) : (
               <div className="w-3 h-3 mt-2 bg-transparent"></div>
@@ -82,7 +82,7 @@ export default function NotificationsPage() {
                 isLastItems ? 'bottom-12' : 'top-12'
               }`}>
                 <div className="py-1">
-                  {!notification.isRead && (
+                  {!notification.read && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -175,7 +175,7 @@ export default function NotificationsPage() {
               </span>
               <span className="text-gray-600 dark:text-gray-400">
                 Chưa đọc: <span className="font-semibold text-blue-600 dark:text-blue-400">
-                  {notifications.filter(n => !n.isRead).length}
+                  {notifications.filter(n => !n.read).length}
                 </span>
               </span>
             </div>

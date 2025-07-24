@@ -91,7 +91,7 @@ export default function EditAccountPage({ id }: { id: number }) {
         }
       });
     }
-  }, [roles, id]);
+  }, [roles, id, role]);
 
   useEffect(() => {
     const { emailError, accountnameError } = getErrorMessage(schema, {

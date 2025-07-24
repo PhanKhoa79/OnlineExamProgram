@@ -23,7 +23,7 @@ export function StudentTable() {
   const dispatch = useDispatch<AppDispatch>();
 
   // Function to fetch students data
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await getListStudentWithoutAccount();
@@ -34,12 +34,12 @@ export function StudentTable() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     if (hasFetchedData.current) return;
     fetchStudents();
-  }, []); 
+  }, [fetchStudents]); 
 
   // Handle refresh button click
   const handleRefresh = () => {

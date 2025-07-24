@@ -11,10 +11,12 @@ const DetailExamModal = dynamic(
   }
 );
 
-export default function DetailExamModalPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const id = Number(params.id);
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
 
+function DetailExamModalClient({ id }: { id: number }) {
+  const router = useRouter();
   return (
     <DetailExamModal 
       examId={id} 
@@ -22,4 +24,10 @@ export default function DetailExamModalPage({ params }: { params: { id: string }
       onClose={() => router.back()} 
     />
   );
+}
+
+export default async function DetailExamModalPage({ params }: PageProps) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
+  return <DetailExamModalClient id={id} />;
 } 

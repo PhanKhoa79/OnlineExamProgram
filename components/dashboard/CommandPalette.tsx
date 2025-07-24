@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { MagnifyingGlassIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import { Dashboard, PersonAdd, ManageAccounts, Groups, QuestionAnswer, SpeakerNotes, Schedule, MeetingRoom, AutoStories, School, Settings, BarChart, Assessment } from '@mui/icons-material';
@@ -120,11 +120,11 @@ export const CommandPalette = () => {
   }, []);
 
   // Save position to localStorage
-  const savePosition = (newPosition: Position) => {
+  const savePosition = useCallback((newPosition: Position) => {
     const constrainedPos = constrainPosition(newPosition);
     localStorage.setItem('commandPalettePosition', JSON.stringify(constrainedPos));
     setPosition(constrainedPos);
-  };
+  }, []); // Empty dependency array since constrainPosition doesn't depend on state
 
   // Handle mouse down for dragging
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -173,7 +173,7 @@ export const CommandPalette = () => {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging, dragOffset, position]);
+  }, [isDragging, dragOffset, position, savePosition]);
 
   // Build menu items based on permissions
   const menuItems: MenuItem[] = [

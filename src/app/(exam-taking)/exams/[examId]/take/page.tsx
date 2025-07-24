@@ -106,7 +106,7 @@ const ExamTakingPage = () => {
     };
 
     fetchStudentId();
-  }, []);
+  }, [router, userEmail]);
 
   // Save answer to database
   const saveAnswerToDatabase = useCallback(async (questionId: number, answerId: number | null, isMarked: boolean = false) => {
@@ -303,7 +303,7 @@ const ExamTakingPage = () => {
       });
       throw error;
     }
-  }, [examId, questions, realStudentId]);
+  }, [exam, examId, questions, realStudentId, router]);
 
   // Fetch exam and questions data
   useEffect(() => {
@@ -369,6 +369,32 @@ const ExamTakingPage = () => {
     };
   }, []);
 
+  // Handle submit exam function
+  const handleSubmitExam = useCallback(async () => {
+    if (!studentExamId) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      await submitStudentExam(studentExamId);
+      toast({
+        title: 'Nộp bài thành công!',
+        description: roomClosed 
+          ? 'Bài thi đã được nộp do phòng thi đã đóng.'
+          : 'Bài thi của bạn đã được nộp thành công.',
+      });
+      router.push('/results/history');
+    } catch (error) {
+      console.error('❌ Error submitting exam:', error);
+      toast({
+        title: 'Lỗi nộp bài',
+        description: 'Không thể nộp bài thi. Vui lòng thử lại.',
+        variant: 'error'
+      });
+      setIsSubmitting(false);
+    }
+  }, [studentExamId, roomClosed, router]);
+
   // Timer countdown
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -430,7 +456,7 @@ const ExamTakingPage = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [examStarted, timeLeft]);
+  }, [examStarted, timeLeft, handleSubmitExam]);
 
   // Enhanced timer display with 10-minute warning
   const getTimerStyle = () => {
@@ -698,7 +724,7 @@ const ExamTakingPage = () => {
     } catch (error) {
       console.error('❌ Error checking room status:', error);
     }
-  }, [examId, studentExamId, router]);
+  }, [assignmentId, studentExamId, router]);  
 
   // Set up periodic room status check
   useEffect(() => {
@@ -726,30 +752,7 @@ const ExamTakingPage = () => {
     }
   }, [examId, examStarted, studentExamId, checkIfRoomIsOpen]);
 
-  const handleSubmitExam = async () => {
-    if (!studentExamId) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      await submitStudentExam(studentExamId);
-      toast({
-        title: 'Nộp bài thành công!',
-        description: roomClosed 
-          ? 'Bài thi đã được nộp do phòng thi đã đóng.'
-          : 'Bài thi của bạn đã được nộp thành công.',
-      });
-      router.push('/results/history');
-    } catch (error) {
-      console.error('❌ Error submitting exam:', error);
-      toast({
-        title: 'Lỗi nộp bài',
-        description: 'Không thể nộp bài thi. Vui lòng thử lại.',
-        variant: 'error'
-      });
-      setIsSubmitting(false);
-    }
-  };
+
 
   const formatTimeLeft = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -1079,7 +1082,7 @@ const ExamTakingPage = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Loại đề:</span>
-                      <span className={`text-sm font-medium px-2 py-1 rounded text-xs ${
+                      <span className={`font-medium px-2 py-1 rounded text-xs ${
                         examType === 'practice' 
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
                           : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'

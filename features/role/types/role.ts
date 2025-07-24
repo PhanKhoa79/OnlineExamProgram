@@ -6,3 +6,7 @@ export interface RoleWithPermissionsDto {
   updatedAt: string;
 }
 
+export interface CreateRoleDto {
+  name: string;
+  permissions: string[];
+}

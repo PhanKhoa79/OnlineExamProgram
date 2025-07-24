@@ -21,7 +21,6 @@ export default function DeleteExamModalPage() {
       toast({ title: 'Xóa đề thi thành công!' });
       router.replace('/dashboard/exam');
     } catch (err: unknown) {
-      console.error("Error deleting exam:", err);
       
       let errorMessage = "Có lỗi xảy ra khi xóa đề thi. Vui lòng thử lại.";
       
