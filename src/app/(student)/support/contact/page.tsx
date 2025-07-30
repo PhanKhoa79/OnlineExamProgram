@@ -27,10 +27,13 @@ import {
 } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { toast } from '@/components/hooks/use-toast';
+import ChatWidget from '@/components/ui/ChatWidget';
 
 export default function ContactPage() {
   usePageTitle('Liên hệ hỗ trợ');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -67,7 +70,8 @@ export default function ContactPage() {
       hours: '8:00 - 22:00',
       icon: <MessageCircle className="w-6 h-6" />,
       color: 'from-purple-500 to-indigo-500',
-      badge: 'Nhanh nhất'
+      badge: 'Nhanh nhất',
+      action: () => setIsChatOpen(true)
     }
   ];
 
@@ -178,7 +182,11 @@ export default function ContactPage() {
       {/* Support Channels */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {supportChannels.map((channel, index) => (
-          <Card key={index} className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
+          <Card 
+            key={index} 
+            className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
+            onClick={channel.action}
+          >
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -443,6 +451,14 @@ export default function ContactPage() {
           </Card>
         </div>
       </div>
+
+      {/* Chat Widget */}
+      <ChatWidget
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        onMinimize={() => setIsChatMinimized(!isChatMinimized)}
+        isMinimized={isChatMinimized}
+      />
     </div>
   );
 } 

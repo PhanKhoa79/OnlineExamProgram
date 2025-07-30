@@ -76,6 +76,64 @@ const nextConfig: NextConfig = {
   
   // Bundle analyzer and optimizations
   webpack: (config, { dev, isServer }) => {
+    // Xử lý các module Node.js không tương thích với client-side
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+        child_process: false,
+        util: false,
+        buffer: false,
+        events: false,
+        querystring: false,
+        punycode: false,
+        string_decoder: false,
+        constants: false,
+        domain: false,
+        dns: false,
+        dgram: false,
+        cluster: false,
+        module: false,
+        vm: false,
+        inspector: false,
+        async_hooks: false,
+        'fs/promises': false,
+        'node:fs': false,
+        'node:path': false,
+        'node:os': false,
+        'node:crypto': false,
+        'node:stream': false,
+        'node:util': false,
+        'node:buffer': false,
+        'node:events': false,
+        'node:querystring': false,
+        'node:punycode': false,
+        'node:string_decoder': false,
+        'node:constants': false,
+        'node:domain': false,
+        'node:dns': false,
+        'node:dgram': false,
+        'node:cluster': false,
+        'node:module': false,
+        'node:vm': false,
+        'node:inspector': false,
+        'node:async_hooks': false,
+        'node:child_process': false,
+        'node:fs/promises': false,
+      };
+    }
+
     // Development optimizations
     if (dev) {
       // Faster development builds

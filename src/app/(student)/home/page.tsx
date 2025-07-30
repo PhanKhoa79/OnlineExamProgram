@@ -31,6 +31,7 @@ import { getScheduleByClassId } from '@/features/schedule/services/scheduleServi
 import { ExamScheduleDto } from '@/features/schedule/types/schedule';
 import { StudentDto } from '@/features/student/types/student';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import ChatButton from '@/components/ui/ChatButton';
 
 export default function StudentHomePage() {
   usePageTitle('Trang chủ');
@@ -229,6 +230,7 @@ export default function StudentHomePage() {
 
   return (
     <div className="space-y-8">
+      <ChatButton />
       {/* Enhanced Welcome Header */}
       <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/25 overflow-hidden">
         {/* Background Pattern */}
