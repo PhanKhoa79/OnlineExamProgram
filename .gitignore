@@ -12,8 +12,9 @@
 /package-managers-backup
 
 #cursor
-.cursorrules
+/.cursor
 
+/.vscode
 # testing
 /coverage
 
